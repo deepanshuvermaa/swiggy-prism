@@ -4,6 +4,8 @@
 
 > Transform any recipe or meal plan into a budget-optimized, nutrition-aware Instamart cart — in seconds.
 
+### [Live Demo](https://deepanshuvermaa.github.io/swiggy-prism/)
+
 ---
 
 ## Value Proposition
