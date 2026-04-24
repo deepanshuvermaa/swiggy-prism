@@ -246,6 +246,36 @@ function navigateTo(id) {
   document.getElementById(id).classList.add("active");
   if (id === "screen-cart" && currentCart) renderCart(currentCart);
   if (id === "screen-summary" && currentCart) renderSummary(currentCart);
+  if (id === "screen-prism-hub") renderPrismHub();
+  if (id === "screen-instamart" && userPersona) applyPersona();
+}
+
+function renderPrismHub() {
+  const config = PERSONA_CONFIG[userPersona || "balanced"];
+  const stats = getWrappedStats();
+
+  document.getElementById("hub-persona-emoji").textContent = config.emoji;
+  document.getElementById("hub-persona-label").textContent = config.tagline;
+  document.getElementById("hub-savings").textContent = stats.savingsPct + "%";
+  document.getElementById("hub-orders").textContent = stats.sessions + " orders";
+
+  const list = document.getElementById("hub-reco-list");
+  list.innerHTML = "";
+
+  const history = JSON.parse(localStorage.getItem("prism_history") || "[]");
+  const suggestions = getSmartSuggestions(config.suggestions, history);
+
+  suggestions.forEach(s => {
+    const item = document.createElement("div");
+    item.className = "hub-reco-item";
+    item.onclick = () => quickRecipe(s.recipe);
+    item.innerHTML = `
+      <span class="hri-emoji">${s.emoji}</span>
+      <div class="hri-info"><span class="hri-name">${s.name}</span><span class="hri-reason">${s.reason}</span></div>
+      <span class="hri-tag ${s.tag}">${s.tagLabel}</span>
+    `;
+    list.appendChild(item);
+  });
 }
 
 function extractBudget(text) {
@@ -569,7 +599,37 @@ function placeOrder() {
   if (currentCart) saveSession(currentCart);
   const overlay = document.getElementById("order-overlay");
   overlay.classList.add("visible");
-  setTimeout(() => overlay.classList.remove("visible"), 3000);
+
+  // brief success flash, then go to post-order screen
+  setTimeout(() => {
+    overlay.classList.remove("visible");
+    renderPostOrder();
+    navigateTo("screen-post-order");
+  }, 2000);
+}
+
+function renderPostOrder() {
+  const stats = getWrappedStats();
+  document.getElementById("po-savings").textContent = stats.savingsPct + "%";
+  document.getElementById("po-budget-bar").style.width = "100%";
+  document.getElementById("po-spent-bar").style.width = ((stats.totalSpent / stats.totalBudget) * 100) + "%";
+
+  // persona-driven "what's next" recommendations
+  const config = PERSONA_CONFIG[userPersona || "balanced"];
+  const list = document.getElementById("po-reco-list");
+  list.innerHTML = "";
+
+  config.suggestions.slice(0, 3).forEach(s => {
+    const item = document.createElement("div");
+    item.className = "hub-reco-item";
+    item.onclick = () => quickRecipe(s.recipe);
+    item.innerHTML = `
+      <span class="hri-emoji">${s.emoji}</span>
+      <div class="hri-info"><span class="hri-name">${s.name}</span><span class="hri-reason">${s.reason}</span></div>
+      <span class="hri-tag ${s.tag}">${s.tagLabel}</span>
+    `;
+    list.appendChild(item);
+  });
 }
 
 function shareWrapped() {

@@ -427,8 +427,8 @@
       <div class="swiggy-nav">
         <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Food</span></div>
         <div class="nav-item active"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Instamart</span></div>
-        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg><span>Dineout</span></div>
-        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Genie</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
       </div>
     </div>
 
@@ -488,7 +488,121 @@
       </div>
     </div>
 
-    <!-- Order Success Overlay -->
+    <!-- ====== SCREEN: Prism Hub (bottom nav tab) ====== -->
+    <div class="screen" id="screen-prism-hub">
+      <div class="swiggy-topbar">
+        <div class="swiggy-location">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
+          <div>
+            <span class="loc-title">Prism Hub</span>
+            <span class="loc-sub" id="hub-persona-label">Your personalized feed</span>
+          </div>
+        </div>
+        <div class="swiggy-profile" onclick="navigateTo('screen-persona')">
+          <span id="hub-persona-emoji">⚖️</span>
+        </div>
+      </div>
+
+      <div class="hub-body">
+        <div class="hub-wrapped-mini" id="hub-wrapped-mini">
+          <div class="hwm-left">
+            <span class="hwm-num" id="hub-savings">12%</span>
+            <span class="hwm-label">saved this month</span>
+          </div>
+          <div class="hwm-right">
+            <span class="hwm-orders" id="hub-orders">3 orders</span>
+            <span class="hwm-via">via Prism</span>
+          </div>
+        </div>
+
+        <div class="hub-section">
+          <h3>Recommended For You</h3>
+          <div class="hub-reco-list" id="hub-reco-list"></div>
+        </div>
+
+        <div class="hub-section">
+          <h3>Quick Actions</h3>
+          <div class="hub-actions">
+            <button class="hub-action-card" onclick="navigateTo('screen-instamart')">
+              <span>🛒</span> New Recipe Cart
+            </button>
+            <button class="hub-action-card" onclick="navigateTo('screen-share-sim')">
+              <span>📱</span> Capture from Video
+            </button>
+            <button class="hub-action-card" onclick="navigateTo('screen-persona')">
+              <span>⚙️</span> Change Persona
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="swiggy-nav">
+        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Food</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Instamart</span></div>
+        <div class="nav-item active"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Post-Order ====== -->
+    <div class="screen" id="screen-post-order">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-instamart')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Order Confirmed</h2>
+      </div>
+
+      <div class="post-order-body">
+        <div class="po-success">
+          <div class="po-check">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="#39A06F"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          </div>
+          <h2>Arriving in 10 minutes!</h2>
+          <p class="po-sub">via Swiggy Instamart</p>
+        </div>
+
+        <div class="po-wrapped" id="po-wrapped">
+          <div class="wrapped-card" id="po-wrapped-card">
+            <div class="wrapped-stat">
+              <span class="ws-num" id="po-savings">--</span>
+              <span class="ws-label">saved on groceries<br>this month with Prism</span>
+            </div>
+            <div class="wrapped-bar-row">
+              <span>Budget</span>
+              <div class="wrapped-bar"><div class="wrapped-bar-fill budget-fill" id="po-budget-bar"></div></div>
+            </div>
+            <div class="wrapped-bar-row">
+              <span>Spent</span>
+              <div class="wrapped-bar"><div class="wrapped-bar-fill spent-fill" id="po-spent-bar"></div></div>
+            </div>
+            <div class="wrapped-footer">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
+              <span>Swiggy Prism</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="po-next">
+          <h3>What's next?</h3>
+          <div class="po-reco-list" id="po-reco-list"></div>
+        </div>
+
+        <button class="btn-share-wrapped" onclick="shareWrapped()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FC8019"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+          Share Your Budget Story
+        </button>
+      </div>
+
+      <div class="swiggy-nav">
+        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Food</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Instamart</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+
+    <!-- Order Success Overlay (brief flash before post-order screen) -->
     <div class="order-overlay" id="order-overlay">
       <div class="order-success-card">
         <div class="success-check">
