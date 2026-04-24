@@ -5,7 +5,8 @@ import type {
   CartItem,
   OptimizedCart,
   OptimizerConfig,
-} from "../types";
+} from "../types/index.js";
+import { normalize } from "../utils/units.js";
 
 const DEFAULT_CONFIG: OptimizerConfig = {
   minBudget: 50,
@@ -41,7 +42,6 @@ export function optimizeCart(
   const startTime = performance.now();
   let totalSkusEvaluated = 0;
 
-  // build candidate list — best SKU match per ingredient
   const candidates: KnapsackItem[] = [];
 
   for (const ingredient of ingredients) {
@@ -51,7 +51,8 @@ export function optimizeCart(
     const bestMatch = findBestSKU(ingredient, skus);
     if (!bestMatch) continue;
 
-    const count = Math.ceil(ingredient.quantity / bestMatch.sku.quantity);
+    const neededQty = convertQuantity(ingredient, bestMatch.sku);
+    const count = Math.max(1, Math.ceil(neededQty));
     const cost = bestMatch.sku.price * count;
     const value = computeValue(ingredient, bestMatch.score, config);
 
@@ -65,7 +66,6 @@ export function optimizeCart(
     });
   }
 
-  // run knapsack
   const selected = knapsack(candidates, budget);
 
   const selectedNames = new Set(selected.map((s) => s.ingredient.name));
@@ -95,6 +95,19 @@ export function optimizeCart(
   };
 }
 
+function convertQuantity(ingredient: Ingredient, sku: SKU): number {
+  const need = normalize(ingredient.quantity, ingredient.unit);
+  const have = normalize(sku.quantity, sku.unit);
+
+  // if units are compatible (both grams or both ml), do the division
+  if (need.unit === have.unit) {
+    return need.quantity / have.quantity;
+  }
+
+  // incompatible units (e.g., grams vs pcs) — assume 1 unit needed
+  return 1;
+}
+
 function findBestSKU(
   ingredient: Ingredient,
   skus: SKU[]
@@ -109,18 +122,20 @@ function findBestSKU(
 
     let score = 0;
 
-    // name similarity — simple token overlap
+    // name similarity
     const ingredientTokens = ingredient.name.toLowerCase().split(/\s+/);
     const skuTokens = sku.name.toLowerCase().split(/\s+/);
     const overlap = ingredientTokens.filter((t) => skuTokens.includes(t)).length;
     score += (overlap / ingredientTokens.length) * 50;
 
-    // unit match bonus
-    if (sku.unit === ingredient.unit) score += 20;
+    // unit compatibility bonus
+    const needUnit = normalize(1, ingredient.unit).unit;
+    const skuUnit = normalize(1, sku.unit).unit;
+    if (needUnit === skuUnit) score += 20;
 
-    // value score — lower price per unit is better
+    // value score — normalized so expensive items aren't penalized to zero
     const pricePerUnit = sku.price / sku.quantity;
-    score += Math.max(0, 30 - pricePerUnit);
+    score += 30 / (1 + pricePerUnit);
 
     if (score > bestScore) {
       bestScore = score;
@@ -140,21 +155,20 @@ function computeValue(
   return matchScore * priorityWeight;
 }
 
-/**
- * 0/1 Knapsack via dynamic programming.
- * Budget is discretized to integer rupees for the DP table.
- */
 function knapsack(items: KnapsackItem[], budget: number): KnapsackItem[] {
   const n = items.length;
-  const W = Math.floor(budget);
+  if (n === 0) return [];
 
-  // dp[i][w] = max value using items 0..i-1 with capacity w
+  // for large budgets, use coarser granularity to keep memory sane
+  const scale = budget > 10000 ? 10 : 1;
+  const W = Math.floor(budget / scale);
+
   const dp: number[][] = Array.from({ length: n + 1 }, () =>
     new Array(W + 1).fill(0)
   );
 
   for (let i = 1; i <= n; i++) {
-    const cost = Math.ceil(items[i - 1].cost);
+    const cost = Math.ceil(items[i - 1].cost / scale);
     const val = items[i - 1].value;
 
     for (let w = 0; w <= W; w++) {
@@ -165,14 +179,13 @@ function knapsack(items: KnapsackItem[], budget: number): KnapsackItem[] {
     }
   }
 
-  // backtrack to find selected items
   const selected: KnapsackItem[] = [];
   let w = W;
 
   for (let i = n; i > 0; i--) {
     if (dp[i][w] !== dp[i - 1][w]) {
       selected.push(items[i - 1]);
-      w -= Math.ceil(items[i - 1].cost);
+      w -= Math.ceil(items[i - 1].cost / scale);
     }
   }
 

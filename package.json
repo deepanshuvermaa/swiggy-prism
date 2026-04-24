@@ -1,6 +1,7 @@
 {
   "name": "swiggy-prism",
   "version": "1.0.0",
+  "type": "module",
   "description": "Budget-first recipe-to-cart agent for Swiggy Instamart",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,6 +27,9 @@
   ],
   "author": "Deepanshu Verma",
   "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.0"
+  },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "eslint": "^9.0.0",

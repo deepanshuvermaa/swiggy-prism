@@ -1,4 +1,4 @@
-import type { MCPResponse, SKU, MCPToolCall } from "../types";
+import type { MCPResponse, SKU, MCPToolCall } from "../types/index.js";
 
 const MCP_BASE_URL = "https://swiggy.deepanshuverma.site";
 
@@ -11,6 +11,7 @@ export class MCPClient {
   private baseUrl: string;
   private timeout: number;
   private accessToken: string | null = null;
+  private tokenExpiresAt = 0;
 
   constructor(options: MCPClientOptions = {}) {
     this.baseUrl = options.baseUrl ?? MCP_BASE_URL;
@@ -29,9 +30,13 @@ export class MCPClient {
 
     const data = (await res.json()) as { access_token: string; expires_in: number };
     this.accessToken = data.access_token;
+    // store expiry with 60s buffer
+    this.tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
   }
 
   async searchSKUs(query: string, limit = 10): Promise<SKU[]> {
+    await this.ensureAuth();
+
     const response = await this.callTool({
       name: "instamart.search",
       arguments: { query, limit },
@@ -45,6 +50,8 @@ export class MCPClient {
   }
 
   async addToCart(items: Array<{ skuId: string; quantity: number }>): Promise<void> {
+    await this.ensureAuth();
+
     const response = await this.callTool({
       name: "instamart.cart.add",
       arguments: { items },
@@ -56,10 +63,17 @@ export class MCPClient {
   }
 
   async getCartSummary(): Promise<MCPResponse> {
+    await this.ensureAuth();
     return this.callTool({
       name: "instamart.cart.summary",
       arguments: {},
     });
+  }
+
+  private async ensureAuth(): Promise<void> {
+    if (!this.accessToken || Date.now() >= this.tokenExpiresAt) {
+      throw new Error("MCP client not authenticated or token expired — call authenticate() first");
+    }
   }
 
   private async callTool(tool: MCPToolCall): Promise<MCPResponse> {

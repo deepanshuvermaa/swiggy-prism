@@ -1,0 +1,108 @@
+import type { SKU } from "../types/index.js";
+
+// realistic instamart catalog — prices in INR, quantities in base units
+// this drives the mock and serves as fallback if MCP search returns nothing
+
+export const INSTAMART_CATALOG: SKU[] = [
+  // protein
+  { skuId: "SKU-CHK-001", name: "chicken breast", brand: "FreshToHome", price: 249, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-CHK-002", name: "chicken curry cut", brand: "Licious", price: 199, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-CHK-003", name: "chicken thigh boneless", brand: "FreshToHome", price: 279, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-PNR-001", name: "paneer block", brand: "Amul", price: 90, quantity: 200, unit: "g", inStock: true },
+  { skuId: "SKU-PNR-002", name: "paneer cubes", brand: "Mother Dairy", price: 110, quantity: 200, unit: "g", inStock: true },
+  { skuId: "SKU-MTN-001", name: "mutton curry cut", brand: "Licious", price: 599, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-EGG-001", name: "eggs white", brand: "Fresho", price: 79, quantity: 6, unit: "pcs", inStock: true },
+  { skuId: "SKU-EGG-002", name: "eggs brown country", brand: "Eggoz", price: 119, quantity: 6, unit: "pcs", inStock: true },
+  { skuId: "SKU-FSH-001", name: "fish rohu steaks", brand: "FreshToHome", price: 219, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-DAL-001", name: "toor dal", brand: "Tata Sampann", price: 135, quantity: 1000, unit: "g", inStock: true },
+  { skuId: "SKU-DAL-002", name: "moong dal yellow", brand: "Fortune", price: 125, quantity: 1000, unit: "g", inStock: true },
+  { skuId: "SKU-DAL-003", name: "chana dal", brand: "Tata Sampann", price: 99, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-DAL-004", name: "masoor dal", brand: "Fortune", price: 89, quantity: 500, unit: "g", inStock: true },
+
+  // dairy
+  { skuId: "SKU-MLK-001", name: "milk toned", brand: "Amul", price: 30, quantity: 500, unit: "ml", inStock: true },
+  { skuId: "SKU-MLK-002", name: "milk full cream", brand: "Amul", price: 35, quantity: 500, unit: "ml", inStock: true },
+  { skuId: "SKU-CRM-001", name: "fresh cream", brand: "Amul", price: 45, quantity: 200, unit: "ml", inStock: true },
+  { skuId: "SKU-CRD-001", name: "curd", brand: "Mother Dairy", price: 42, quantity: 400, unit: "g", inStock: true },
+  { skuId: "SKU-CRD-002", name: "greek yogurt", brand: "Epigamia", price: 65, quantity: 200, unit: "g", inStock: true },
+  { skuId: "SKU-BTR-001", name: "butter salted", brand: "Amul", price: 56, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-BTR-002", name: "butter unsalted", brand: "Amul", price: 56, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-CHS-001", name: "cheese slices", brand: "Amul", price: 120, quantity: 200, unit: "g", inStock: true },
+  { skuId: "SKU-GHE-001", name: "ghee", brand: "Amul", price: 290, quantity: 500, unit: "ml", inStock: true },
+  { skuId: "SKU-GHE-002", name: "cow ghee", brand: "Patanjali", price: 265, quantity: 500, unit: "ml", inStock: true },
+
+  // vegetables
+  { skuId: "SKU-ONI-001", name: "onion", brand: "Fresho", price: 35, quantity: 1000, unit: "g", inStock: true },
+  { skuId: "SKU-TOM-001", name: "tomato", brand: "Fresho", price: 30, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-TOM-002", name: "tomato hybrid", brand: "Fresho", price: 40, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-POT-001", name: "potato", brand: "Fresho", price: 29, quantity: 1000, unit: "g", inStock: true },
+  { skuId: "SKU-GRL-001", name: "garlic", brand: "Fresho", price: 15, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-GNG-001", name: "ginger", brand: "Fresho", price: 12, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-GPC-001", name: "green chili", brand: "Fresho", price: 10, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-COR-001", name: "coriander leaves", brand: "Fresho", price: 10, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-CPS-001", name: "capsicum green", brand: "Fresho", price: 22, quantity: 250, unit: "g", inStock: true },
+  { skuId: "SKU-SPH-001", name: "spinach", brand: "Fresho", price: 18, quantity: 250, unit: "g", inStock: true },
+  { skuId: "SKU-MNT-001", name: "mint leaves", brand: "Fresho", price: 10, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-LMN-001", name: "lemon", brand: "Fresho", price: 8, quantity: 4, unit: "pcs", inStock: true },
+  { skuId: "SKU-CRY-001", name: "carrot", brand: "Fresho", price: 25, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-BNS-001", name: "beans french", brand: "Fresho", price: 29, quantity: 250, unit: "g", inStock: true },
+  { skuId: "SKU-PEA-001", name: "green peas", brand: "Fresho", price: 45, quantity: 250, unit: "g", inStock: true },
+  { skuId: "SKU-CAU-001", name: "cauliflower", brand: "Fresho", price: 30, quantity: 1, unit: "pcs", inStock: true },
+  { skuId: "SKU-BRJ-001", name: "brinjal", brand: "Fresho", price: 22, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-LDY-001", name: "lady finger", brand: "Fresho", price: 25, quantity: 250, unit: "g", inStock: true },
+  { skuId: "SKU-CUC-001", name: "cucumber", brand: "Fresho", price: 15, quantity: 500, unit: "g", inStock: true },
+
+  // grains
+  { skuId: "SKU-RCE-001", name: "basmati rice", brand: "India Gate", price: 199, quantity: 1000, unit: "g", inStock: true },
+  { skuId: "SKU-RCE-002", name: "sona masoori rice", brand: "Daawat", price: 159, quantity: 1000, unit: "g", inStock: true },
+  { skuId: "SKU-ATA-001", name: "whole wheat atta", brand: "Aashirvaad", price: 235, quantity: 5000, unit: "g", inStock: true },
+  { skuId: "SKU-ATA-002", name: "multigrain atta", brand: "Aashirvaad", price: 275, quantity: 5000, unit: "g", inStock: true },
+  { skuId: "SKU-BRD-001", name: "white bread", brand: "Harvest Gold", price: 40, quantity: 400, unit: "g", inStock: true },
+  { skuId: "SKU-BRD-002", name: "brown bread", brand: "Harvest Gold", price: 50, quantity: 400, unit: "g", inStock: true },
+  { skuId: "SKU-OAT-001", name: "rolled oats", brand: "Quaker", price: 120, quantity: 400, unit: "g", inStock: true },
+  { skuId: "SKU-PST-001", name: "penne pasta", brand: "Barilla", price: 99, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-NDL-001", name: "noodles hakka", brand: "Ching's", price: 40, quantity: 150, unit: "g", inStock: true },
+  { skuId: "SKU-RVA-001", name: "rava sooji", brand: "Pillsbury", price: 52, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-PST-002", name: "maida refined flour", brand: "Pillsbury", price: 38, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-BSN-001", name: "besan gram flour", brand: "Rajdhani", price: 70, quantity: 500, unit: "g", inStock: true },
+
+  // oils
+  { skuId: "SKU-OIL-001", name: "sunflower oil", brand: "Fortune", price: 135, quantity: 1000, unit: "ml", inStock: true },
+  { skuId: "SKU-OIL-002", name: "mustard oil", brand: "Fortune", price: 165, quantity: 1000, unit: "ml", inStock: true },
+  { skuId: "SKU-OIL-003", name: "olive oil extra virgin", brand: "Figaro", price: 349, quantity: 500, unit: "ml", inStock: true },
+  { skuId: "SKU-OIL-004", name: "refined oil soybean", brand: "Fortune", price: 115, quantity: 1000, unit: "ml", inStock: true },
+  { skuId: "SKU-COO-001", name: "coconut oil", brand: "Parachute", price: 112, quantity: 500, unit: "ml", inStock: true },
+
+  // spices
+  { skuId: "SKU-SLT-001", name: "salt iodized", brand: "Tata", price: 22, quantity: 1000, unit: "g", inStock: true },
+  { skuId: "SKU-TRM-001", name: "turmeric powder", brand: "MDH", price: 45, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-RCH-001", name: "red chili powder", brand: "MDH", price: 55, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-CUM-001", name: "cumin seeds", brand: "MDH", price: 75, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-CUM-002", name: "cumin powder", brand: "Everest", price: 60, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-COR-002", name: "coriander powder", brand: "MDH", price: 42, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-GAR-001", name: "garam masala", brand: "MDH", price: 68, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-GAR-002", name: "garam masala", brand: "Everest", price: 72, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-BKC-001", name: "black pepper whole", brand: "Tata Sampann", price: 89, quantity: 50, unit: "g", inStock: true },
+  { skuId: "SKU-MST-001", name: "mustard seeds", brand: "MDH", price: 28, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-CLV-001", name: "cloves", brand: "Tata Sampann", price: 95, quantity: 50, unit: "g", inStock: true },
+  { skuId: "SKU-CRD-003", name: "cardamom green", brand: "Tata Sampann", price: 140, quantity: 50, unit: "g", inStock: true },
+  { skuId: "SKU-BAY-001", name: "bay leaves", brand: "MDH", price: 30, quantity: 25, unit: "g", inStock: true },
+  { skuId: "SKU-CIN-001", name: "cinnamon sticks", brand: "MDH", price: 65, quantity: 50, unit: "g", inStock: true },
+  { skuId: "SKU-KSR-001", name: "kasuri methi", brand: "MDH", price: 35, quantity: 25, unit: "g", inStock: true },
+  { skuId: "SKU-KMR-001", name: "kashmiri red chili powder", brand: "Everest", price: 68, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-FNS-001", name: "fennel seeds saunf", brand: "MDH", price: 38, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-AJW-001", name: "ajwain carom seeds", brand: "MDH", price: 32, quantity: 100, unit: "g", inStock: true },
+
+  // condiments
+  { skuId: "SKU-KTC-001", name: "tomato ketchup", brand: "Kissan", price: 99, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-SOY-001", name: "soy sauce", brand: "Ching's", price: 55, quantity: 200, unit: "ml", inStock: true },
+  { skuId: "SKU-VNG-001", name: "white vinegar", brand: "Sil", price: 32, quantity: 200, unit: "ml", inStock: true },
+  { skuId: "SKU-GGP-001", name: "ginger garlic paste", brand: "Sil", price: 45, quantity: 200, unit: "g", inStock: true },
+  { skuId: "SKU-TCM-001", name: "tandoori chicken masala", brand: "MDH", price: 48, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-BCM-001", name: "butter chicken masala", brand: "MDH", price: 48, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-BPM-001", name: "biryani masala", brand: "MDH", price: 52, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-PMX-001", name: "pav bhaji masala", brand: "Everest", price: 45, quantity: 100, unit: "g", inStock: true },
+  { skuId: "SKU-SGR-001", name: "sugar", brand: "Uttam", price: 44, quantity: 1000, unit: "g", inStock: true },
+  { skuId: "SKU-JGR-001", name: "jaggery", brand: "Miltop", price: 75, quantity: 500, unit: "g", inStock: true },
+  { skuId: "SKU-HNY-001", name: "honey", brand: "Dabur", price: 199, quantity: 500, unit: "g", inStock: true },
+];
