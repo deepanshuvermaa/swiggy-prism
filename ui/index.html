@@ -22,16 +22,22 @@
       </div>
     </div>
 
-    <!-- ====== SCREEN: Share Simulation (YouTube) ====== -->
+    <!-- ====== SCREEN: Share Simulation ====== -->
     <div class="screen active" id="screen-share-sim">
-      <div class="yt-header">
-        <svg width="90" height="20" viewBox="0 0 90 20" fill="none">
-          <rect width="28" height="20" rx="4" fill="#FF0000"/>
-          <path d="M11 6l8 4-8 4V6z" fill="white"/>
-          <text x="32" y="15" font-family="Inter" font-size="14" font-weight="700" fill="#333">YouTube</text>
-        </svg>
+      <!-- Platform Tabs -->
+      <div class="platform-tabs">
+        <button class="ptab active" onclick="switchPlatform('youtube')">
+          <svg width="18" height="13" viewBox="0 0 28 20"><rect width="28" height="20" rx="4" fill="#FF0000"/><path d="M11 6l8 4-8 4V6z" fill="white"/></svg>
+          YouTube
+        </button>
+        <button class="ptab" onclick="switchPlatform('instagram')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2c2.7 0 3 0 4.1.1 2.9.1 4.2 1.4 4.3 4.3.1 1.1.1 1.4.1 4.1s0 3-.1 4.1c-.1 2.9-1.4 4.2-4.3 4.3-1.1.1-1.4.1-4.1.1s-3 0-4.1-.1c-2.9-.1-4.2-1.4-4.3-4.3C3.5 15 3.5 14.7 3.5 12s0-3 .1-4.1c.1-2.9 1.4-4.2 4.3-4.3C9 3.5 9.3 3.5 12 3.5zM12 7a5 5 0 100 10 5 5 0 000-10zm0 8.2a3.2 3.2 0 110-6.4 3.2 3.2 0 010 6.4zm5.2-9.4a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4z"/></svg>
+          Instagram
+        </button>
       </div>
-      <div class="yt-video-area">
+
+      <!-- YouTube View -->
+      <div class="platform-view active" id="view-youtube">
         <div class="yt-player">
           <div class="yt-play-big">▶</div>
         </div>
@@ -40,21 +46,41 @@
           <p class="yt-channel">Ranveer Brar · 2.4M views · 3 months ago</p>
         </div>
         <div class="yt-actions">
-          <button class="yt-action-btn" onclick="showShareSheet()">
+          <button class="yt-action-btn highlight" onclick="showShareSheet()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
             Share
           </button>
-          <button class="yt-action-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg>
-            Save
-          </button>
-          <button class="yt-action-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
-            Like
-          </button>
+          <button class="yt-action-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg> Save</button>
+          <button class="yt-action-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg> Like</button>
         </div>
         <div class="yt-description">
           <p><strong>Butter Chicken Recipe</strong> — The creamiest, most flavorful makhani you'll ever make at home. Serves 4 people. Ingredients: 500g chicken, yogurt marinade, tomato gravy with cream, butter, kasuri methi...</p>
+        </div>
+      </div>
+
+      <!-- Instagram Reel View -->
+      <div class="platform-view" id="view-instagram">
+        <div class="ig-reel">
+          <div class="ig-reel-bg"></div>
+          <div class="ig-reel-overlay">
+            <div class="ig-reel-sidebar">
+              <button class="ig-sidebar-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg><span>24.3k</span></button>
+              <button class="ig-sidebar-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><span>1.2k</span></button>
+              <button class="ig-sidebar-btn highlight" onclick="showShareSheet()"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg><span>Share</span></button>
+            </div>
+            <div class="ig-reel-info">
+              <div class="ig-reel-user">
+                <div class="ig-avatar">SK</div>
+                <strong>chef_sanjyot</strong>
+                <button class="ig-follow">Follow</button>
+              </div>
+              <p class="ig-caption">Easy Paneer Tikka at home! Budget-friendly, ready in 15 mins. For 3-4 people. #paneer #cooking #recipe</p>
+              <div class="ig-audio">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                Original Audio · chef_sanjyot
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -161,14 +187,31 @@
         </div>
 
         <div class="insta-section">
-          <h3>What's cooking today?</h3>
-          <div class="recipe-suggestions">
-            <div class="recipe-pill" onclick="quickRecipe('butter chicken for 4, budget 800')">🍗 Butter Chicken</div>
-            <div class="recipe-pill" onclick="quickRecipe('paneer tikka for 3, budget 600')">🧀 Paneer Tikka</div>
-            <div class="recipe-pill" onclick="quickRecipe('chicken biryani for 4, budget 1200')">🍚 Biryani</div>
-            <div class="recipe-pill" onclick="quickRecipe('dal tadka for 4, budget 400')">🫘 Dal Tadka</div>
-            <div class="recipe-pill" onclick="quickRecipe('chole bhature for 4, budget 500')">🫛 Chole Bhature</div>
-            <div class="recipe-pill" onclick="quickRecipe('egg fried rice for 3, budget 350')">🥚 Fried Rice</div>
+          <div class="section-head">
+            <h3>What's cooking today?</h3>
+            <div class="diet-toggle">
+              <button class="diet-btn active" data-diet="all" onclick="setDiet('all')">All</button>
+              <button class="diet-btn" data-diet="veg" onclick="setDiet('veg')">
+                <span class="veg-dot green"></span>Veg
+              </button>
+              <button class="diet-btn" data-diet="nonveg" onclick="setDiet('nonveg')">
+                <span class="veg-dot red"></span>Non-Veg
+              </button>
+            </div>
+          </div>
+          <div class="recipe-suggestions" id="recipe-suggestions">
+            <div class="recipe-pill" data-diet="nonveg" onclick="quickRecipe('butter chicken for 4, budget 800')">🍗 Butter Chicken</div>
+            <div class="recipe-pill" data-diet="veg" onclick="quickRecipe('paneer tikka for 3, budget 600')">🧀 Paneer Tikka</div>
+            <div class="recipe-pill" data-diet="nonveg" onclick="quickRecipe('chicken biryani for 4, budget 1200')">🍚 Biryani</div>
+            <div class="recipe-pill" data-diet="veg" onclick="quickRecipe('dal tadka for 4, budget 400')">🫘 Dal Tadka</div>
+            <div class="recipe-pill" data-diet="veg" onclick="quickRecipe('chole bhature for 4, budget 500')">🫛 Chole Bhature</div>
+            <div class="recipe-pill" data-diet="nonveg" onclick="quickRecipe('egg fried rice for 3, budget 350')">🥚 Fried Rice</div>
+            <div class="recipe-pill" data-diet="veg" onclick="quickRecipe('palak paneer for 4, budget 500')">🥬 Palak Paneer</div>
+            <div class="recipe-pill" data-diet="veg" onclick="quickRecipe('aloo gobi for 4, budget 300')">🥔 Aloo Gobi</div>
+            <div class="recipe-pill" data-diet="nonveg" onclick="quickRecipe('egg curry for 4, budget 400')">🥚 Egg Curry</div>
+            <div class="recipe-pill" data-diet="veg" onclick="quickRecipe('rajma for 4, budget 450')">🫘 Rajma Chawal</div>
+            <div class="recipe-pill" data-diet="veg" onclick="quickRecipe('pasta for 3, budget 400')">🍝 Pasta</div>
+            <div class="recipe-pill" data-diet="veg" onclick="quickRecipe('maggi for 2, budget 150')">🍜 Maggi</div>
           </div>
         </div>
 

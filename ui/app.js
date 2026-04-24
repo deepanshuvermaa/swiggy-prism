@@ -72,6 +72,63 @@ function getNutrition(name, qty) {
 }
 
 let currentCart = null;
+let currentPlatform = "youtube";
+let currentDiet = "all";
+
+// ===== Platform Switching =====
+
+function switchPlatform(platform) {
+  currentPlatform = platform;
+  document.querySelectorAll(".ptab").forEach(t => t.classList.remove("active"));
+  document.querySelector(`.ptab[onclick*="${platform}"]`).classList.add("active");
+  document.querySelectorAll(".platform-view").forEach(v => v.classList.remove("active"));
+  document.getElementById(`view-${platform}`).classList.add("active");
+}
+
+// ===== Diet Filter =====
+
+function setDiet(diet) {
+  currentDiet = diet;
+  document.querySelectorAll(".diet-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(`.diet-btn[data-diet="${diet}"]`).classList.add("active");
+
+  document.querySelectorAll(".recipe-pill").forEach(pill => {
+    const pillDiet = pill.dataset.diet;
+    if (diet === "all" || pillDiet === diet) {
+      pill.classList.remove("hidden");
+    } else {
+      pill.classList.add("hidden");
+    }
+  });
+}
+
+// ===== Wrapped with localStorage =====
+
+function saveSession(cart) {
+  const history = JSON.parse(localStorage.getItem("prism_history") || "[]");
+  history.push({
+    date: new Date().toISOString(),
+    totalCost: cart.totalCost,
+    budget: cart.budget,
+    items: cart.items.length,
+    recipe: cart.items[0]?.ingredient || "unknown",
+  });
+  // keep last 20 sessions
+  if (history.length > 20) history.shift();
+  localStorage.setItem("prism_history", JSON.stringify(history));
+}
+
+function getWrappedStats() {
+  const history = JSON.parse(localStorage.getItem("prism_history") || "[]");
+  if (history.length === 0) {
+    return { totalBudget: 3000, totalSpent: 2640, sessions: 3, savingsPct: 12 };
+  }
+
+  const totalBudget = history.reduce((s, h) => s + h.budget, 0);
+  const totalSpent = history.reduce((s, h) => s + h.totalCost, 0);
+  const savingsPct = Math.max(1, Math.round((1 - totalSpent / totalBudget) * 100));
+  return { totalBudget, totalSpent, sessions: history.length, savingsPct };
+}
 
 function navigateTo(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
@@ -96,15 +153,25 @@ function showShareSheet() {
 
 function captureFromShare() {
   document.getElementById("share-sheet").classList.remove("visible");
-  setTimeout(() => {
-    navigateTo("screen-instamart");
-  }, 300);
+
+  // update banner based on platform
+  const bannerText = document.querySelector(".prism-banner-text span");
+  if (currentPlatform === "instagram") {
+    bannerText.textContent = "Paneer Tikka from Instagram — Tap to build your cart";
+  } else {
+    bannerText.textContent = "Butter Chicken from YouTube — Tap to build your cart";
+  }
+
+  setTimeout(() => navigateTo("screen-instamart"), 300);
 }
 
 // ===== Prism Flow =====
 
 function startPrismFlow() {
-  runPipeline("butter chicken for 4 people, budget 800 rupees");
+  const recipe = currentPlatform === "instagram"
+    ? "paneer tikka for 3 people, budget 600 rupees"
+    : "butter chicken for 4 people, budget 800 rupees";
+  runPipeline(recipe);
 }
 
 function quickRecipe(text) {
@@ -358,14 +425,15 @@ function renderSummary(cart) {
     container.appendChild(more);
   }
 
-  // wrapped
-  const savingsPct = Math.max(2, Math.round((1 - cart.budgetUtilization) * 100));
-  document.getElementById("wrapped-savings").textContent = savingsPct + "%";
+  // wrapped — pull from localStorage history
+  const stats = getWrappedStats();
+  document.getElementById("wrapped-savings").textContent = stats.savingsPct + "%";
   document.getElementById("wrapped-budget-bar").style.width = "100%";
-  document.getElementById("wrapped-spent-bar").style.width = (cart.budgetUtilization * 100) + "%";
+  document.getElementById("wrapped-spent-bar").style.width = ((stats.totalSpent / stats.totalBudget) * 100) + "%";
 }
 
 function placeOrder() {
+  if (currentCart) saveSession(currentCart);
   const overlay = document.getElementById("order-overlay");
   overlay.classList.add("visible");
   setTimeout(() => overlay.classList.remove("visible"), 3000);

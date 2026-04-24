@@ -61,14 +61,25 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* ====== YouTube Simulation ====== */
+/* ====== Platform Tabs ====== */
 
-.yt-header {
-  padding: 10px 16px;
+.platform-tabs {
+  display: flex; gap: 0;
   border-bottom: 1px solid var(--grey-light);
 }
+.ptab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px; background: none; border: none; border-bottom: 2px solid transparent;
+  font-size: 13px; font-weight: 600; color: var(--text-sec);
+  cursor: pointer; font-family: inherit; transition: all 0.2s;
+}
+.ptab.active { color: var(--charcoal); border-bottom-color: var(--charcoal); }
+.ptab:hover { background: var(--grey-bg); }
 
-.yt-video-area { flex: 1; overflow-y: auto; }
+.platform-view { display: none; flex: 1; overflow-y: auto; }
+.platform-view.active { display: flex; flex-direction: column; }
+
+/* ====== YouTube Simulation ====== */
 
 .yt-player {
   height: 200px;
@@ -95,7 +106,7 @@ body {
   padding: 10px 0; background: none; border: none;
   font-size: 11px; font-family: inherit; color: var(--charcoal); cursor: pointer;
 }
-.yt-action-btn:first-child { color: var(--orange); font-weight: 600; }
+.yt-action-btn.highlight { color: var(--orange); font-weight: 600; }
 
 .yt-description {
   padding: 12px 16px;
@@ -132,6 +143,78 @@ body {
 .share-app-icon.copy { background: #666; }
 .share-app-icon.more { background: #999; }
 .swiggy-label { color: var(--orange) !important; font-weight: 600 !important; }
+
+/* ====== Instagram Reel ====== */
+
+.ig-reel {
+  flex: 1; position: relative; overflow: hidden;
+}
+.ig-reel-bg {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, #1a1a2e 0%, #2d1b3d 30%, #44225c 60%, #1a1a2e 100%);
+}
+.ig-reel-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+}
+.ig-reel-sidebar {
+  position: absolute; right: 10px; bottom: 100px;
+  display: flex; flex-direction: column; gap: 18px; align-items: center;
+}
+.ig-sidebar-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: none; border: none; cursor: pointer;
+  color: white; font-size: 11px; font-family: inherit;
+}
+.ig-sidebar-btn.highlight svg { filter: drop-shadow(0 0 8px rgba(252,128,25,0.6)); }
+.ig-reel-info {
+  position: absolute; bottom: 16px; left: 12px; right: 60px;
+  color: white;
+}
+.ig-reel-user {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.ig-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(45deg, #f09433, #dc2743);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: white;
+}
+.ig-reel-user strong { font-size: 13px; }
+.ig-follow {
+  padding: 3px 12px; border: 1px solid white; border-radius: 6px;
+  background: none; color: white; font-size: 11px; font-weight: 600;
+  font-family: inherit; cursor: pointer;
+}
+.ig-caption { font-size: 12px; line-height: 1.4; margin-bottom: 8px; opacity: 0.9; }
+.ig-audio {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; opacity: 0.7;
+}
+
+/* ====== Diet Toggle ====== */
+
+.section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.section-head h3 { margin-bottom: 0; }
+
+.diet-toggle { display: flex; gap: 4px; }
+.diet-btn {
+  padding: 4px 10px; border: 1px solid var(--grey-light);
+  border-radius: 16px; background: none;
+  font-size: 11px; font-weight: 500; color: var(--text-sec);
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 4px;
+  transition: all 0.2s;
+}
+.diet-btn.active { background: var(--charcoal); color: white; border-color: var(--charcoal); }
+.veg-dot {
+  width: 8px; height: 8px; border-radius: 2px; border: 1px solid;
+  display: inline-block;
+}
+.veg-dot.green { border-color: #39A06F; background: #39A06F; }
+.veg-dot.red { border-color: #E04F5F; background: #E04F5F; }
+
+.recipe-pill.hidden { display: none; }
 
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(252,128,25,0.4); }
