@@ -74,6 +74,117 @@ function getNutrition(name, qty) {
 let currentCart = null;
 let currentPlatform = "youtube";
 let currentDiet = "all";
+let userPersona = localStorage.getItem("prism_persona") || null;
+
+// ===== Persona System =====
+
+const PERSONA_CONFIG = {
+  foodie: {
+    emoji: "🍕", label: "Foodie",
+    tagline: "Taste explorer — we find the most flavorful combos for you",
+    suggestions: [
+      { recipe: "butter chicken for 4, budget 900", name: "Butter Chicken", emoji: "🍗", reason: "Rich & creamy classic", tag: "trending", tagLabel: "Trending" },
+      { recipe: "chicken biryani for 4, budget 1200", name: "Dum Biryani", emoji: "🍚", reason: "Layers of flavor", tag: "trending", tagLabel: "Must Try" },
+      { recipe: "chole bhature for 4, budget 500", name: "Chole Bhature", emoji: "🫛", reason: "Street food vibes", tag: "trending", tagLabel: "Popular" },
+      { recipe: "pasta for 3, budget 400", name: "Cheesy Pasta", emoji: "🍝", reason: "Comfort food hit", tag: "trending", tagLabel: "Comfort" },
+      { recipe: "paneer tikka for 3, budget 600", name: "Paneer Tikka", emoji: "🧀", reason: "Smoky & bold", tag: "trending", tagLabel: "Favorite" },
+    ],
+  },
+  gymfreak: {
+    emoji: "💪", label: "Gym Freak",
+    tagline: "High protein, clean macros — gains-friendly grocery runs",
+    suggestions: [
+      { recipe: "egg curry for 4, budget 400", name: "Egg Curry", emoji: "🥚", reason: "26g protein/serving", tag: "protein", tagLabel: "High Protein" },
+      { recipe: "chicken biryani for 4, budget 1000", name: "Chicken & Rice", emoji: "🍗", reason: "Complete meal prep", tag: "protein", tagLabel: "Meal Prep" },
+      { recipe: "palak paneer for 4, budget 500", name: "Palak Paneer", emoji: "🥬", reason: "Iron + protein combo", tag: "healthy", tagLabel: "Clean" },
+      { recipe: "dal tadka for 4, budget 400", name: "Dal Tadka", emoji: "🫘", reason: "Plant-based protein", tag: "protein", tagLabel: "18g Protein" },
+      { recipe: "omelette for 2, budget 200", name: "Protein Omelette", emoji: "🥚", reason: "Quick post-workout", tag: "protein", tagLabel: "Quick" },
+    ],
+  },
+  balanced: {
+    emoji: "⚖️", label: "Balanced",
+    tagline: "Smart nutrition without overthinking — healthy defaults",
+    suggestions: [
+      { recipe: "dal tadka for 4, budget 400", name: "Dal Tadka", emoji: "🫘", reason: "Nutritious everyday meal", tag: "healthy", tagLabel: "Balanced" },
+      { recipe: "palak paneer for 4, budget 500", name: "Palak Paneer", emoji: "🥬", reason: "Greens + protein", tag: "healthy", tagLabel: "Nutritious" },
+      { recipe: "rajma for 4, budget 450", name: "Rajma Chawal", emoji: "🫘", reason: "Fiber-rich comfort", tag: "healthy", tagLabel: "Wholesome" },
+      { recipe: "egg fried rice for 3, budget 350", name: "Fried Rice", emoji: "🍚", reason: "Quick balanced meal", tag: "healthy", tagLabel: "Easy" },
+      { recipe: "aloo gobi for 4, budget 300", name: "Aloo Gobi", emoji: "🥔", reason: "Light yet filling", tag: "healthy", tagLabel: "Light" },
+    ],
+  },
+  budget: {
+    emoji: "💰", label: "Budget Saver",
+    tagline: "Maximum nutrition per rupee — every paisa optimized",
+    suggestions: [
+      { recipe: "dal tadka for 4, budget 300", name: "Dal Tadka", emoji: "🫘", reason: "₹75/person, high protein", tag: "value", tagLabel: "Best Value" },
+      { recipe: "aloo gobi for 4, budget 250", name: "Aloo Gobi", emoji: "🥔", reason: "₹62/person, filling", tag: "value", tagLabel: "₹62/head" },
+      { recipe: "egg curry for 4, budget 300", name: "Egg Curry", emoji: "🥚", reason: "₹75/person, protein-rich", tag: "value", tagLabel: "Smart Buy" },
+      { recipe: "maggi for 2, budget 100", name: "Loaded Maggi", emoji: "🍜", reason: "₹50/person, quick fix", tag: "value", tagLabel: "₹50/head" },
+      { recipe: "rajma for 4, budget 350", name: "Rajma Chawal", emoji: "🫘", reason: "₹87/person, complete", tag: "value", tagLabel: "Value Meal" },
+    ],
+  },
+};
+
+function selectPersona(persona) {
+  userPersona = persona;
+  localStorage.setItem("prism_persona", persona);
+  applyPersona();
+  navigateTo("screen-instamart");
+}
+
+function applyPersona() {
+  if (!userPersona) return;
+  const config = PERSONA_CONFIG[userPersona];
+  if (!config) return;
+
+  // show persona chip
+  const chip = document.getElementById("persona-chip");
+  chip.style.display = "flex";
+  document.getElementById("persona-chip-emoji").textContent = config.emoji;
+  document.getElementById("persona-chip-text").textContent = config.tagline;
+
+  // render suggested for you
+  const section = document.getElementById("suggested-section");
+  section.style.display = "block";
+  document.getElementById("suggested-title").textContent = `${config.emoji} Suggested for ${config.label}`;
+
+  const scroll = document.getElementById("suggested-scroll");
+  scroll.innerHTML = "";
+
+  // add history-based suggestions first
+  const history = JSON.parse(localStorage.getItem("prism_history") || "[]");
+  const reordered = getSmartSuggestions(config.suggestions, history);
+
+  reordered.forEach(s => {
+    const card = document.createElement("div");
+    card.className = "suggested-card";
+    card.onclick = () => quickRecipe(s.recipe);
+    card.innerHTML = `
+      <span class="sc-emoji">${s.emoji}</span>
+      <span class="sc-name">${s.name}</span>
+      <span class="sc-reason">${s.reason}</span>
+      <span class="sc-tag ${s.tag}">${s.tagLabel}</span>
+    `;
+    scroll.appendChild(card);
+  });
+}
+
+function getSmartSuggestions(defaults, history) {
+  if (history.length === 0) return defaults;
+
+  // boost recipes user hasn't tried, deprioritize repeated ones
+  const tried = new Set(history.map(h => h.recipe));
+  const fresh = defaults.filter(d => !tried.has(d.name.toLowerCase()));
+  const repeat = defaults.filter(d => tried.has(d.name.toLowerCase()));
+
+  // add a "Try again?" label to repeats
+  repeat.forEach(r => {
+    r.tagLabel = "Order Again";
+    r.tag = "trending";
+  });
+
+  return [...fresh, ...repeat];
+}
 
 // ===== Platform Switching =====
 
@@ -148,13 +259,19 @@ function extractBudget(text) {
 // ===== Share Sheet =====
 
 function showShareSheet() {
+  // hide the "tap share" guide
+  document.querySelectorAll("#guide-yt-share, #guide-ig-share").forEach(g => g.style.display = "none");
   document.getElementById("share-sheet").classList.add("visible");
+  // show the "tap prism" guide after a beat
+  setTimeout(() => {
+    const prismGuide = document.getElementById("guide-prism-tap");
+    if (prismGuide) prismGuide.style.display = "block";
+  }, 400);
 }
 
 function captureFromShare() {
   document.getElementById("share-sheet").classList.remove("visible");
 
-  // update banner based on platform
   const bannerText = document.querySelector(".prism-banner-text span");
   if (currentPlatform === "instagram") {
     bannerText.textContent = "Paneer Tikka from Instagram — Tap to build your cart";
@@ -162,7 +279,15 @@ function captureFromShare() {
     bannerText.textContent = "Butter Chicken from YouTube — Tap to build your cart";
   }
 
-  setTimeout(() => navigateTo("screen-instamart"), 300);
+  // show persona onboarding if first time, otherwise go straight to instamart
+  setTimeout(() => {
+    if (!userPersona) {
+      navigateTo("screen-persona");
+    } else {
+      applyPersona();
+      navigateTo("screen-instamart");
+    }
+  }, 300);
 }
 
 // ===== Prism Flow =====
@@ -383,9 +508,17 @@ function computeNutrition(cart) {
   const fiberBonus = Math.min(10, totals.fiber / 2);
   const score = Math.round(Math.min(100, (proteinRatio * 120 - fatsRatio * 40 + fiberBonus + 50)));
 
+  // persona-aware scoring — gym freaks care more about protein
+  if (userPersona === "gymfreak") {
+    const proteinBoost = Math.min(15, totals.protein / 5);
+    score = Math.round(Math.min(100, score + proteinBoost));
+  } else if (userPersona === "budget") {
+    // budget users get a value score boost
+    score = Math.round(Math.min(100, score + 5));
+  }
+
   document.getElementById("health-score-num").textContent = score;
 
-  // update ring
   const ring = document.getElementById("health-ring");
   const circumference = 2 * Math.PI * 42;
   ring.setAttribute("stroke-dashoffset", String(circumference - (score / 100) * circumference));
@@ -451,4 +584,7 @@ function shareWrapped() {
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("prism-recipe-input");
   if (input) input.addEventListener("keydown", e => { if (e.key === "Enter") submitRecipeInput(); });
+
+  // apply saved persona on load
+  if (userPersona) applyPersona();
 });
