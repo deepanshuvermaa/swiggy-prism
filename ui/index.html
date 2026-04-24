@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Swiggy Prism</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔶</text></svg>">
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="6" width="3" height="6" rx="0.5"/><rect x="4.5" y="4" width="3" height="8" rx="0.5"/><rect x="9" y="2" width="3" height="10" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.3"/></svg>
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="currentColor"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="1.5" y="1.5" width="16" height="9" rx="1" fill="currentColor"/><rect x="23" y="3.5" width="2" height="5" rx="1" fill="currentColor"/></svg>
+      </div>
+    </div>
+
+    <!-- Screen 1: Welcome -->
+    <div class="screen active" id="screen-welcome">
+      <div class="welcome-content">
+        <div class="prism-logo">
+          <svg viewBox="0 0 120 120" width="100" height="100">
+            <defs>
+              <linearGradient id="prism-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#FC8019"/>
+                <stop offset="50%" style="stop-color:#FF9A3E"/>
+                <stop offset="100%" style="stop-color:#FFB347"/>
+              </linearGradient>
+            </defs>
+            <polygon points="60,10 110,100 10,100" fill="none" stroke="url(#prism-grad)" stroke-width="3"/>
+            <line x1="40" y1="55" x2="10" y2="45" stroke="#FC8019" stroke-width="2" opacity="0.6"/>
+            <line x1="40" y1="55" x2="60" y2="10" stroke="#FF9A3E" stroke-width="1.5" opacity="0.4"/>
+            <line x1="75" y1="65" x2="110" y2="40" stroke="#FC8019" stroke-width="2" opacity="0.5"/>
+            <line x1="75" y1="65" x2="110" y2="60" stroke="#FF9A3E" stroke-width="2" opacity="0.4"/>
+            <line x1="75" y1="65" x2="105" y2="80" stroke="#FFB347" stroke-width="2" opacity="0.3"/>
+            <circle cx="40" cy="55" r="3" fill="#FC8019"/>
+            <circle cx="75" cy="65" r="3" fill="#FC8019"/>
+          </svg>
+        </div>
+        <h1 class="app-title">Swiggy Prism</h1>
+        <p class="app-subtitle">Optimize your cart with<br>context-aware commerce.</p>
+        <div class="user-greeting">
+          <div class="avatar">
+            <svg viewBox="0 0 40 40" width="40" height="40">
+              <circle cx="20" cy="20" r="20" fill="#FFE0C2"/>
+              <circle cx="20" cy="15" r="7" fill="#F5C9A0"/>
+              <ellipse cx="20" cy="33" rx="12" ry="10" fill="#F5C9A0"/>
+            </svg>
+          </div>
+          <p class="greeting-text">Hello Deepanshu,<br>welcome to Swiggy Prism.</p>
+        </div>
+        <button class="btn-primary" onclick="navigateTo('screen-chat')">Get Started</button>
+      </div>
+    </div>
+
+    <!-- Screen 2: Chat / Intent Capture -->
+    <div class="screen" id="screen-chat">
+      <div class="chat-header">
+        <button class="back-btn" onclick="navigateTo('screen-welcome')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="header-title">Meal Planner Co-pilot.</h2>
+      </div>
+      <div class="chat-body" id="chat-body">
+        <div class="chat-bubble bot">
+          <div class="bot-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#FC8019"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          </div>
+          <div class="bubble-content">
+            Hey! Tell me what you want to cook, your budget, and how many people. I'll handle the rest.
+          </div>
+        </div>
+      </div>
+      <div class="parsing-indicator" id="parsing-indicator">
+        <div class="parsing-bar"><div class="parsing-fill"></div></div>
+        <span>Parsing Intent</span>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Optimized Cart -->
+    <div class="screen" id="screen-cart">
+      <div class="cart-header">
+        <button class="back-btn" onclick="navigateTo('screen-chat')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="cart-header-logo">
+          <svg viewBox="0 0 30 30" width="28" height="28">
+            <polygon points="15,3 27,25 3,25" fill="none" stroke="#FC8019" stroke-width="2"/>
+            <circle cx="12" cy="15" r="2" fill="#FC8019"/>
+            <circle cx="19" cy="17" r="2" fill="#FC8019"/>
+          </svg>
+        </div>
+        <button class="info-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        </button>
+      </div>
+
+      <div class="budget-badge" id="budget-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#39A06F"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span>Cart is <strong>Budget-Compliant</strong> (<span id="cart-total-badge">--</span>/<span id="cart-budget-badge">--</span>)</span>
+      </div>
+
+      <div class="cart-body">
+        <div class="cart-section">
+          <h3 class="section-title">Your Cart (Optimized)</h3>
+
+          <div class="category-block">
+            <h4 class="category-name">Essentials</h4>
+            <div class="sku-grid" id="essentials-grid"></div>
+          </div>
+
+          <div class="category-block">
+            <h4 class="category-name">Recipe Kit</h4>
+            <div class="sku-grid" id="recipe-grid"></div>
+          </div>
+
+          <div class="category-block">
+            <h4 class="category-name">Healthy Staples</h4>
+            <div class="sku-grid" id="staples-grid"></div>
+          </div>
+        </div>
+
+        <!-- Health & Value Panel -->
+        <div class="value-panel" id="value-panel">
+          <div class="panel-header">
+            <h3>Health & Value</h3>
+            <button class="close-panel" onclick="togglePanel()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Nutrition Score</span>
+            <div class="metric-bar">
+              <div class="bar-fill nutrition" style="width: 78%"></div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Savings Potential</span>
+            <div class="metric-bar">
+              <div class="bar-fill savings" style="width: 65%"></div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Budget Utilization</span>
+            <div class="metric-bar">
+              <div class="bar-fill budget" id="budget-bar" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-show-panel" onclick="togglePanel()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FC8019"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          Health & Value Analysis
+        </button>
+      </div>
+
+      <div class="cart-footer">
+        <button class="btn-primary" onclick="navigateTo('screen-summary')">Proceed to Summary</button>
+      </div>
+    </div>
+
+    <!-- Screen 4: Summary & CTA -->
+    <div class="screen" id="screen-summary">
+      <div class="summary-header">
+        <button class="back-btn" onclick="navigateTo('screen-cart')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="header-title">Prism Summary</h2>
+      </div>
+
+      <div class="summary-body">
+        <div class="summary-hero">
+          <h2>Your optimal cart<br>is ready!</h2>
+          <div class="summary-total">
+            <span class="total-label">Total:</span>
+            <span class="total-amount" id="summary-total">--</span>
+          </div>
+          <p class="summary-sub">Total price & summary</p>
+        </div>
+
+        <div class="summary-items" id="summary-items"></div>
+
+        <button class="btn-primary btn-order" onclick="placeOrder()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          Place Order via Swiggy MCP
+        </button>
+
+        <button class="btn-secondary" onclick="shareStory()">Share Your Budget Story</button>
+        <p class="share-hint">Generate a viral image snippet,<br>celebrate Swiggy Prism.</p>
+
+        <div class="share-card" id="share-card">
+          <div class="share-card-inner">
+            <div class="share-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="#FC8019"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <p class="share-text">I optimized my weekly<br>groceries by <strong>12%</strong> using<br>Swiggy Prism.</p>
+            <span class="share-tagline">Total saved: Swiggy Prism</span>
+            <div class="share-brand">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
+              <span>SWIGGY</span>
+              <svg class="share-arrow" width="14" height="14" viewBox="0 0 24 24" fill="#999"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
