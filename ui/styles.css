@@ -744,6 +744,17 @@ body {
 .po-next h3 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
 .po-reco-list { display: flex; flex-direction: column; gap: 8px; }
 
+/* Page Footer */
+.page-footer {
+  text-align: center; padding: 16px;
+  font-size: 12px; color: #999;
+  margin-top: 12px;
+}
+.page-footer a {
+  color: var(--orange); text-decoration: none; font-weight: 600;
+}
+.page-footer a:hover { text-decoration: underline; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
