@@ -54,7 +54,25 @@
           <p class="greeting-text">Hello Deepanshu,<br>welcome to Swiggy Prism.</p>
         </div>
         <button class="btn-primary" onclick="navigateTo('screen-chat')">Get Started</button>
+        <button class="btn-capture-link" onclick="navigateTo('screen-capture')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FC8019"><path d="M15 8v8H5V8h10m1-2H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V7c0-.55-.45-1-1-1zm4 0v12h2V6h-2zM2 18h2V6H2v12z"/></svg>
+          Capture from YouTube / Instagram
+        </button>
       </div>
+    </div>
+
+    <!-- Screen 1b: Video Capture -->
+    <div class="screen" id="screen-capture">
+      <div class="chat-header">
+        <button class="back-btn" onclick="navigateTo('screen-welcome')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="header-title">Capture Recipe</h2>
+      </div>
+      <div class="capture-intro">
+        <p>Watching a recipe video? Tap <strong>"Send to Prism"</strong> to instantly extract ingredients and build an optimized Instamart cart.</p>
+      </div>
+      <div class="video-feed" id="video-feed"></div>
     </div>
 
     <!-- Screen 2: Chat / Intent Capture -->
