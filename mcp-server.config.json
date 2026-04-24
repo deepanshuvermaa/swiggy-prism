@@ -1,0 +1,63 @@
+{
+  "name": "swiggy-prism",
+  "version": "1.0.0",
+  "description": "Budget-first recipe-to-cart agent for Swiggy Instamart",
+  "transport": {
+    "type": "https",
+    "endpoint": "https://swiggy.deepanshuverma.site",
+    "timeout": 10000
+  },
+  "auth": {
+    "type": "oauth2",
+    "tokenUrl": "https://swiggy.deepanshuverma.site/oauth/token",
+    "grantType": "client_credentials",
+    "scopes": [
+      "instamart.search",
+      "instamart.cart.read",
+      "instamart.cart.write"
+    ]
+  },
+  "tools": [
+    {
+      "name": "instamart.search",
+      "description": "Search Instamart catalog for SKUs matching a query",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Ingredient or product name" },
+          "limit": { "type": "number", "default": 10 }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "instamart.cart.add",
+      "description": "Add items to the user's Instamart cart",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "skuId": { "type": "string" },
+                "quantity": { "type": "number" }
+              },
+              "required": ["skuId", "quantity"]
+            }
+          }
+        },
+        "required": ["items"]
+      }
+    },
+    {
+      "name": "instamart.cart.summary",
+      "description": "Get current cart summary with totals",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}
