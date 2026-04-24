@@ -1,461 +1,363 @@
-const API_BASE = window.location.origin;
+const API = window.location.origin;
 
-const EMOJI_MAP = {
-  chicken: "🍗", paneer: "🧀", mutton: "🥩", fish: "🐟", egg: "🥚",
-  prawn: "🦐", dal: "🫘", lentil: "🫘", rajma: "🫘", chole: "🫘", chana: "🫘",
-  milk: "🥛", cream: "🍶", curd: "🥛", yogurt: "🥛", butter: "🧈",
-  cheese: "🧀", ghee: "🫕",
-  onion: "🧅", tomato: "🍅", potato: "🥔", garlic: "🧄", ginger: "🫚",
-  capsicum: "🫑", carrot: "🥕", peas: "🫛", spinach: "🥬", palak: "🥬",
-  cauliflower: "🥦", brinjal: "🍆", beans: "🫛", cabbage: "🥬",
-  cucumber: "🥒", lemon: "🍋", mint: "🌿", coriander: "🌿",
-  rice: "🍚", atta: "🌾", flour: "🌾", maida: "🌾", bread: "🍞",
-  pasta: "🍝", noodle: "🍜", oats: "🥣", rava: "🌾",
-  oil: "🫒", olive: "🫒", coconut: "🥥",
-  salt: "🧂", turmeric: "✨", cumin: "✨", chili: "🌶️", chilli: "🌶️",
-  pepper: "✨", masala: "✨", cinnamon: "✨", cardamom: "✨", kasuri: "🌿",
-  biryani: "✨",
-  sugar: "🍬", honey: "🍯", jaggery: "🍬",
-  ketchup: "🍅", soy: "🫗", vinegar: "🫗",
+const EMOJI = {
+  chicken:"🍗",paneer:"🧀",mutton:"🥩",fish:"🐟",egg:"🥚",prawn:"🦐",
+  dal:"🫘",lentil:"🫘",rajma:"🫘",chole:"🫘",chana:"🫘",
+  milk:"🥛",cream:"🍶",curd:"🥛",yogurt:"🥛",butter:"🧈",cheese:"🧀",ghee:"🫕",
+  onion:"🧅",tomato:"🍅",potato:"🥔",garlic:"🧄",ginger:"🫚",
+  capsicum:"🫑",carrot:"🥕",peas:"🫛",spinach:"🥬",palak:"🥬",
+  cauliflower:"🥦",brinjal:"🍆",beans:"🫛",cabbage:"🥬",
+  cucumber:"🥒",lemon:"🍋",mint:"🌿",coriander:"🌿",
+  rice:"🍚",atta:"🌾",flour:"🌾",maida:"🌾",bread:"🍞",
+  pasta:"🍝",noodle:"🍜",oats:"🥣",rava:"🌾",
+  oil:"🫒",olive:"🫒",coconut:"🥥",
+  salt:"🧂",turmeric:"✨",cumin:"✨",chili:"🌶️",chilli:"🌶️",
+  pepper:"✨",masala:"✨",cinnamon:"✨",cardamom:"✨",kasuri:"🌿",biryani:"✨",
+  sugar:"🍬",honey:"🍯",jaggery:"🍬",ketchup:"🍅",soy:"🫗",vinegar:"🫗",
 };
 
-function getEmoji(name) {
-  const lower = name.toLowerCase();
-  for (const [key, emoji] of Object.entries(EMOJI_MAP)) {
-    if (lower.includes(key)) return emoji;
-  }
+// rough per-100g nutrition data
+const NUTRITION = {
+  chicken:{cal:239,protein:27,carbs:0,fats:14,fiber:0},
+  paneer:{cal:265,protein:18,carbs:1,fats:21,fiber:0},
+  egg:{cal:155,protein:13,carbs:1,fats:11,fiber:0},
+  fish:{cal:206,protein:22,carbs:0,fats:12,fiber:0},
+  mutton:{cal:294,protein:25,carbs:0,fats:21,fiber:0},
+  dal:{cal:116,protein:9,carbs:20,fats:0.4,fiber:8},
+  milk:{cal:42,protein:3.4,carbs:5,fats:1,fiber:0},
+  cream:{cal:195,protein:2,carbs:3,fats:20,fiber:0},
+  curd:{cal:60,protein:3,carbs:5,fats:3,fiber:0},
+  butter:{cal:717,protein:0.9,carbs:0.1,fats:81,fiber:0},
+  cheese:{cal:350,protein:25,carbs:1,fats:27,fiber:0},
+  ghee:{cal:900,protein:0,carbs:0,fats:100,fiber:0},
+  onion:{cal:40,protein:1,carbs:9,fats:0.1,fiber:1.7},
+  tomato:{cal:18,protein:0.9,carbs:3.9,fats:0.2,fiber:1.2},
+  potato:{cal:77,protein:2,carbs:17,fats:0.1,fiber:2.2},
+  rice:{cal:130,protein:2.7,carbs:28,fats:0.3,fiber:0.4},
+  bread:{cal:265,protein:9,carbs:49,fats:3.2,fiber:2.7},
+  spinach:{cal:23,protein:2.9,carbs:3.6,fats:0.4,fiber:2.2},
+  capsicum:{cal:20,protein:0.9,carbs:4.6,fats:0.2,fiber:1.7},
+  carrot:{cal:41,protein:0.9,carbs:10,fats:0.2,fiber:2.8},
+  oil:{cal:884,protein:0,carbs:0,fats:100,fiber:0},
+  pasta:{cal:131,protein:5,carbs:25,fats:1.1,fiber:1.8},
+  atta:{cal:340,protein:12,carbs:72,fats:1.7,fiber:11},
+};
+
+function getEmoji(n) {
+  const l = n.toLowerCase();
+  for (const [k, e] of Object.entries(EMOJI)) { if (l.includes(k)) return e; }
   return "🛒";
 }
 
-let currentCart = null;
-let currentIngredients = null;
-
-// navigation
-function navigateTo(screenId) {
-  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
-  document.getElementById(screenId).classList.add("active");
-
-  if (screenId === "screen-cart" && currentCart) renderCart(currentCart);
-  if (screenId === "screen-summary" && currentCart) renderSummary(currentCart);
+function getNutrition(name, qty) {
+  const l = name.toLowerCase();
+  for (const [k, n] of Object.entries(NUTRITION)) {
+    if (l.includes(k)) {
+      const scale = qty / 100;
+      return { cal: Math.round(n.cal * scale), protein: Math.round(n.protein * scale), carbs: Math.round(n.carbs * scale), fats: Math.round(n.fats * scale), fiber: Math.round(n.fiber * scale) };
+    }
+  }
+  return { cal: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 };
 }
 
-// extract budget from prompt text
-function extractBudget(text) {
-  // look for ₹ or rs or rupees followed by number
-  const match = text.match(/(?:₹|rs\.?|rupees?)\s*(\d[\d,]*)/i)
-    || text.match(/(\d[\d,]*)\s*(?:₹|rs\.?|rupees?|budget)/i);
-  if (match) return parseInt(match[1].replace(/,/g, ""), 10);
+let currentCart = null;
 
-  // standalone large numbers likely budget
+function navigateTo(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if (id === "screen-cart" && currentCart) renderCart(currentCart);
+  if (id === "screen-summary" && currentCart) renderSummary(currentCart);
+}
+
+function extractBudget(text) {
+  const m = text.match(/(?:₹|rs\.?|rupees?|budget)\s*(\d[\d,]*)/i) || text.match(/(\d[\d,]*)\s*(?:₹|rs|rupees?|budget)/i);
+  if (m) return parseInt(m[1].replace(/,/g, ""), 10);
   const nums = text.match(/\b(\d{3,5})\b/g);
   if (nums) return parseInt(nums[nums.length - 1], 10);
-
-  return 800; // sensible default
+  return 800;
 }
 
-// ===== CHAT =====
+// ===== Share Sheet =====
 
-async function sendMessage() {
-  const input = document.getElementById("chat-input");
+function showShareSheet() {
+  document.getElementById("share-sheet").classList.add("visible");
+}
+
+function captureFromShare() {
+  document.getElementById("share-sheet").classList.remove("visible");
+  setTimeout(() => {
+    navigateTo("screen-instamart");
+  }, 300);
+}
+
+// ===== Prism Flow =====
+
+function startPrismFlow() {
+  runPipeline("butter chicken for 4 people, budget 800 rupees");
+}
+
+function quickRecipe(text) {
+  runPipeline(text);
+}
+
+function submitRecipeInput() {
+  const input = document.getElementById("prism-recipe-input");
   const text = input.value.trim();
   if (!text) return;
-
-  addChatBubble(text, "user");
   input.value = "";
-
-  await processRecipeRequest(text);
+  runPipeline(text);
 }
 
-async function processRecipeRequest(text) {
-  const indicator = document.getElementById("parsing-indicator");
-  indicator.classList.add("visible");
-  resetParsingAnimation();
+async function runPipeline(text) {
+  navigateTo("screen-processing");
 
-  addTypingIndicator();
+  const steps = ["step-parse", "step-search", "step-optimize", "step-health"];
+  const fill = document.getElementById("proc-fill");
+
+  // reset
+  steps.forEach(s => {
+    const el = document.getElementById(s);
+    el.classList.remove("done", "active");
+  });
+  fill.style.width = "0%";
 
   const budget = extractBudget(text);
 
   // step 1: parse
+  setStep(steps, 0, fill, 10);
   let ingredients;
   try {
-    const parseRes = await fetch(`${API_BASE}/api/parse`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const r = await fetch(`${API}/api/parse`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: text }),
     });
-    const parseData = await parseRes.json();
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+    ingredients = d.ingredients;
 
-    removeTypingIndicator();
-
-    if (!parseData.success) {
-      indicator.classList.remove("visible");
-      addChatBubble(`Something went wrong: ${parseData.error}`, "bot");
-      return;
-    }
-
-    ingredients = parseData.ingredients;
-    currentIngredients = ingredients;
-
-    const llmNote = parseData.usedLLM ? "AI-parsed" : "matched from recipe database";
-    addChatBubble(
-      `Found <strong>${ingredients.length} ingredients</strong> (${llmNote}). ` +
-      `Searching Instamart for best-value SKUs...`,
-      "bot"
-    );
+    const detail = document.getElementById("step-parse-detail");
+    detail.textContent = `Found ${ingredients.length} ingredients`;
   } catch (err) {
-    removeTypingIndicator();
-    indicator.classList.remove("visible");
-    addChatBubble("Could not reach the server. Make sure it's running on localhost:3000.", "bot");
+    alert("Parse failed: " + (err.message || err));
+    navigateTo("screen-instamart");
     return;
   }
 
-  // step 2: optimize
-  addTypingIndicator();
+  // step 2: search
+  await delay(400);
+  setStep(steps, 1, fill, 40);
+  await delay(600);
 
+  // step 3: optimize
+  setStep(steps, 2, fill, 70);
+
+  let cart;
   try {
-    const optRes = await fetch(`${API_BASE}/api/optimize`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const r = await fetch(`${API}/api/optimize`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ingredients, budget }),
     });
-    const optData = await optRes.json();
-
-    removeTypingIndicator();
-    indicator.classList.remove("visible");
-
-    if (!optData.success) {
-      addChatBubble(`Optimization failed: ${optData.error}`, "bot");
-      return;
-    }
-
-    currentCart = formatCart(optData.cart, budget);
-    addCartReadyBubble(currentCart);
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+    cart = d.cart;
   } catch (err) {
-    removeTypingIndicator();
-    indicator.classList.remove("visible");
-    addChatBubble("Optimization request failed.", "bot");
+    alert("Optimize failed: " + (err.message || err));
+    navigateTo("screen-instamart");
+    return;
   }
-}
 
-function formatCart(rawCart, budget) {
-  return {
-    budget: rawCart.budget,
-    totalCost: rawCart.totalCost,
-    budgetUtilization: rawCart.budgetUtilization,
-    items: rawCart.items.map((item) => ({
-      name: item.sku.name,
-      brand: item.sku.brand,
-      price: item.sku.price,
-      count: item.count,
-      priority: mapPriority(item.ingredient.priority),
-      ingredient: item.ingredient.name,
-      totalPrice: item.totalPrice,
+  // step 4: health
+  await delay(400);
+  setStep(steps, 3, fill, 100);
+  await delay(500);
+
+  // done — go to cart
+  currentCart = {
+    budget: cart.budget,
+    totalCost: cart.totalCost,
+    budgetUtilization: cart.budgetUtilization,
+    items: cart.items.map(i => ({
+      name: i.sku.name,
+      brand: i.sku.brand,
+      price: i.sku.price,
+      count: i.count,
+      totalPrice: i.totalPrice,
+      priority: i.ingredient.priority,
+      ingredient: i.ingredient.name,
+      ingredientQty: i.ingredient.quantity,
+      ingredientUnit: i.ingredient.unit,
     })),
-    droppedItems: rawCart.droppedItems || [],
-    meta: rawCart.meta,
+    droppedItems: cart.droppedItems || [],
+    meta: cart.meta,
   };
+
+  navigateTo("screen-cart");
 }
 
-function mapPriority(p) {
-  if (p === "essential") return "essential";
-  if (p === "important") return "recipe";
-  return "staple";
-}
-
-function addChatBubble(text, type) {
-  const body = document.getElementById("chat-body");
-  const bubble = document.createElement("div");
-  bubble.className = `chat-bubble ${type}`;
-
-  if (type === "bot") {
-    bubble.innerHTML = `
-      <div class="bot-icon">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
-      </div>
-      <div class="bubble-content">${text}</div>
-    `;
-  } else {
-    bubble.innerHTML = `<div class="bubble-content">${text}</div>`;
+function setStep(steps, idx, fill, pct) {
+  for (let i = 0; i < steps.length; i++) {
+    const el = document.getElementById(steps[i]);
+    if (i < idx) { el.classList.add("done"); el.classList.remove("active"); }
+    else if (i === idx) { el.classList.add("active"); el.classList.remove("done"); }
+    else { el.classList.remove("done", "active"); }
   }
-
-  body.appendChild(bubble);
-  body.scrollTop = body.scrollHeight;
+  // mark current as done after a beat
+  setTimeout(() => {
+    document.getElementById(steps[idx]).classList.add("done");
+    document.getElementById(steps[idx]).classList.remove("active");
+  }, 300);
+  fill.style.width = pct + "%";
 }
 
-function addCartReadyBubble(cart) {
-  const body = document.getElementById("chat-body");
-  const bubble = document.createElement("div");
-  bubble.className = "chat-bubble bot";
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  const pct = Math.round(cart.budgetUtilization * 100);
-  const dropped = cart.droppedItems.length > 0
-    ? `<br><span style="font-size:12px;color:#666">${cart.droppedItems.length} item(s) dropped to fit budget.</span>`
-    : "";
-
-  bubble.innerHTML = `
-    <div class="bot-icon">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
-    </div>
-    <div class="bubble-content">
-      <strong>Cart optimized!</strong><br>
-      ₹${cart.totalCost.toLocaleString()} / ₹${cart.budget.toLocaleString()} — ${cart.items.length} items (${pct}% utilized).
-      ${dropped}<br><br>
-      <span style="font-size:11px;color:#999">Optimized in ${cart.meta.optimizationTimeMs}ms | ${cart.meta.totalSkusEvaluated} SKUs evaluated</span><br><br>
-      <button onclick="navigateTo('screen-cart')" style="
-        background: #FC8019; color: white; border: none; padding: 8px 20px;
-        border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
-        font-family: inherit;
-      ">View Optimized Cart →</button>
-    </div>
-  `;
-  body.appendChild(bubble);
-  body.scrollTop = body.scrollHeight;
-}
-
-function addTypingIndicator() {
-  const body = document.getElementById("chat-body");
-  if (body.querySelector(".typing-indicator")) return;
-
-  const bubble = document.createElement("div");
-  bubble.className = "chat-bubble bot typing-indicator";
-  bubble.innerHTML = `
-    <div class="bot-icon">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
-    </div>
-    <div class="bubble-content">
-      <div class="typing-dots"><span></span><span></span><span></span></div>
-    </div>
-  `;
-  body.appendChild(bubble);
-  body.scrollTop = body.scrollHeight;
-}
-
-function removeTypingIndicator() {
-  const indicator = document.querySelector(".typing-indicator");
-  if (indicator) indicator.remove();
-}
-
-function resetParsingAnimation() {
-  const fill = document.querySelector(".parsing-fill");
-  fill.style.animation = "none";
-  fill.offsetHeight;
-  fill.style.animation = "parse 3s ease-in-out forwards";
-}
-
-// ===== CART RENDERING =====
+// ===== Cart Rendering =====
 
 function renderCart(cart) {
   document.getElementById("cart-total-badge").textContent = `₹${cart.totalCost.toLocaleString()}`;
   document.getElementById("cart-budget-badge").textContent = `₹${cart.budget.toLocaleString()}`;
+  document.getElementById("cb-total").textContent = `₹${cart.totalCost.toLocaleString()}`;
+  document.getElementById("cb-items").textContent = `${cart.items.length} items in cart`;
 
   const badge = document.getElementById("budget-badge");
-  badge.classList.toggle("over-budget", cart.totalCost > cart.budget);
+  badge.className = "budget-badge " + (cart.totalCost <= cart.budget ? "green" : "red");
 
-  const pct = Math.round(cart.budgetUtilization * 100);
-  document.getElementById("budget-bar").style.width = `${pct}%`;
+  const body = document.getElementById("cart-items-body");
+  body.innerHTML = "";
 
-  const essentials = cart.items.filter((i) => i.priority === "essential");
-  const recipe = cart.items.filter((i) => i.priority === "recipe");
-  const staples = cart.items.filter((i) => i.priority === "staple");
-
-  renderSKUGrid("essentials-grid", essentials);
-  renderSKUGrid("recipe-grid", recipe);
-  renderSKUGrid("staples-grid", staples);
-
-  // hide empty categories
-  document.getElementById("essentials-grid").closest(".category-block").style.display = essentials.length ? "" : "none";
-  document.getElementById("recipe-grid").closest(".category-block").style.display = recipe.length ? "" : "none";
-  document.getElementById("staples-grid").closest(".category-block").style.display = staples.length ? "" : "none";
-}
-
-function renderSKUGrid(gridId, items) {
-  const grid = document.getElementById(gridId);
-  grid.innerHTML = "";
-
-  items.forEach((item) => {
-    const card = document.createElement("div");
-    card.className = "sku-card";
-    card.innerHTML = `
-      <div class="sku-check">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-      </div>
-      <span class="sku-emoji">${getEmoji(item.ingredient)}</span>
-      <div class="sku-name">${item.name}</div>
-      <div class="sku-price">₹${item.totalPrice.toFixed(0)}</div>
-    `;
-    grid.appendChild(card);
+  // group by priority
+  const groups = { essential: [], important: [], optional: [] };
+  cart.items.forEach(i => {
+    const g = groups[i.priority] || groups.essential;
+    g.push(i);
   });
+
+  const labels = { essential: "Essentials", important: "Recipe Kit", optional: "Spices & Extras" };
+
+  for (const [prio, items] of Object.entries(groups)) {
+    if (items.length === 0) continue;
+    const label = document.createElement("div");
+    label.className = "cart-category-label";
+    label.textContent = labels[prio] || prio;
+    body.appendChild(label);
+
+    items.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "cart-item";
+      row.innerHTML = `
+        <span class="cart-item-emoji">${getEmoji(item.ingredient)}</span>
+        <div class="cart-item-info">
+          <div class="cart-item-name">${item.name}</div>
+          <div class="cart-item-brand">${item.brand}</div>
+        </div>
+        <div class="cart-item-qty">${item.count}</div>
+        <div class="cart-item-price">₹${item.totalPrice}</div>
+      `;
+      body.appendChild(row);
+    });
+  }
+
+  // compute nutrition
+  computeNutrition(cart);
 }
 
-function togglePanel() {
-  document.getElementById("value-panel").classList.toggle("visible");
+function computeNutrition(cart) {
+  let totals = { cal: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 };
+
+  cart.items.forEach(item => {
+    const n = getNutrition(item.ingredient, item.ingredientQty || 100);
+    totals.cal += n.cal;
+    totals.protein += n.protein;
+    totals.carbs += n.carbs;
+    totals.fats += n.fats;
+    totals.fiber += n.fiber;
+  });
+
+  const maxMacro = Math.max(totals.protein, totals.carbs, totals.fats, 1);
+
+  document.getElementById("macro-protein").style.width = (totals.protein / maxMacro * 100) + "%";
+  document.getElementById("macro-carbs").style.width = (totals.carbs / maxMacro * 100) + "%";
+  document.getElementById("macro-fats").style.width = (totals.fats / maxMacro * 100) + "%";
+  document.getElementById("macro-fiber").style.width = Math.min(100, totals.fiber / maxMacro * 100) + "%";
+
+  document.getElementById("macro-protein-val").textContent = totals.protein + "g";
+  document.getElementById("macro-carbs-val").textContent = totals.carbs + "g";
+  document.getElementById("macro-fats-val").textContent = totals.fats + "g";
+  document.getElementById("macro-fiber-val").textContent = totals.fiber + "g";
+  document.getElementById("total-calories").textContent = totals.cal + " kcal";
+
+  // health score: penalize high fat ratio, reward protein + fiber
+  const totalMacro = totals.protein + totals.carbs + totals.fats + 1;
+  const proteinRatio = totals.protein / totalMacro;
+  const fatsRatio = totals.fats / totalMacro;
+  const fiberBonus = Math.min(10, totals.fiber / 2);
+  const score = Math.round(Math.min(100, (proteinRatio * 120 - fatsRatio * 40 + fiberBonus + 50)));
+
+  document.getElementById("health-score-num").textContent = score;
+
+  // update ring
+  const ring = document.getElementById("health-ring");
+  const circumference = 2 * Math.PI * 42;
+  ring.setAttribute("stroke-dashoffset", String(circumference - (score / 100) * circumference));
+  ring.setAttribute("stroke", score > 65 ? "#39A06F" : score > 40 ? "#F7C948" : "#E04F5F");
 }
 
-// ===== SUMMARY =====
+function toggleHealthPanel() {
+  document.getElementById("health-panel").classList.toggle("visible");
+}
+
+// ===== Summary =====
 
 function renderSummary(cart) {
   document.getElementById("summary-total").textContent = `₹${cart.totalCost.toLocaleString()}`;
 
+  const savings = Math.round((1 - cart.budgetUtilization) * cart.budget);
+  document.getElementById("summary-saved").textContent = `You saved ₹${savings} vs full budget`;
+
   const container = document.getElementById("summary-items");
   container.innerHTML = "";
 
-  const showItems = cart.items.slice(0, 6);
-  showItems.forEach((item) => {
+  cart.items.slice(0, 5).forEach(item => {
     const div = document.createElement("div");
     div.className = "summary-item";
     div.innerHTML = `
-      <span class="summary-item-emoji">${getEmoji(item.ingredient)}</span>
-      <div class="summary-item-info">
-        <div class="summary-item-name">${item.name}</div>
-        <div class="summary-item-detail">${item.brand} x${item.count}</div>
-      </div>
-      <span class="summary-item-price">₹${item.totalPrice.toFixed(0)}</span>
+      <span class="si-emoji">${getEmoji(item.ingredient)}</span>
+      <div class="si-info"><div class="si-name">${item.name}</div><div class="si-detail">${item.brand} x${item.count}</div></div>
+      <span class="si-price">₹${item.totalPrice}</span>
     `;
     container.appendChild(div);
   });
 
-  if (cart.items.length > 6) {
+  if (cart.items.length > 5) {
     const more = document.createElement("div");
     more.className = "summary-item";
-    more.innerHTML = `
-      <span class="summary-item-emoji">📦</span>
-      <div class="summary-item-info">
-        <div class="summary-item-name">+${cart.items.length - 6} more items</div>
-        <div class="summary-item-detail">View full cart</div>
-      </div>
-      <span class="summary-item-price"></span>
-    `;
+    more.innerHTML = `<span class="si-emoji">📦</span><div class="si-info"><div class="si-name">+${cart.items.length - 5} more items</div></div><span class="si-price"></span>`;
     container.appendChild(more);
   }
 
-  // update share card savings
-  const savings = Math.round((1 - cart.budgetUtilization) * 100);
-  const shareText = document.querySelector(".share-text");
-  if (shareText) {
-    shareText.innerHTML = `I optimized my weekly<br>groceries by <strong>${savings > 0 ? savings : 2}%</strong> using<br>Swiggy Prism.`;
-  }
+  // wrapped
+  const savingsPct = Math.max(2, Math.round((1 - cart.budgetUtilization) * 100));
+  document.getElementById("wrapped-savings").textContent = savingsPct + "%";
+  document.getElementById("wrapped-budget-bar").style.width = "100%";
+  document.getElementById("wrapped-spent-bar").style.width = (cart.budgetUtilization * 100) + "%";
 }
 
 function placeOrder() {
-  const screen = document.getElementById("screen-summary");
-  const overlay = document.createElement("div");
-  overlay.className = "order-success";
-  overlay.innerHTML = `
-    <div class="success-check">
-      <svg viewBox="0 0 24 24" fill="#39A06F"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-    </div>
-    <h2>Order Placed!</h2>
-    <p>Your optimized cart is on its way via Swiggy MCP.</p>
-  `;
-  screen.appendChild(overlay);
-  setTimeout(() => overlay.remove(), 3000);
+  const overlay = document.getElementById("order-overlay");
+  overlay.classList.add("visible");
+  setTimeout(() => overlay.classList.remove("visible"), 3000);
 }
 
-function shareStory() {
-  const card = document.getElementById("share-card");
+function shareWrapped() {
+  const card = document.getElementById("wrapped-card");
   card.style.animation = "none";
   card.offsetHeight;
-  card.style.animation = "successPop 0.5s ease, cardFloat 3s ease-in-out 0.5s infinite";
+  card.style.animation = "successPop 0.5s ease";
 }
 
-// ===== VIDEO CAPTURE =====
-
-const VIDEO_RECIPES = [
-  {
-    platform: "youtube",
-    channel: "Ranveer Brar",
-    title: "Restaurant Style Butter Chicken at Home",
-    thumbnail: "",
-    recipeText: "butter chicken for 4 people budget 800 rupees",
-  },
-  {
-    platform: "youtube",
-    channel: "Kunal Kapur",
-    title: "Hyderabadi Chicken Biryani - Step by Step",
-    thumbnail: "",
-    title2: "Biryani",
-    recipeText: "chicken biryani for 4 people budget 1200",
-  },
-  {
-    platform: "instagram",
-    channel: "cook_with_siddhi",
-    title: "Quick Paneer Tikka in 15 Minutes!",
-    thumbnail: "",
-    recipeText: "paneer tikka for 3 people budget 600",
-  },
-  {
-    platform: "youtube",
-    channel: "Hebbars Kitchen",
-    title: "Dal Tadka - Easy Comfort Food Recipe",
-    thumbnail: "",
-    recipeText: "dal tadka for 4 people budget 400",
-  },
-  {
-    platform: "instagram",
-    channel: "foodie_mumbai",
-    title: "Chole Bhature - Street Style at Home",
-    thumbnail: "",
-    recipeText: "chole bhature for 4 people budget 500",
-  },
-  {
-    platform: "youtube",
-    channel: "Chef Sanjyot Keer",
-    title: "Egg Fried Rice - 10 Minute Meal",
-    thumbnail: "",
-    recipeText: "egg fried rice for 3 people budget 350",
-  },
-];
-
-function renderVideoFeed() {
-  const feed = document.getElementById("video-feed");
-  if (!feed) return;
-  feed.innerHTML = "";
-
-  VIDEO_RECIPES.forEach((video, idx) => {
-    const card = document.createElement("div");
-    card.className = "video-card";
-    const icon = video.platform === "youtube"
-      ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.6 31.6 0 000 12a31.6 31.6 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.6 31.6 0 0024 12a31.6 31.6 0 00-.5-5.8zM9.5 15.6V8.4L16 12l-6.5 3.6z"/></svg>`
-      : `<svg width="16" height="16" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.5.2 5 1.7 5.1 5.1.1 1.3.1 1.6.1 4.8 0 3.2 0 3.6-.1 4.8-.2 3.4-1.7 5-5.1 5.1-1.3.1-1.6.1-4.8.1-3.2 0-3.6 0-4.8-.1-3.5-.2-5-1.7-5.1-5.1-.1-1.3-.1-1.6-.1-4.8 0-3.2 0-3.6.1-4.8C2.3 3.9 3.8 2.3 7.2 2.2c1.3 0 1.6-.1 4.8-.1zM12 0C8.7 0 8.3 0 7.1.1 2.7.3.3 2.7.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c.2 4.4 2.6 6.8 7 7 1.2.1 1.6.1 4.9.1s3.7 0 4.9-.1c4.4-.2 6.8-2.6 7-7 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c-.2-4.4-2.6-6.8-7-7C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 100 12.4 6.2 6.2 0 000-12.4zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-11.8a1.4 1.4 0 100 2.9 1.4 1.4 0 000-2.9z"/></svg>`;
-
-    card.innerHTML = `
-      <div class="video-thumbnail">
-        <div class="video-play">▶</div>
-      </div>
-      <div class="video-info">
-        <div class="video-platform">${icon} <span>${video.channel}</span></div>
-        <div class="video-title">${video.title}</div>
-      </div>
-      <button class="video-capture-btn" onclick="captureFromVideo(${idx})">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
-        Send to Prism
-      </button>
-    `;
-    feed.appendChild(card);
-  });
-}
-
-async function captureFromVideo(idx) {
-  const video = VIDEO_RECIPES[idx];
-
-  // switch to chat screen
-  navigateTo("screen-chat");
-
-  // show the captured message
-  addChatBubble(
-    `<span style="font-size:11px;color:rgba(255,255,255,0.7)">📱 Captured from ${video.platform === "youtube" ? "YouTube" : "Instagram"} — ${video.channel}</span><br>${video.recipeText}`,
-    "user"
-  );
-
-  // process it
-  await processRecipeRequest(video.recipeText);
-}
-
-// ===== INIT =====
+// ===== Init =====
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("chat-input").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendMessage();
-  });
-  renderVideoFeed();
+  const input = document.getElementById("prism-recipe-input");
+  if (input) input.addEventListener("keydown", e => { if (e.key === "Enter") submitRecipeInput(); });
 });

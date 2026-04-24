@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Swiggy Prism</title>
+  <title>Swiggy Instamart — Prism</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔶</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FC8019">
 </head>
 <body>
   <div class="phone-frame">
+
+    <!-- Status Bar -->
     <div class="status-bar">
       <span class="time">9:41</span>
       <div class="status-icons">
@@ -19,219 +22,386 @@
       </div>
     </div>
 
-    <!-- Screen 1: Welcome -->
-    <div class="screen active" id="screen-welcome">
-      <div class="welcome-content">
-        <div class="prism-logo">
-          <svg viewBox="0 0 120 120" width="100" height="100">
-            <defs>
-              <linearGradient id="prism-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#FC8019"/>
-                <stop offset="50%" style="stop-color:#FF9A3E"/>
-                <stop offset="100%" style="stop-color:#FFB347"/>
-              </linearGradient>
-            </defs>
-            <polygon points="60,10 110,100 10,100" fill="none" stroke="url(#prism-grad)" stroke-width="3"/>
-            <line x1="40" y1="55" x2="10" y2="45" stroke="#FC8019" stroke-width="2" opacity="0.6"/>
-            <line x1="40" y1="55" x2="60" y2="10" stroke="#FF9A3E" stroke-width="1.5" opacity="0.4"/>
-            <line x1="75" y1="65" x2="110" y2="40" stroke="#FC8019" stroke-width="2" opacity="0.5"/>
-            <line x1="75" y1="65" x2="110" y2="60" stroke="#FF9A3E" stroke-width="2" opacity="0.4"/>
-            <line x1="75" y1="65" x2="105" y2="80" stroke="#FFB347" stroke-width="2" opacity="0.3"/>
-            <circle cx="40" cy="55" r="3" fill="#FC8019"/>
-            <circle cx="75" cy="65" r="3" fill="#FC8019"/>
+    <!-- ====== SCREEN: Share Simulation (YouTube) ====== -->
+    <div class="screen active" id="screen-share-sim">
+      <div class="yt-header">
+        <svg width="90" height="20" viewBox="0 0 90 20" fill="none">
+          <rect width="28" height="20" rx="4" fill="#FF0000"/>
+          <path d="M11 6l8 4-8 4V6z" fill="white"/>
+          <text x="32" y="15" font-family="Inter" font-size="14" font-weight="700" fill="#333">YouTube</text>
+        </svg>
+      </div>
+      <div class="yt-video-area">
+        <div class="yt-player">
+          <div class="yt-play-big">▶</div>
+        </div>
+        <div class="yt-video-meta">
+          <h3 class="yt-title">Restaurant Style Butter Chicken | Makhani Recipe</h3>
+          <p class="yt-channel">Ranveer Brar · 2.4M views · 3 months ago</p>
+        </div>
+        <div class="yt-actions">
+          <button class="yt-action-btn" onclick="showShareSheet()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+            Share
+          </button>
+          <button class="yt-action-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg>
+            Save
+          </button>
+          <button class="yt-action-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+            Like
+          </button>
+        </div>
+        <div class="yt-description">
+          <p><strong>Butter Chicken Recipe</strong> — The creamiest, most flavorful makhani you'll ever make at home. Serves 4 people. Ingredients: 500g chicken, yogurt marinade, tomato gravy with cream, butter, kasuri methi...</p>
+        </div>
+      </div>
+
+      <!-- Share Sheet Overlay -->
+      <div class="share-sheet" id="share-sheet">
+        <div class="share-sheet-handle"></div>
+        <p class="share-sheet-title">Share to</p>
+        <div class="share-sheet-grid">
+          <div class="share-app">
+            <div class="share-app-icon wa">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.47 14.38c-.29-.14-1.7-.84-1.96-.94-.26-.1-.46-.14-.65.14-.19.29-.75.94-.92 1.13-.17.19-.34.22-.63.07-.29-.14-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.6-2-.17-.29-.02-.44.13-.58.13-.13.29-.34.43-.51.14-.17.19-.29.29-.48.1-.19.05-.36-.02-.51-.07-.14-.65-1.57-.89-2.15-.24-.57-.48-.49-.65-.5-.17-.01-.36-.01-.55-.01-.19 0-.51.07-.77.36-.26.29-1.01.99-1.01 2.41 0 1.42 1.03 2.79 1.18 2.98.14.19 2.03 3.1 4.93 4.34.69.3 1.23.47 1.65.61.69.22 1.32.19 1.82.12.55-.08 1.7-.7 1.94-1.37.24-.67.24-1.25.17-1.37-.07-.12-.26-.19-.55-.34z"/><path d="M12 2C6.48 2 2 6.48 2 12c0 1.82.49 3.53 1.34 5L2 22l5.16-1.34C8.54 21.52 10.22 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.74 0-3.36-.52-4.72-1.42l-.34-.2-3.06.8.82-2.98-.22-.36A7.963 7.963 0 014 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/></svg>
+            </div>
+            <span>WhatsApp</span>
+          </div>
+          <div class="share-app">
+            <div class="share-app-icon ig">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2c2.7 0 3 0 4.1.1 2.9.1 4.2 1.4 4.3 4.3.1 1.1.1 1.4.1 4.1s0 3-.1 4.1c-.1 2.9-1.4 4.2-4.3 4.3-1.1.1-1.4.1-4.1.1s-3 0-4.1-.1c-2.9-.1-4.2-1.4-4.3-4.3C3.5 15 3.5 14.7 3.5 12s0-3 .1-4.1c.1-2.9 1.4-4.2 4.3-4.3C9 3.5 9.3 3.5 12 3.5zM12 7a5 5 0 100 10 5 5 0 000-10zm0 8.2a3.2 3.2 0 110-6.4 3.2 3.2 0 010 6.4zm5.2-9.4a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4z"/></svg>
+            </div>
+            <span>Instagram</span>
+          </div>
+          <div class="share-app">
+            <div class="share-app-icon tw">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </div>
+            <span>X</span>
+          </div>
+          <div class="share-app" onclick="captureFromShare()">
+            <div class="share-app-icon swiggy">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="12,3 21,19 3,19"/></svg>
+            </div>
+            <span class="swiggy-label">Instamart<br>Prism</span>
+          </div>
+          <div class="share-app">
+            <div class="share-app-icon copy">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            </div>
+            <span>Copy</span>
+          </div>
+          <div class="share-app">
+            <div class="share-app-icon more">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </div>
+            <span>More</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Swiggy Instamart Home with Prism ====== -->
+    <div class="screen" id="screen-instamart">
+      <div class="swiggy-topbar">
+        <div class="swiggy-location">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FC8019"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          <div>
+            <span class="loc-title">Home</span>
+            <span class="loc-sub">Sector 17, Chandigarh</span>
+          </div>
+        </div>
+        <div class="swiggy-profile">D</div>
+      </div>
+
+      <div class="prism-banner">
+        <div class="prism-banner-icon">
+          <svg viewBox="0 0 40 40" width="36" height="36">
+            <polygon points="20,4 36,34 4,34" fill="none" stroke="white" stroke-width="2"/>
+            <circle cx="14" cy="19" r="2" fill="white" opacity="0.7"/>
+            <circle cx="24" cy="22" r="2" fill="white" opacity="0.7"/>
           </svg>
         </div>
-        <h1 class="app-title">Swiggy Prism</h1>
-        <p class="app-subtitle">Optimize your cart with<br>context-aware commerce.</p>
-        <div class="user-greeting">
-          <div class="avatar">
-            <svg viewBox="0 0 40 40" width="40" height="40">
-              <circle cx="20" cy="20" r="20" fill="#FFE0C2"/>
-              <circle cx="20" cy="15" r="7" fill="#F5C9A0"/>
-              <ellipse cx="20" cy="33" rx="12" ry="10" fill="#F5C9A0"/>
-            </svg>
-          </div>
-          <p class="greeting-text">Hello Deepanshu,<br>welcome to Swiggy Prism.</p>
+        <div class="prism-banner-text">
+          <strong>Prism found a recipe!</strong>
+          <span>Butter Chicken from YouTube — Tap to build your cart</span>
         </div>
-        <button class="btn-primary" onclick="navigateTo('screen-chat')">Get Started</button>
-        <button class="btn-capture-link" onclick="navigateTo('screen-capture')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FC8019"><path d="M15 8v8H5V8h10m1-2H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V7c0-.55-.45-1-1-1zm4 0v12h2V6h-2zM2 18h2V6H2v12z"/></svg>
-          Capture from YouTube / Instagram
-        </button>
+        <button class="prism-banner-btn" onclick="startPrismFlow()">Go</button>
       </div>
-    </div>
 
-    <!-- Screen 1b: Video Capture -->
-    <div class="screen" id="screen-capture">
-      <div class="chat-header">
-        <button class="back-btn" onclick="navigateTo('screen-welcome')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2 class="header-title">Capture Recipe</h2>
-      </div>
-      <div class="capture-intro">
-        <p>Watching a recipe video? Tap <strong>"Send to Prism"</strong> to instantly extract ingredients and build an optimized Instamart cart.</p>
-      </div>
-      <div class="video-feed" id="video-feed"></div>
-    </div>
-
-    <!-- Screen 2: Chat / Intent Capture -->
-    <div class="screen" id="screen-chat">
-      <div class="chat-header">
-        <button class="back-btn" onclick="navigateTo('screen-welcome')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h2 class="header-title">Meal Planner Co-pilot.</h2>
-      </div>
-      <div class="chat-body" id="chat-body">
-        <div class="chat-bubble bot">
-          <div class="bot-icon">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="#FC8019"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-          </div>
-          <div class="bubble-content">
-            Hey! Tell me what you want to cook, your budget, and how many people. I'll handle the rest.
-          </div>
+      <div class="instamart-body">
+        <div class="search-bar-fake">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#999"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <span>Search Instamart</span>
         </div>
-      </div>
-      <div class="parsing-indicator" id="parsing-indicator">
-        <div class="parsing-bar"><div class="parsing-fill"></div></div>
-        <span>Parsing Intent</span>
-      </div>
-      <div class="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
-        <button class="send-btn" id="send-btn" onclick="sendMessage()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
-      </div>
-    </div>
 
-    <!-- Screen 3: Optimized Cart -->
-    <div class="screen" id="screen-cart">
-      <div class="cart-header">
-        <button class="back-btn" onclick="navigateTo('screen-chat')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <div class="cart-header-logo">
-          <svg viewBox="0 0 30 30" width="28" height="28">
-            <polygon points="15,3 27,25 3,25" fill="none" stroke="#FC8019" stroke-width="2"/>
-            <circle cx="12" cy="15" r="2" fill="#FC8019"/>
-            <circle cx="19" cy="17" r="2" fill="#FC8019"/>
-          </svg>
-        </div>
-        <button class="info-btn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        </button>
-      </div>
-
-      <div class="budget-badge" id="budget-badge">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="#39A06F"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-        <span>Cart is <strong>Budget-Compliant</strong> (<span id="cart-total-badge">--</span>/<span id="cart-budget-badge">--</span>)</span>
-      </div>
-
-      <div class="cart-body">
-        <div class="cart-section">
-          <h3 class="section-title">Your Cart (Optimized)</h3>
-
-          <div class="category-block">
-            <h4 class="category-name">Essentials</h4>
-            <div class="sku-grid" id="essentials-grid"></div>
+        <div class="quick-cats">
+          <div class="quick-cat">
+            <span class="qc-emoji">🥛</span>
+            <span class="qc-label">Dairy</span>
           </div>
-
-          <div class="category-block">
-            <h4 class="category-name">Recipe Kit</h4>
-            <div class="sku-grid" id="recipe-grid"></div>
+          <div class="quick-cat">
+            <span class="qc-emoji">🍎</span>
+            <span class="qc-label">Fruits</span>
           </div>
-
-          <div class="category-block">
-            <h4 class="category-name">Healthy Staples</h4>
-            <div class="sku-grid" id="staples-grid"></div>
+          <div class="quick-cat">
+            <span class="qc-emoji">🥬</span>
+            <span class="qc-label">Veggies</span>
+          </div>
+          <div class="quick-cat">
+            <span class="qc-emoji">🍗</span>
+            <span class="qc-label">Meat</span>
+          </div>
+          <div class="quick-cat">
+            <span class="qc-emoji">🌶️</span>
+            <span class="qc-label">Masala</span>
           </div>
         </div>
 
-        <!-- Health & Value Panel -->
-        <div class="value-panel" id="value-panel">
-          <div class="panel-header">
-            <h3>Health & Value</h3>
-            <button class="close-panel" onclick="togglePanel()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        <div class="insta-section">
+          <h3>What's cooking today?</h3>
+          <div class="recipe-suggestions">
+            <div class="recipe-pill" onclick="quickRecipe('butter chicken for 4, budget 800')">🍗 Butter Chicken</div>
+            <div class="recipe-pill" onclick="quickRecipe('paneer tikka for 3, budget 600')">🧀 Paneer Tikka</div>
+            <div class="recipe-pill" onclick="quickRecipe('chicken biryani for 4, budget 1200')">🍚 Biryani</div>
+            <div class="recipe-pill" onclick="quickRecipe('dal tadka for 4, budget 400')">🫘 Dal Tadka</div>
+            <div class="recipe-pill" onclick="quickRecipe('chole bhature for 4, budget 500')">🫛 Chole Bhature</div>
+            <div class="recipe-pill" onclick="quickRecipe('egg fried rice for 3, budget 350')">🥚 Fried Rice</div>
+          </div>
+        </div>
+
+        <div class="insta-section">
+          <h3>Or tell Prism what you want</h3>
+          <div class="prism-input-row">
+            <input type="text" id="prism-recipe-input" placeholder="e.g. palak paneer for 4, budget ₹600">
+            <button class="prism-go-btn" onclick="submitRecipeInput()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
           </div>
-          <div class="metric-row">
-            <span class="metric-label">Nutrition Score</span>
-            <div class="metric-bar">
-              <div class="bar-fill nutrition" style="width: 78%"></div>
-            </div>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Savings Potential</span>
-            <div class="metric-bar">
-              <div class="bar-fill savings" style="width: 65%"></div>
-            </div>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Budget Utilization</span>
-            <div class="metric-bar">
-              <div class="bar-fill budget" id="budget-bar" style="width: 0%"></div>
-            </div>
-          </div>
         </div>
-
-        <button class="btn-show-panel" onclick="togglePanel()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FC8019"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-          Health & Value Analysis
-        </button>
       </div>
 
-      <div class="cart-footer">
-        <button class="btn-primary" onclick="navigateTo('screen-summary')">Proceed to Summary</button>
+      <!-- Swiggy Bottom Nav -->
+      <div class="swiggy-nav">
+        <div class="nav-item">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span>Food</span>
+        </div>
+        <div class="nav-item active">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          <span>Instamart</span>
+        </div>
+        <div class="nav-item">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+          <span>Dineout</span>
+        </div>
+        <div class="nav-item">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <span>Genie</span>
+        </div>
       </div>
     </div>
 
-    <!-- Screen 4: Summary & CTA -->
+    <!-- ====== SCREEN: Prism Processing ====== -->
+    <div class="screen" id="screen-processing">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-instamart')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Prism — Smart Cart</h2>
+      </div>
+
+      <div class="processing-body">
+        <div class="processing-steps">
+          <div class="proc-step done" id="step-parse">
+            <div class="proc-dot"></div>
+            <div class="proc-info">
+              <strong>Extracting ingredients</strong>
+              <span id="step-parse-detail">From shared recipe...</span>
+            </div>
+          </div>
+          <div class="proc-step" id="step-search">
+            <div class="proc-dot"></div>
+            <div class="proc-info">
+              <strong>Searching Instamart</strong>
+              <span>Finding best-value SKUs...</span>
+            </div>
+          </div>
+          <div class="proc-step" id="step-optimize">
+            <div class="proc-dot"></div>
+            <div class="proc-info">
+              <strong>Optimizing for budget</strong>
+              <span>Running Knapsack algorithm...</span>
+            </div>
+          </div>
+          <div class="proc-step" id="step-health">
+            <div class="proc-dot"></div>
+            <div class="proc-info">
+              <strong>Calculating health score</strong>
+              <span>Analyzing nutrition data...</span>
+            </div>
+          </div>
+        </div>
+        <div class="proc-loader">
+          <div class="proc-bar"><div class="proc-fill" id="proc-fill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Optimized Cart (Swiggy-native) ====== -->
+    <div class="screen" id="screen-cart">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-instamart')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Your Prism Cart</h2>
+        <button class="info-btn" onclick="toggleHealthPanel()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FC8019" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </button>
+      </div>
+
+      <div class="budget-badge green" id="budget-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span>Budget-Compliant <strong id="cart-total-badge">--</strong> / <strong id="cart-budget-badge">--</strong></span>
+      </div>
+
+      <!-- Health Score Panel -->
+      <div class="health-panel" id="health-panel">
+        <div class="health-panel-header">
+          <h3>Nutrition Breakdown</h3>
+          <button class="close-panel" onclick="toggleHealthPanel()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="health-score-ring">
+          <svg viewBox="0 0 100 100" width="90" height="90">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#E8E8E8" stroke-width="8"/>
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#39A06F" stroke-width="8" stroke-dasharray="264" stroke-dashoffset="66" stroke-linecap="round" transform="rotate(-90 50 50)" id="health-ring"/>
+          </svg>
+          <div class="health-score-text">
+            <span class="hs-num" id="health-score-num">75</span>
+            <span class="hs-label">Health Score</span>
+          </div>
+        </div>
+        <div class="macro-bars">
+          <div class="macro-row">
+            <span class="macro-name">Protein</span>
+            <div class="macro-bar"><div class="macro-fill protein" id="macro-protein" style="width:0%"></div></div>
+            <span class="macro-val" id="macro-protein-val">--</span>
+          </div>
+          <div class="macro-row">
+            <span class="macro-name">Carbs</span>
+            <div class="macro-bar"><div class="macro-fill carbs" id="macro-carbs" style="width:0%"></div></div>
+            <span class="macro-val" id="macro-carbs-val">--</span>
+          </div>
+          <div class="macro-row">
+            <span class="macro-name">Fats</span>
+            <div class="macro-bar"><div class="macro-fill fats" id="macro-fats" style="width:0%"></div></div>
+            <span class="macro-val" id="macro-fats-val">--</span>
+          </div>
+          <div class="macro-row">
+            <span class="macro-name">Fiber</span>
+            <div class="macro-bar"><div class="macro-fill fiber" id="macro-fiber" style="width:0%"></div></div>
+            <span class="macro-val" id="macro-fiber-val">--</span>
+          </div>
+        </div>
+        <div class="calorie-total">
+          <span>Est. total calories:</span>
+          <strong id="total-calories">--</strong>
+        </div>
+      </div>
+
+      <div class="cart-body" id="cart-items-body">
+        <!-- items rendered here -->
+      </div>
+
+      <div class="cart-bottom">
+        <div class="cart-bottom-info">
+          <span class="cb-total" id="cb-total">₹--</span>
+          <span class="cb-items" id="cb-items">-- items</span>
+        </div>
+        <button class="btn-checkout" onclick="navigateTo('screen-summary')">View Summary →</button>
+      </div>
+
+      <!-- Swiggy Bottom Nav -->
+      <div class="swiggy-nav">
+        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Food</span></div>
+        <div class="nav-item active"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Instamart</span></div>
+        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg><span>Dineout</span></div>
+        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Genie</span></div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Summary + Wrapped ====== -->
     <div class="screen" id="screen-summary">
-      <div class="summary-header">
+      <div class="swiggy-topbar">
         <button class="back-btn" onclick="navigateTo('screen-cart')">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <h2 class="header-title">Prism Summary</h2>
+        <h2 class="topbar-title">Order Summary</h2>
       </div>
 
       <div class="summary-body">
         <div class="summary-hero">
-          <h2>Your optimal cart<br>is ready!</h2>
-          <div class="summary-total">
-            <span class="total-label">Total:</span>
-            <span class="total-amount" id="summary-total">--</span>
+          <div class="summary-prism-icon">
+            <svg viewBox="0 0 40 40" width="40" height="40"><polygon points="20,4 36,34 4,34" fill="none" stroke="#FC8019" stroke-width="2.5"/><circle cx="14" cy="19" r="2.5" fill="#FC8019"/><circle cx="24" cy="22" r="2.5" fill="#FC8019"/></svg>
           </div>
-          <p class="summary-sub">Total price & summary</p>
+          <h2>Cart optimized!</h2>
+          <div class="summary-total-pill">
+            <span class="st-amount" id="summary-total">₹--</span>
+          </div>
+          <p class="summary-saved" id="summary-saved">You saved ₹-- vs unoptimized cart</p>
         </div>
 
         <div class="summary-items" id="summary-items"></div>
 
-        <button class="btn-primary btn-order" onclick="placeOrder()">
+        <button class="btn-checkout btn-full" onclick="placeOrder()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
-          Place Order via Swiggy MCP
+          Place Order · Swiggy Instamart
         </button>
 
-        <button class="btn-secondary" onclick="shareStory()">Share Your Budget Story</button>
-        <p class="share-hint">Generate a viral image snippet,<br>celebrate Swiggy Prism.</p>
-
-        <div class="share-card" id="share-card">
-          <div class="share-card-inner">
-            <div class="share-icon">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="#FC8019"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <div class="wrapped-section">
+          <h3>Your Prism Wrapped</h3>
+          <div class="wrapped-card" id="wrapped-card">
+            <div class="wrapped-stat">
+              <span class="ws-num" id="wrapped-savings">12%</span>
+              <span class="ws-label">saved on groceries<br>this month with Prism</span>
             </div>
-            <p class="share-text">I optimized my weekly<br>groceries by <strong>12%</strong> using<br>Swiggy Prism.</p>
-            <span class="share-tagline">Total saved: Swiggy Prism</span>
-            <div class="share-brand">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
-              <span>SWIGGY</span>
-              <svg class="share-arrow" width="14" height="14" viewBox="0 0 24 24" fill="#999"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+            <div class="wrapped-bar-row">
+              <span>Budget</span>
+              <div class="wrapped-bar"><div class="wrapped-bar-fill budget-fill" id="wrapped-budget-bar"></div></div>
+            </div>
+            <div class="wrapped-bar-row">
+              <span>Spent</span>
+              <div class="wrapped-bar"><div class="wrapped-bar-fill spent-fill" id="wrapped-spent-bar"></div></div>
+            </div>
+            <div class="wrapped-footer">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
+              <span>Swiggy Prism</span>
             </div>
           </div>
+          <button class="btn-share-wrapped" onclick="shareWrapped()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FC8019"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+            Share Your Budget Story
+          </button>
         </div>
       </div>
     </div>
+
+    <!-- Order Success Overlay -->
+    <div class="order-overlay" id="order-overlay">
+      <div class="order-success-card">
+        <div class="success-check">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="#39A06F"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <h2>Order Placed!</h2>
+        <p>Arriving in <strong>10 minutes</strong></p>
+        <span class="order-id">via Swiggy Instamart</span>
+      </div>
+    </div>
+
   </div>
 
   <script src="app.js"></script>
