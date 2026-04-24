@@ -4,7 +4,9 @@
 
 > Transform any recipe or meal plan into a budget-optimized, nutrition-aware Instamart cart — in seconds.
 
-### [Live Demo](https://deepanshuvermaa.github.io/swiggy-prism/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Try%20it%20now-FC8019?style=for-the-badge&logo=googlechrome&logoColor=white)](https://deepanshuvermaa.github.io/swiggy-prism/)
+
+**[https://deepanshuvermaa.github.io/swiggy-prism/](https://deepanshuvermaa.github.io/swiggy-prism/)**
 
 ---
 
@@ -76,15 +78,17 @@ flowchart LR
 - [x] MCP server integration
 
 ### Phase 2 — Retention & Growth
-- [ ] Multi-source intent (browser extension, mobile hooks for Instagram/YouTube)
-- [ ] Swiggy Prism "Wrapped" — spending analytics for social sharing
-- [ ] Health Score — nutritional constraints (calories/macros) in optimizer
+- [x] Multi-source intent — YouTube + Instagram share simulation
+- [x] Swiggy Prism "Wrapped" — spending analytics with localStorage persistence
+- [x] Health Score — calorie/macro breakdown with nutrition ring
+- [x] Persona system — Foodie / Gym Freak / Balanced / Budget Saver
+- [x] Personalized recommendations based on persona + order history
 
 ## Quick Start
 
 ```bash
 # Clone
-git clone https://github.com/your-org/swiggy-prism.git
+git clone https://github.com/deepanshuvermaa/swiggy-prism.git
 cd swiggy-prism
 
 # Install
@@ -92,15 +96,17 @@ npm install
 
 # Configure
 cp .env.example .env
-# Add your LLM API key and Swiggy MCP credentials
+# Add your Gemini API key (optional — works without it using local parser)
 
-# Build & Run
-npm run build
-npm start
+# Run dev server
+npm run dev
+# Open http://localhost:3000
 
-# Test
+# Run tests
 npm test
 ```
+
+Or just try the **[Live Demo](https://deepanshuvermaa.github.io/swiggy-prism/)** — no setup needed.
 
 ## License
 
@@ -108,4 +114,4 @@ MIT — see [LICENSE](./LICENSE)
 
 ---
 
-*Built for the Swiggy Builders Club (MCP)*
+*Built by [Deepanshu Verma](https://deepanshuverma.site/portfolio) for the Swiggy Builders Club (MCP)*
