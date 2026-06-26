@@ -12,6 +12,7 @@ import { optimizeCart } from "./core/optimizer.js";
 import { localParseRecipe } from "./core/local-parser.js";
 import { sanitizePrompt } from "./utils/sanitize.js";
 import { createProvider, createFoodProvider, createDineoutProvider, getAuthManager } from "./mcp/adapter.js";
+import { fetchUserProfile, addConnectedSession, getConnectedSessions } from "./mcp/auth-pkce.js";
 import { parseIntent } from "./core/intent-parser.js";
 import { decide } from "./core/decision-engine.js";
 import type { Ingredient, SKU, Persona } from "./types/index.js";
@@ -90,7 +91,22 @@ const server = createServer(async (req, res) => {
       const redirectUri = getRedirectUri(req);
       const token = await exchangeCode(code, globalCodeVerifier, redirectUri);
       getAuthManager().setToken(token);
-      log({ level: "info", event: "auth_success", status: "auth", details: `Token expires in ${Math.round((token.expiresAt - Date.now()) / 3600000)}h` });
+
+      // Fetch user profile and track session
+      const clientIp = req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() || req.socket?.remoteAddress || "unknown";
+      const profile = await fetchUserProfile(token.accessToken);
+      const userLabel = profile.phone || profile.name || profile.userId || clientIp;
+      addConnectedSession({
+        phone: profile.phone,
+        name: profile.name,
+        userId: profile.userId,
+        connectedAt: new Date().toISOString(),
+        expiresAt: token.expiresAt,
+        scope: token.scope,
+        ip: clientIp,
+      });
+
+      log({ level: "info", event: "auth_success", status: "auth", userId: userLabel, details: `User: ${userLabel} — Token expires in ${Math.round((token.expiresAt - Date.now()) / 3600000)}h` });
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prism — Connected</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;font-family:Inter,-apple-system,sans-serif}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FFF3E8}.card{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.1);max-width:380px}.icon{font-size:48px;margin-bottom:12px}.title{font-size:22px;font-weight:700;color:#333;margin-bottom:8px}.sub{font-size:14px;color:#666;line-height:1.5}.badge{display:inline-block;margin-top:16px;padding:8px 20px;background:#FC8019;color:white;border-radius:10px;font-weight:600;font-size:14px}.links{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.link{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s}.link-primary{background:#FC8019;color:white}.link-primary:hover{background:#E5710F}.link-secondary{background:#f5f5f5;color:#333}.link-secondary:hover{background:#e8e8e8}.countdown{margin-top:12px;font-size:12px;color:#999}</style></head><body><div class="card"><div class="icon">&#x2705;</div><div class="title">Connected to Swiggy</div><div class="sub">Prism is now linked to your Swiggy account.<br>All 35 MCP tools are active.</div><div class="badge">Food &middot; Instamart &middot; Dineout</div><div class="links"><a href="/" class="link link-primary">Open Prism</a><a href="/admin" class="link link-secondary">Admin Dashboard</a></div><div class="countdown" id="cd">Redirecting to Prism in 5s...</div></div><script>var s=5;var el=document.getElementById('cd');var t=setInterval(function(){s--;if(s<=0){clearInterval(t);window.location.href='/';}else{el.textContent='Redirecting to Prism in '+s+'s...';}},1000);</script></body></html>`);
     } catch (err) {
@@ -126,10 +142,14 @@ const server = createServer(async (req, res) => {
   }
 
   // ─── Admin & Logs API ─────────────────────────────────────────────────
+  if (url.pathname === "/api/sessions") {
+    return json(res, { sessions: getConnectedSessions() });
+  }
+
   if (url.pathname === "/api/logs") {
     const limit = parseInt(url.searchParams.get("limit") ?? "100");
     const level = url.searchParams.get("level") ?? undefined;
-    return json(res, { logs: getLogs(limit, { level }), stats: getStats() });
+    return json(res, { logs: getLogs(limit, { level }), stats: getStats(), sessions: getConnectedSessions() });
   }
 
   if (url.pathname === "/admin") {
@@ -271,6 +291,21 @@ body{font-family:Inter,-apple-system,sans-serif;background:#FAFAFA;color:#1a1a2e
 .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
 .status-dot.on{background:#39A06F}.status-dot.off{background:#E04F5F}
 
+/* Connected Users */
+.users-section{padding:0 24px;margin-top:4px}
+.users-grid{display:flex;flex-direction:column;gap:8px}
+.user-card{background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,0.05);border-left:3px solid #39A06F;transition:all 0.15s}
+.user-card.expired{border-left-color:#E04F5F;opacity:0.6}
+.user-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#FC8019,#FF6B35);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:16px;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-primary{font-size:14px;font-weight:600;color:#1a1a2e;display:flex;align-items:center;gap:6px}
+.user-phone{font-family:'SF Mono',Consolas,monospace;letter-spacing:0.5px}
+.user-meta{font-size:11px;color:#888;margin-top:2px;display:flex;gap:12px;flex-wrap:wrap}
+.user-badge{padding:2px 8px;border-radius:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+.user-badge.active{background:#E8F5EE;color:#2D8B57}
+.user-badge.expired-badge{background:#FDEAEC;color:#C93545}
+.no-users{text-align:center;padding:24px;color:#bbb;font-size:13px}
+
 /* Stats Grid */
 .section-title{font-size:13px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px;padding:20px 24px 8px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 24px}
@@ -338,11 +373,14 @@ body{font-family:Inter,-apple-system,sans-serif;background:#FAFAFA;color:#1a1a2e
     <div class="auth-icon">&#x1F511;</div>
     <div class="auth-info">
       <h3>Swiggy OAuth 2.1 (PKCE)</h3>
-      <p><span class="status-dot off" id="status-dot"></span><span id="auth-text">Not connected</span></p>
+      <p><span class="status-dot off" id="status-dot"></span><span id="auth-text">Not connected</span> &middot; <span id="user-count">0</span> session(s)</p>
     </div>
   </div>
   <a href="/auth/start" class="auth-btn">Connect Account</a>
 </div>
+
+<div class="section-title">Connected Users</div>
+<div class="users-section" id="users"></div>
 
 <div class="section-title">Performance Overview</div>
 <div class="stats" id="stats"></div>
@@ -366,6 +404,25 @@ body{font-family:Inter,-apple-system,sans-serif;background:#FAFAFA;color:#1a1a2e
 var currentFilter = 'all';
 var toolColors = ['#FC8019','#6B4EFF','#39A06F','#E04F5F','#F5A623','#3B82F6','#EC4899','#14B8A6'];
 
+function getTimeAgo(d) {
+  var diff = Date.now() - d.getTime();
+  var mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  var days = Math.floor(hrs / 24);
+  return days + 'd ago';
+}
+function getTimeUntil(ts) {
+  var diff = ts - Date.now();
+  if (diff <= 0) return 'expired';
+  var hrs = Math.floor(diff / 3600000);
+  if (hrs < 24) return hrs + 'h';
+  var days = Math.floor(hrs / 24);
+  return days + 'd ' + (hrs % 24) + 'h';
+}
+
 function loadLogs() {
   var url = '/api/logs?limit=200' + (currentFilter !== 'all' ? '&level=' + currentFilter : '');
   fetch(url).then(function(r){return r.json()}).then(function(data) {
@@ -380,6 +437,54 @@ function loadLogs() {
         txt.textContent = 'Not connected — click Connect Account';
       }
     });
+
+    // Render connected users
+    var sessions = data.sessions || [];
+    var ucEl = document.getElementById('user-count');
+    if (ucEl) ucEl.textContent = sessions.length;
+    var usersEl = document.getElementById('users');
+    if (usersEl) {
+      if (sessions.length === 0) {
+        usersEl.innerHTML = '<div class="users-grid"><div class="no-users">No users connected yet. Share the app to get connections.</div></div>';
+      } else {
+        var uhtml = '<div class="users-grid">';
+        for (var ui = 0; ui < sessions.length; ui++) {
+          var u = sessions[ui];
+          var now = Date.now();
+          var isExpired = now >= u.expiresAt;
+          var label = u.phone || u.name || u.userId || u.ip || 'Unknown';
+          var maskedLabel = label;
+          if (u.phone && u.phone.length >= 10) {
+            maskedLabel = u.phone.slice(0, 3) + '****' + u.phone.slice(-3);
+          }
+          var avatar = label.charAt(0).toUpperCase();
+          var connTime = new Date(u.connectedAt);
+          var timeAgo = getTimeAgo(connTime);
+          var expiresIn = isExpired ? 'Expired' : getTimeUntil(u.expiresAt);
+          uhtml += '<div class="user-card' + (isExpired ? ' expired' : '') + '">';
+          uhtml += '<div class="user-avatar">' + avatar + '</div>';
+          uhtml += '<div class="user-info">';
+          uhtml += '<div class="user-primary">';
+          if (u.phone) {
+            uhtml += '<span class="user-phone">' + maskedLabel + '</span>';
+          } else if (u.name) {
+            uhtml += '<span>' + u.name + '</span>';
+          } else {
+            uhtml += '<span>' + (u.userId || u.ip || 'User') + '</span>';
+          }
+          uhtml += ' <span class="user-badge ' + (isExpired ? 'expired-badge' : 'active') + '">' + (isExpired ? 'Expired' : 'Active') + '</span>';
+          uhtml += '</div>';
+          uhtml += '<div class="user-meta">';
+          uhtml += '<span>Connected ' + timeAgo + '</span>';
+          uhtml += '<span>' + (isExpired ? 'Token expired' : 'Expires in ' + expiresIn) + '</span>';
+          if (u.ip && u.ip !== 'unknown') uhtml += '<span>IP: ' + u.ip + '</span>';
+          uhtml += '</div>';
+          uhtml += '</div></div>';
+        }
+        uhtml += '</div>';
+        usersEl.innerHTML = uhtml;
+      }
+    }
 
     var s = data.stats;
     document.getElementById('stats').innerHTML =

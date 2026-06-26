@@ -23,6 +23,29 @@ export interface TokenState {
   scope: string;
 }
 
+export interface ConnectedUser {
+  phone?: string;
+  name?: string;
+  userId?: string;
+  connectedAt: string; // ISO timestamp
+  expiresAt: number;
+  scope: string;
+  ip?: string;
+}
+
+// All sessions that ever connected (in-memory, max 50)
+const connectedSessions: ConnectedUser[] = [];
+const MAX_SESSIONS = 50;
+
+export function addConnectedSession(session: ConnectedUser): void {
+  connectedSessions.push(session);
+  if (connectedSessions.length > MAX_SESSIONS) connectedSessions.shift();
+}
+
+export function getConnectedSessions(): ConnectedUser[] {
+  return [...connectedSessions].reverse(); // newest first
+}
+
 export function generateCodeVerifier(): string {
   return crypto.randomBytes(32).toString("base64url");
 }
@@ -114,6 +137,66 @@ export async function exchangeCode(
     expiresAt: Date.now() + data.expires_in * 1000 - 60_000, // 60s safety buffer
     scope: data.scope ?? "mcp:tools",
   };
+}
+
+/**
+ * Fetch user profile from MCP after successful auth.
+ * Falls back gracefully if the endpoint is unavailable.
+ */
+export async function fetchUserProfile(accessToken: string): Promise<{ phone?: string; name?: string; userId?: string }> {
+  try {
+    // Try MCP userinfo endpoint
+    const res = await fetch(`${MCP_BASE}/auth/userinfo`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        phone: data.phone || data.mobile || data.phone_number,
+        name: data.name || data.display_name,
+        userId: data.user_id || data.sub || data.id,
+      };
+    }
+  } catch {
+    // userinfo endpoint may not exist — that's fine
+  }
+
+  // Try calling an MCP tool that might return user context
+  try {
+    const res = await fetch(`${MCP_BASE}/food/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "profile-check",
+        method: "tools/call",
+        params: { name: "get_user_profile", arguments: {} },
+      }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const content = data?.result?.content?.[0]?.text;
+      if (content) {
+        try {
+          const profile = JSON.parse(content);
+          return {
+            phone: profile.phone || profile.mobile,
+            name: profile.name || profile.display_name,
+            userId: profile.user_id || profile.id,
+          };
+        } catch { /* not JSON */ }
+      }
+    }
+  } catch {
+    // tool may not exist — that's fine
+  }
+
+  return {};
 }
 
 /**
