@@ -27,17 +27,36 @@
     <div class="screen active" id="screen-onboarding">
       <div class="landing-scroll">
 
-        <!-- Hero -->
+        <!-- Hero — fits in first viewport with CTAs visible -->
         <div class="land-hero">
           <div class="land-hero-bg"></div>
           <div class="land-hero-content">
-            <div class="land-hero-badge"><span class="land-badge-dot"></span> Built on Swiggy MCP</div>
-            <img src="assets/swiggy-logo.webp" width="64" height="64" alt="Swiggy" class="land-logo">
-            <h1 class="land-title">Swiggy <span>Prism</span></h1>
-            <p class="land-tagline">Stop deciding. Start eating.</p>
-            <p class="land-sub">See a recipe online? Craving something? Prism instantly tells you the smartest way to eat&mdash;cook, order, or dine out&mdash;optimized for budget, time &amp; health.</p>
+            <div class="land-hero-top">
+              <svg viewBox="0 0 40 40" width="44" height="44" class="land-prism-icon"><polygon points="20,4 36,34 4,34" fill="none" stroke="white" stroke-width="2.5"/><circle cx="14" cy="20" r="2.5" fill="white"/><circle cx="24" cy="23" r="2.5" fill="white"/></svg>
+              <h1 class="land-title">Swiggy Prism</h1>
+              <p class="land-tagline">Should you cook it, order it, or dine out?</p>
+            </div>
+
+            <div class="land-hero-cards">
+              <div class="land-hero-card"><span>🍳</span><div><strong>Cook at Home</strong><span>Instamart cart, budget-optimized</span></div></div>
+              <div class="land-hero-card"><span>🛵</span><div><strong>Order Delivery</strong><span>Best restaurant, coupon applied</span></div></div>
+              <div class="land-hero-card"><span>🍽️</span><div><strong>Dine Out</strong><span>Book a table, free reservations</span></div></div>
+            </div>
+
+            <div class="land-hero-cta">
+              <button class="land-btn-primary" onclick="startWithSwiggy()">
+                <img src="assets/swiggy-logo.webp" width="22" height="22" alt="" style="border-radius:5px">
+                Connect with Swiggy
+              </button>
+              <button class="land-btn-secondary" onclick="startWithMock()">
+                Explore with Demo Data
+              </button>
+              <p class="land-hero-note">OAuth 2.1 PKCE &middot; No passwords stored</p>
+            </div>
+
             <div class="land-scroll-hint">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+              <span>Learn more</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
             </div>
           </div>
         </div>
@@ -144,11 +163,10 @@
           </div>
         </div>
 
-        <!-- CTA -->
+        <!-- Bottom CTA -->
         <div class="land-section land-cta">
           <div class="land-cta-glow"></div>
           <h2 class="land-cta-title">Ready to eat smarter?</h2>
-          <p class="land-cta-sub">Connect your Swiggy account for live data, or explore with demo data first.</p>
           <button class="land-btn-primary" onclick="startWithSwiggy()">
             <img src="assets/swiggy-logo.webp" width="22" height="22" alt="" style="border-radius:5px">
             Connect with Swiggy
@@ -156,7 +174,6 @@
           <button class="land-btn-secondary" onclick="startWithMock()">
             Explore with Demo Data
           </button>
-          <p class="land-cta-note">OAuth 2.1 PKCE — no passwords stored. You can connect anytime from the app.</p>
         </div>
 
       </div>
