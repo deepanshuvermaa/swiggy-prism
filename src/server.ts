@@ -92,7 +92,7 @@ const server = createServer(async (req, res) => {
       getAuthManager().setToken(token);
       log({ level: "info", event: "auth_success", status: "auth", details: `Token expires in ${Math.round((token.expiresAt - Date.now()) / 3600000)}h` });
       res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prism — Connected</title><style>*{margin:0;font-family:Inter,-apple-system,sans-serif}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FFF3E8}.card{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.1);max-width:360px}.icon{font-size:48px;margin-bottom:12px}.title{font-size:22px;font-weight:700;color:#333;margin-bottom:8px}.sub{font-size:14px;color:#666;line-height:1.5}.badge{display:inline-block;margin-top:16px;padding:8px 20px;background:#FC8019;color:white;border-radius:10px;font-weight:600;font-size:14px}</style></head><body><div class="card"><div class="icon">&#x2705;</div><div class="title">Connected to Swiggy</div><div class="sub">Prism is now linked to your Swiggy account.<br>All 35 MCP tools are active.</div><div class="badge">Food &middot; Instamart &middot; Dineout</div></div></body></html>`);
+      res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prism — Connected</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;font-family:Inter,-apple-system,sans-serif}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FFF3E8}.card{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.1);max-width:380px}.icon{font-size:48px;margin-bottom:12px}.title{font-size:22px;font-weight:700;color:#333;margin-bottom:8px}.sub{font-size:14px;color:#666;line-height:1.5}.badge{display:inline-block;margin-top:16px;padding:8px 20px;background:#FC8019;color:white;border-radius:10px;font-weight:600;font-size:14px}.links{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.link{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s}.link-primary{background:#FC8019;color:white}.link-primary:hover{background:#E5710F}.link-secondary{background:#f5f5f5;color:#333}.link-secondary:hover{background:#e8e8e8}.countdown{margin-top:12px;font-size:12px;color:#999}</style></head><body><div class="card"><div class="icon">&#x2705;</div><div class="title">Connected to Swiggy</div><div class="sub">Prism is now linked to your Swiggy account.<br>All 35 MCP tools are active.</div><div class="badge">Food &middot; Instamart &middot; Dineout</div><div class="links"><a href="/" class="link link-primary">Open Prism</a><a href="/admin" class="link link-secondary">Admin Dashboard</a></div><div class="countdown" id="cd">Redirecting to Prism in 5s...</div></div><script>var s=5;var el=document.getElementById('cd');var t=setInterval(function(){s--;if(s<=0){clearInterval(t);window.location.href='/';}else{el.textContent='Redirecting to Prism in '+s+'s...';}},1000);</script></body></html>`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       log({ level: "error", event: "auth_failed", status: "error", details: msg });
@@ -245,108 +245,216 @@ function readBody(req: any): Promise<string> {
 const ADMIN_HTML = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prism Admin — Production Logs</title>
+<title>Swiggy Prism — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;box-sizing:border-box}
-body{font-family:Inter,-apple-system,sans-serif;background:#f5f5f5;color:#333}
-.header{background:linear-gradient(135deg,#FC8019,#FF6B35);color:white;padding:20px 24px}
-.header h1{font-size:20px;font-weight:700}.header p{font-size:12px;opacity:0.8;margin-top:4px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px 24px}
-.stat-card{background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
-.stat-value{font-size:28px;font-weight:800;color:#FC8019}.stat-label{font-size:11px;color:#666;margin-top:4px}
-.controls{padding:8px 24px;display:flex;gap:8px;flex-wrap:wrap}
-.ctrl-btn{padding:6px 14px;border:1px solid #ddd;border-radius:8px;background:white;font-size:12px;cursor:pointer;font-family:inherit}
+body{font-family:Inter,-apple-system,sans-serif;background:#FAFAFA;color:#1a1a2e;min-height:100vh}
+
+/* Header */
+.header{background:linear-gradient(135deg,#FC8019 0%,#FF6B35 50%,#E5710F 100%);color:white;padding:28px 32px 20px;position:relative;overflow:hidden}
+.header::after{content:'';position:absolute;top:-40%;right:-10%;width:300px;height:300px;background:rgba(255,255,255,0.06);border-radius:50%}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.header h1{font-size:24px;font-weight:800;letter-spacing:-0.3px}
+.header-sub{font-size:13px;opacity:0.85;margin-top:4px;font-weight:400}
+.header-badge{background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;backdrop-filter:blur(4px)}
+.header-servers{display:flex;gap:8px;margin-top:14px;position:relative;z-index:1}
+.server-chip{background:rgba(255,255,255,0.15);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;backdrop-filter:blur(4px)}
+
+/* Auth Section */
+.auth-bar{background:white;margin:16px 24px;border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.auth-left{display:flex;align-items:center;gap:12px}
+.auth-icon{width:40px;height:40px;border-radius:10px;background:#FFF3E8;display:flex;align-items:center;justify-content:center;font-size:20px}
+.auth-info h3{font-size:14px;font-weight:600;color:#1a1a2e}.auth-info p{font-size:11px;color:#666;margin-top:1px}
+.auth-btn{padding:10px 20px;background:#FC8019;color:white;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;transition:all 0.2s}
+.auth-btn:hover{background:#E5710F;transform:translateY(-1px);box-shadow:0 4px 12px rgba(252,128,25,0.3)}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.status-dot.on{background:#39A06F}.status-dot.off{background:#E04F5F}
+
+/* Stats Grid */
+.section-title{font-size:13px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px;padding:20px 24px 8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 24px}
+.stat-card{background:white;border-radius:14px;padding:18px 14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.05);transition:transform 0.15s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+.stat-icon{font-size:20px;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:800;color:#FC8019;line-height:1}
+.stat-label{font-size:10px;color:#888;margin-top:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+
+/* Tool Breakdown */
+.breakdown{padding:0 24px;margin-top:4px}
+.breakdown-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:#f0f0f0;margin-top:8px}
+.breakdown-seg{height:100%;transition:width 0.5s}
+.breakdown-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#666}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+
+/* Controls */
+.controls{padding:16px 24px 8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ctrl-btn{padding:7px 16px;border:1.5px solid #e8e8e8;border-radius:20px;background:white;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.15s;color:#555}
 .ctrl-btn:hover{border-color:#FC8019;color:#FC8019}.ctrl-btn.active{background:#FC8019;color:white;border-color:#FC8019}
-.logs{padding:0 24px 24px;margin-top:8px}
-.log-entry{background:white;border-radius:10px;padding:12px 16px;margin-bottom:6px;font-size:12px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
-.log-time{color:#999;white-space:nowrap;flex-shrink:0;font-family:monospace;font-size:11px}
-.log-badge{padding:2px 8px;border-radius:6px;font-weight:600;font-size:10px;flex-shrink:0;text-transform:uppercase}
-.log-badge.info{background:#E8F5EE;color:#39A06F}.log-badge.warn{background:#FFF3E8;color:#FC8019}.log-badge.error{background:#FDEAEC;color:#E04F5F}
-.log-body{flex:1;line-height:1.4}.log-event{font-weight:600;color:#333}.log-detail{color:#666;margin-top:2px}
-.log-tool{background:#f0f0f0;padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11px}
-.log-sid{color:#999;font-family:monospace;font-size:10px}
-.empty{text-align:center;padding:40px;color:#999}
-.auth-section{padding:16px 24px}
-.auth-btn{display:inline-block;padding:10px 24px;background:#FC8019;color:white;border-radius:10px;font-weight:600;text-decoration:none;font-size:14px}
-.auth-btn:hover{background:#E5710F}
-.auth-status{display:inline-block;padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;margin-left:12px}
-.auth-status.ok{background:#E8F5EE;color:#39A06F}.auth-status.no{background:#FDEAEC;color:#E04F5F}
-.export-btn{padding:8px 16px;background:#333;color:white;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit}
+.ctrl-spacer{flex:1}
+.export-btn{padding:7px 16px;background:#1a1a2e;color:white;border:none;border-radius:20px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.export-btn:hover{background:#333;transform:translateY(-1px)}
+
+/* Logs */
+.logs{padding:0 24px 32px;margin-top:4px}
+.log-entry{background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;box-shadow:0 1px 3px rgba(0,0,0,0.04);border-left:3px solid transparent;transition:all 0.15s}
+.log-entry:hover{box-shadow:0 3px 12px rgba(0,0,0,0.08);transform:translateX(2px)}
+.log-entry.info{border-left-color:#39A06F}.log-entry.warn{border-left-color:#F5A623}.log-entry.error{border-left-color:#E04F5F}
+.log-time{color:#aaa;white-space:nowrap;flex-shrink:0;font-family:'SF Mono',Consolas,monospace;font-size:10px;padding-top:2px}
+.log-badge{padding:2px 8px;border-radius:6px;font-weight:700;font-size:9px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.5px}
+.log-badge.info{background:#E8F5EE;color:#2D8B57}.log-badge.warn{background:#FFF3E8;color:#D4860B}.log-badge.error{background:#FDEAEC;color:#C93545}
+.log-body{flex:1;min-width:0}.log-event{font-weight:600;color:#1a1a2e;font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.log-tool{background:#F0EEFF;color:#6B4EFF;padding:2px 8px;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:10px;font-weight:600}
+.log-duration{color:#aaa;font-size:11px;font-family:monospace}
+.log-detail{color:#666;margin-top:3px;font-size:12px;line-height:1.4}
+.log-sid{color:#bbb;font-family:monospace;font-size:9px;margin-top:2px}
+.empty{text-align:center;padding:48px 24px;color:#999}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:0.4}.empty p{font-size:14px}
+
+/* Live indicator */
+.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#39A06F;margin-right:6px;animation:livePulse 2s infinite}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.3}}
 </style>
 </head><body>
+
 <div class="header">
-  <h1>Swiggy Prism — Production Dashboard</h1>
-  <p>Activity logs for Swiggy Builders Club submission</p>
+  <div class="header-row">
+    <div>
+      <h1>Swiggy Prism</h1>
+      <div class="header-sub">Production Dashboard &mdash; Builders Club Integration</div>
+    </div>
+    <div class="header-badge"><span class="live-dot"></span>Live</div>
+  </div>
+  <div class="header-servers">
+    <span class="server-chip">Food (14 tools)</span>
+    <span class="server-chip">Instamart (13 tools)</span>
+    <span class="server-chip">Dineout (8 tools)</span>
+  </div>
 </div>
-<div class="auth-section">
-  <a href="/auth/start" class="auth-btn">Connect Swiggy Account</a>
-  <span id="auth-status" class="auth-status no">Not Connected</span>
+
+<div class="auth-bar">
+  <div class="auth-left">
+    <div class="auth-icon">&#x1F511;</div>
+    <div class="auth-info">
+      <h3>Swiggy OAuth 2.1 (PKCE)</h3>
+      <p><span class="status-dot off" id="status-dot"></span><span id="auth-text">Not connected</span></p>
+    </div>
+  </div>
+  <a href="/auth/start" class="auth-btn">Connect Account</a>
 </div>
+
+<div class="section-title">Performance Overview</div>
 <div class="stats" id="stats"></div>
+
+<div class="section-title">MCP Tool Usage</div>
+<div class="breakdown" id="breakdown"></div>
+
 <div class="controls">
-  <button class="ctrl-btn active" onclick="filterLogs('all')">All</button>
+  <button class="ctrl-btn active" onclick="filterLogs('all')">All Events</button>
   <button class="ctrl-btn" onclick="filterLogs('info')">Info</button>
   <button class="ctrl-btn" onclick="filterLogs('warn')">Warnings</button>
   <button class="ctrl-btn" onclick="filterLogs('error')">Errors</button>
-  <button class="export-btn" onclick="exportLogs()">Export as JSON</button>
+  <div class="ctrl-spacer"></div>
+  <button class="export-btn" onclick="exportLogs()">&#x2B73; Export JSON</button>
 </div>
+
+<div class="section-title">Activity Log <span style="font-weight:400;text-transform:none;font-size:11px;color:#bbb">(auto-refreshes every 5s)</span></div>
 <div class="logs" id="logs"></div>
+
 <script>
 var currentFilter = 'all';
+var toolColors = ['#FC8019','#6B4EFF','#39A06F','#E04F5F','#F5A623','#3B82F6','#EC4899','#14B8A6'];
+
 function loadLogs() {
   var url = '/api/logs?limit=200' + (currentFilter !== 'all' ? '&level=' + currentFilter : '');
-  fetch(url).then(r=>r.json()).then(function(data) {
-    // Auth status
-    fetch('/api/health').then(r=>r.json()).then(function(h) {
-      var el = document.getElementById('auth-status');
-      if (h.authenticated) { el.textContent = 'Connected'; el.className = 'auth-status ok'; }
-      else { el.textContent = 'Not Connected'; el.className = 'auth-status no'; }
+  fetch(url).then(function(r){return r.json()}).then(function(data) {
+    fetch('/api/health').then(function(r){return r.json()}).then(function(h) {
+      var dot = document.getElementById('status-dot');
+      var txt = document.getElementById('auth-text');
+      if (h.authenticated) {
+        dot.className = 'status-dot on';
+        txt.textContent = h.mcpMode === 'live' ? 'Connected to mcp.swiggy.com' : 'Connected (mock mode)';
+      } else {
+        dot.className = 'status-dot off';
+        txt.textContent = 'Not connected — click Connect Account';
+      }
     });
-    // Stats
+
     var s = data.stats;
     document.getElementById('stats').innerHTML =
-      '<div class="stat-card"><div class="stat-value">' + s.total + '</div><div class="stat-label">Total Events</div></div>' +
-      '<div class="stat-card"><div class="stat-value">' + s.toolCalls + '</div><div class="stat-label">Tool Calls</div></div>' +
-      '<div class="stat-card"><div class="stat-value">' + s.errors + '</div><div class="stat-label">Errors</div></div>' +
-      '<div class="stat-card"><div class="stat-value">' + s.avgLatencyMs + 'ms</div><div class="stat-label">Avg Latency</div></div>' +
-      '<div class="stat-card"><div class="stat-value">' + s.errorRate + '</div><div class="stat-label">Error Rate</div></div>' +
-      '<div class="stat-card"><div class="stat-value">' + s.authEvents + '</div><div class="stat-label">Auth Events</div></div>';
-    // Logs
+      '<div class="stat-card"><div class="stat-icon">&#x1F4CA;</div><div class="stat-value">' + s.total + '</div><div class="stat-label">Total Events</div></div>' +
+      '<div class="stat-card"><div class="stat-icon">&#x1F527;</div><div class="stat-value">' + s.toolCalls + '</div><div class="stat-label">MCP Tool Calls</div></div>' +
+      '<div class="stat-card"><div class="stat-icon">&#x26A0;</div><div class="stat-value">' + s.errors + '</div><div class="stat-label">Errors</div></div>' +
+      '<div class="stat-card"><div class="stat-icon">&#x23F1;</div><div class="stat-value">' + s.avgLatencyMs + '<small style="font-size:12px">ms</small></div><div class="stat-label">Avg Latency</div></div>' +
+      '<div class="stat-card"><div class="stat-icon">&#x2705;</div><div class="stat-value">' + s.errorRate + '</div><div class="stat-label">Error Rate</div></div>' +
+      '<div class="stat-card"><div class="stat-icon">&#x1F512;</div><div class="stat-value">' + s.authEvents + '</div><div class="stat-label">Auth Events</div></div>';
+
+    // Tool breakdown bar
+    var bd = data.stats.toolBreakdown || {};
+    var keys = Object.keys(bd);
+    var total = keys.reduce(function(s,k){return s+bd[k]},0);
+    if (total > 0) {
+      var barHtml = '<div class="breakdown-bar">';
+      var legendHtml = '<div class="breakdown-legend">';
+      for (var ti=0;ti<keys.length;ti++) {
+        var pct = (bd[keys[ti]]/total*100).toFixed(1);
+        var c = toolColors[ti%toolColors.length];
+        barHtml += '<div class="breakdown-seg" style="width:'+pct+'%;background:'+c+'"></div>';
+        legendHtml += '<div class="legend-item"><span class="legend-dot" style="background:'+c+'"></span>'+keys[ti]+' ('+bd[keys[ti]]+')</div>';
+      }
+      barHtml += '</div>';
+      legendHtml += '</div>';
+      document.getElementById('breakdown').innerHTML = barHtml + legendHtml;
+    } else {
+      document.getElementById('breakdown').innerHTML = '<div style="font-size:12px;color:#bbb;padding:8px 0">No tool calls recorded yet</div>';
+    }
+
     var logs = data.logs;
-    if (logs.length === 0) { document.getElementById('logs').innerHTML = '<div class="empty">No logs yet. Make some requests!</div>'; return; }
+    if (logs.length === 0) {
+      document.getElementById('logs').innerHTML = '<div class="empty"><div class="empty-icon">&#x1F4ED;</div><p>No activity recorded yet</p><p style="font-size:12px;margin-top:4px;color:#bbb">Start using Prism to see logs here</p></div>';
+      return;
+    }
     var html = '';
     for (var i = 0; i < logs.length; i++) {
       var l = logs[i];
-      var time = new Date(l.ts).toLocaleTimeString();
-      html += '<div class="log-entry">';
+      var d = new Date(l.ts);
+      var time = d.toLocaleTimeString() + '.' + String(d.getMilliseconds()).padStart(3,'0');
+      html += '<div class="log-entry ' + l.level + '">';
       html += '<span class="log-time">' + time + '</span>';
       html += '<span class="log-badge ' + l.level + '">' + l.level + '</span>';
       html += '<div class="log-body"><div class="log-event">' + l.event;
       if (l.tool) html += ' <span class="log-tool">' + l.tool + '</span>';
-      if (l.durationMs) html += ' <span style="color:#999">' + l.durationMs + 'ms</span>';
+      if (l.durationMs) html += ' <span class="log-duration">' + l.durationMs + 'ms</span>';
       html += '</div>';
       if (l.details) html += '<div class="log-detail">' + l.details + '</div>';
-      if (l.sessionId) html += '<div class="log-sid">session: ' + l.sessionId + '</div>';
+      if (l.sessionId) html += '<div class="log-sid">Session: ' + l.sessionId + '</div>';
       html += '</div></div>';
     }
     document.getElementById('logs').innerHTML = html;
   });
 }
+
 function filterLogs(level) {
   currentFilter = level;
   document.querySelectorAll('.ctrl-btn').forEach(function(b){b.classList.remove('active')});
   event.target.classList.add('active');
   loadLogs();
 }
+
 function exportLogs() {
-  fetch('/api/logs?limit=500').then(r=>r.json()).then(function(data) {
+  fetch('/api/logs?limit=500').then(function(r){return r.json()}).then(function(data) {
+    data.exportedAt = new Date().toISOString();
+    data.integration = 'Swiggy Prism — Builders Club';
+    data.developer = 'Deepanshu Verma <deepanshuverma966@gmail.com>';
     var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'prism-logs-' + new Date().toISOString().split('T')[0] + '.json';
+    a.download = 'swiggy-prism-logs-' + new Date().toISOString().split('T')[0] + '.json';
     a.click();
   });
 }
+
 loadLogs();
 setInterval(loadLogs, 5000);
 </script>
