@@ -2,10 +2,19 @@ const API = window.location.origin;
 let serverAvailable = null; // null = unknown, true/false after check
 let swiggyConnected = false;
 
+// Detect if running on GitHub Pages (static) vs local server
+function isStaticDeploy() {
+  var host = window.location.hostname;
+  return host.includes('github.io') || host.includes('netlify') || host.includes('vercel');
+}
+
 // ─── Onboarding ──────────────────────────────────────────────────────────────
 
 function startWithSwiggy() {
-  // Redirect to OAuth flow — will come back after auth
+  if (isStaticDeploy()) {
+    showConnectOverlay();
+    return;
+  }
   window.location.href = '/auth/start';
 }
 
@@ -20,11 +29,37 @@ function startWithMock() {
 
 function connectSwiggyFromApp() {
   if (swiggyConnected) {
-    // Already connected — show status
     alert('Connected to Swiggy! All 35 MCP tools active.');
     return;
   }
+  if (isStaticDeploy()) {
+    showConnectOverlay();
+    return;
+  }
   window.location.href = '/auth/start';
+}
+
+function showConnectOverlay() {
+  // Remove existing overlay if any
+  var existing = document.getElementById('connect-overlay');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'connect-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn 0.3s';
+  overlay.innerHTML = '<div style="background:white;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:successPop 0.4s ease">'
+    + '<div style="font-size:36px;margin-bottom:12px">🔌</div>'
+    + '<h2 style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:8px">Live Server Required</h2>'
+    + '<p style="font-size:13px;color:#666;line-height:1.6;margin-bottom:20px">Connecting to Swiggy requires the Prism backend server running locally. This demo runs on GitHub Pages (static).</p>'
+    + '<div style="background:#F5F5F5;border-radius:12px;padding:14px;text-align:left;margin-bottom:20px">'
+    + '<p style="font-size:11px;color:#999;margin-bottom:6px;font-weight:600">TO CONNECT FOR REAL:</p>'
+    + '<code style="font-size:12px;color:#1a1a2e;font-family:monospace;line-height:1.8;display:block">git clone the repo<br>npm install<br>npm run dev<br>Open localhost:3000</code>'
+    + '</div>'
+    + '<button onclick="this.closest(\'#connect-overlay\').remove();startWithMock()" style="width:100%;padding:14px;background:#FC8019;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">Continue with Demo Data</button>'
+    + '<button onclick="this.closest(\'#connect-overlay\').remove()" style="width:100%;padding:12px;background:none;border:1.5px solid #e8e8e8;border-radius:12px;font-size:13px;color:#666;cursor:pointer;font-family:inherit">Close</button>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
 }
 
 function updateConnectButton(connected) {
@@ -52,7 +87,7 @@ function updateConnectButton(connected) {
   // If URL has auth callback params, user just authenticated
   if (window.location.search.includes('code=')) {
     localStorage.setItem('prism_onboarded', 'live');
-    return; // let the server handle the callback
+    if (!isStaticDeploy()) return; // let the server handle the callback
   }
   if (onboarded) {
     // Skip onboarding, go straight to app
@@ -61,13 +96,15 @@ function updateConnectButton(connected) {
       if (onboarded === 'live') updateConnectButton(true);
     }, 50);
   }
-  // Check server auth status
-  fetch('/api/health').then(function(r) { return r.json(); }).then(function(h) {
-    if (h.authenticated && h.mcpMode === 'live') {
-      updateConnectButton(true);
-      localStorage.setItem('prism_onboarded', 'live');
-    }
-  }).catch(function() { /* offline / static deploy — ignore */ });
+  // Check server auth status — only if server is expected
+  if (!isStaticDeploy()) {
+    fetch('/api/health').then(function(r) { return r.json(); }).then(function(h) {
+      if (h.authenticated && h.mcpMode === 'live') {
+        updateConnectButton(true);
+        localStorage.setItem('prism_onboarded', 'live');
+      }
+    }).catch(function() { /* server unavailable — ignore */ });
+  }
 })();
 
 async function checkServer() {
