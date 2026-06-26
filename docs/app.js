@@ -248,6 +248,12 @@ function navigateTo(id) {
   if (id === "screen-summary" && currentCart) renderSummary(currentCart);
   if (id === "screen-prism-hub") renderPrismHub();
   if (id === "screen-instamart" && userPersona) applyPersona();
+  if (id === "screen-food-xray") renderFoodXRay();
+  if (id === "screen-smart-search") {
+    var persona = PERSONA_CONFIG[userPersona || "balanced"];
+    var emojiEl = document.getElementById("smart-search-persona-emoji");
+    if (emojiEl && persona) emojiEl.textContent = persona.emoji;
+  }
 }
 
 function renderPrismHub() {
@@ -302,11 +308,19 @@ function showShareSheet() {
 function captureFromShare() {
   document.getElementById("share-sheet").classList.remove("visible");
 
-  const bannerText = document.querySelector(".prism-banner-text span");
-  if (currentPlatform === "instagram") {
-    bannerText.textContent = "Paneer Tikka from Instagram — Tap to build your cart";
-  } else {
-    bannerText.textContent = "Butter Chicken from YouTube — Tap to build your cart";
+  // Show the recipe banner on Instamart home
+  var banner = document.getElementById("prism-recipe-banner");
+  var bannerTitle = document.getElementById("banner-recipe-title");
+  var bannerSub = document.getElementById("banner-recipe-sub");
+  if (banner) {
+    banner.style.display = "";
+    if (currentPlatform === "instagram") {
+      bannerTitle.textContent = "Prism found a recipe!";
+      bannerSub.textContent = "Paneer Tikka from Instagram — Tap to build your cart";
+    } else {
+      bannerTitle.textContent = "Prism found a recipe!";
+      bannerSub.textContent = "Butter Chicken from YouTube — Tap to build your cart";
+    }
   }
 
   // show persona onboarding if first time, otherwise go straight to instamart
@@ -647,4 +661,527 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // apply saved persona on load
   if (userPersona) applyPersona();
+
+  // Smart search enter key
+  var smartInput = document.getElementById('smart-search-input');
+  if (smartInput) smartInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') submitSmartSearch(); });
 });
+
+// ─── Decision Engine UI ──────────────────────────────────────────────────────────
+
+var currentDecision = null;
+
+function submitSmartSearch() {
+  var input = document.getElementById('smart-search-input');
+  var text = input ? input.value.trim() : '';
+  if (!text) return;
+  runDecisionPipeline(text);
+}
+
+function quickDecision(text) {
+  // Set input value for context
+  var input = document.getElementById('smart-search-input');
+  if (input) input.value = text;
+  // Make sure we're on the smart search screen
+  if (!document.getElementById('screen-smart-search').classList.contains('active')) {
+    navigateTo('screen-smart-search');
+  }
+  runDecisionPipeline(text);
+}
+
+function runDecisionPipeline(text) {
+  var persona = userPersona || 'balanced';
+  var intent = window.PrismEngine.parseIntent(text);
+  var result = window.PrismEngine.decide(intent, persona);
+  currentDecision = result;
+
+  // Hide suggestions, show inline results
+  var suggestions = document.getElementById('initial-suggestions');
+  if (suggestions) suggestions.style.display = 'none';
+
+  renderInlineResults(result);
+}
+
+function renderInlineResults(result) {
+  var container = document.getElementById('inline-results');
+  if (!container) return;
+
+  var channelConfig = {
+    instamart: { icon: '🍳', name: 'Cook at Home', color: '#39A06F', accent: 'linear-gradient(135deg,#E8F5EE,#F0FFF4)', tag: 'Instamart', actionLabel: 'Build Cart' },
+    food:      { icon: '🛵', name: 'Order Delivery', color: '#FC8019', accent: 'linear-gradient(135deg,#FFF3E8,#FFFFFF)', tag: 'Swiggy Food', actionLabel: 'Order Now' },
+    dineout:   { icon: '🍽️', name: 'Dine Out', color: '#6B4EFF', accent: 'linear-gradient(135deg,#F0EEFF,#FFFFFF)', tag: 'Dineout', actionLabel: 'Book Table' },
+  };
+
+  var intent = result.intent;
+  var html = '<div class="ir-header">';
+  html += '<div class="ir-query">' + intent.dishName.charAt(0).toUpperCase() + intent.dishName.slice(1) + '</div>';
+  html += '<div class="ir-meta">' + intent.servings + ' servings · ₹' + intent.budget + ' budget</div>';
+  html += '</div>';
+
+  for (var i = 0; i < result.options.length; i++) {
+    var opt = result.options[i];
+    var cfg = channelConfig[opt.channel];
+    var isTop = opt.recommended;
+
+    // Build card details
+    var subtitle = '';
+    var extraInfo = '';
+    if (opt.details.type === 'cook') {
+      subtitle = opt.details.recipeName.charAt(0).toUpperCase() + opt.details.recipeName.slice(1);
+      extraInfo = opt.details.cookTimeMin + ' min cook + ' + opt.details.groceryDeliveryMin + ' min delivery';
+    } else if (opt.details.type === 'order') {
+      subtitle = opt.details.restaurant.name;
+      extraInfo = opt.details.restaurant.rating + '★ · ' + opt.details.restaurant.distanceKm + ' km';
+      if (opt.details.cart.discount > 0) extraInfo += ' · <span style="color:#39A06F">-₹' + opt.details.cart.discount + ' off</span>';
+    } else if (opt.details.type === 'dineout') {
+      subtitle = opt.details.venue.name + ' · ' + opt.details.venue.locality;
+      extraInfo = opt.details.nextSlot.displayTime + ' tonight';
+      if (opt.details.offerText) extraInfo += ' · <span style="color:#39A06F">' + opt.details.offerText + '</span>';
+    }
+
+    html += '<div class="ir-card' + (isTop ? ' ir-top' : '') + '" style="background:' + cfg.accent + ';border-left:3px solid ' + cfg.color + '">';
+    if (isTop) html += '<div class="ir-best-badge" style="background:' + cfg.color + '">BEST MATCH</div>';
+    html += '<div class="ir-card-row">';
+    html += '<div class="ir-card-left">';
+    html += '<div class="ir-card-title"><span class="ir-icon">' + cfg.icon + '</span> ' + cfg.name + '</div>';
+    html += '<div class="ir-subtitle">' + subtitle + '</div>';
+    html += '<div class="ir-extra">' + extraInfo + '</div>';
+    html += '</div>';
+    html += '<div class="ir-card-right">';
+    html += '<div class="ir-price">₹' + opt.cost + '</div>';
+    html += '<div class="ir-time">' + opt.timeMin + ' min</div>';
+    html += '</div></div>';
+    html += '<div class="ir-card-footer">';
+    html += '<div class="ir-health"><span class="ir-health-bar" style="width:' + opt.healthScore + '%;background:' + (opt.healthScore >= 65 ? '#39A06F' : opt.healthScore >= 45 ? '#F5A623' : '#E04F5F') + '"></span><span class="ir-health-label">Health ' + opt.healthScore + '%</span></div>';
+    html += '<button class="ir-action-btn" style="background:' + cfg.color + '" onclick="executeChannel(' + i + ')">' + cfg.actionLabel + '</button>';
+    html += '</div></div>';
+  }
+
+  // Clear/new search link
+  html += '<button class="ir-clear" onclick="clearInlineResults()">← New search</button>';
+
+  container.innerHTML = html;
+  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function clearInlineResults() {
+  var container = document.getElementById('inline-results');
+  if (container) container.innerHTML = '';
+  var suggestions = document.getElementById('initial-suggestions');
+  if (suggestions) suggestions.style.display = '';
+  var input = document.getElementById('smart-search-input');
+  if (input) { input.value = ''; input.focus(); }
+}
+
+function executeChannel(index) {
+  if (!currentDecision || !currentDecision.options[index]) return;
+  var opt = currentDecision.options[index];
+
+  if (opt.details.type === 'cook') {
+    if (opt.details.cart && opt.details.cart.items) {
+      var rawCart = opt.details.cart;
+      currentCart = {
+        budget: rawCart.budget,
+        totalCost: rawCart.totalCost,
+        budgetUtilization: rawCart.budgetUtilization,
+        items: rawCart.items.map(function(i) {
+          return {
+            name: i.sku ? i.sku.name : i.name || '',
+            brand: i.sku ? i.sku.brand : i.brand || '',
+            price: i.sku ? i.sku.price : i.price || 0,
+            count: i.count,
+            totalPrice: i.totalPrice,
+            priority: i.ingredient ? i.ingredient.priority : i.priority || 'essential',
+            ingredient: i.ingredient ? i.ingredient.name : i.name || '',
+            ingredientQty: i.ingredient ? i.ingredient.quantity : 100,
+            ingredientUnit: i.ingredient ? i.ingredient.unit : 'g',
+          };
+        }),
+        droppedItems: rawCart.droppedItems || [],
+        meta: rawCart.meta,
+      };
+      navigateTo('screen-cart');
+    }
+  } else if (opt.details.type === 'order') {
+    showFoodActionSheet(opt.details);
+  } else if (opt.details.type === 'dineout') {
+    showDineoutActionSheet(opt.details);
+  }
+}
+
+// ─── Action Sheet (bottom sheet) ──────────────────────────────────────────────
+
+function openActionSheet(contentHtml) {
+  var sheet = document.getElementById('action-sheet');
+  var content = document.getElementById('action-sheet-content');
+  if (sheet && content) {
+    content.innerHTML = contentHtml;
+    sheet.classList.add('open');
+  }
+}
+
+function closeActionSheet() {
+  var sheet = document.getElementById('action-sheet');
+  if (sheet) sheet.classList.remove('open');
+}
+
+function showFoodActionSheet(details) {
+  var r = details.restaurant;
+  var cart = details.cart;
+  var html = '<div class="as-header" style="background:linear-gradient(135deg,#FF6B35,#FC8019);color:white;padding:16px;border-radius:14px 14px 0 0;margin:-16px -16px 16px">';
+  html += '<div style="font-size:18px;font-weight:700">' + r.name + '</div>';
+  html += '<div style="font-size:13px;opacity:0.9">' + r.rating + '★ · ' + r.cuisine.join(', ') + ' · ' + r.deliveryTimeMin + ' min delivery</div>';
+  html += '</div>';
+
+  html += '<div class="as-items">';
+  for (var i = 0; i < cart.items.length; i++) {
+    var ci = cart.items[i];
+    html += '<div class="as-item-row"><span>' + (ci.menuItem.isVeg ? '🟢' : '🔴') + ' ' + ci.menuItem.name + ' × ' + ci.quantity + '</span><span>₹' + ci.totalPrice + '</span></div>';
+  }
+  html += '</div>';
+
+  html += '<div class="as-totals">';
+  html += '<div class="as-total-row"><span>Subtotal</span><span>₹' + cart.subtotal + '</span></div>';
+  html += '<div class="as-total-row"><span>Delivery</span><span>₹' + cart.deliveryFee + '</span></div>';
+  if (cart.discount > 0) html += '<div class="as-total-row as-discount"><span>Discount' + (cart.appliedCoupon ? ' (' + cart.appliedCoupon.couponCode + ')' : '') + '</span><span>-₹' + cart.discount + '</span></div>';
+  html += '<div class="as-total-row as-final"><span>Total</span><span>₹' + cart.total + '</span></div>';
+  html += '</div>';
+
+  html += '<button class="as-action-btn" style="background:#FC8019" onclick="confirmFoodOrder()">Place Order · ₹' + cart.total + '</button>';
+  html += '<div class="as-note">Cash on delivery · Powered by Swiggy Food</div>';
+
+  currentFoodOrder = details;
+  openActionSheet(html);
+}
+
+function confirmFoodOrder() {
+  closeActionSheet();
+  saveDecisionOrder('food', currentDecision ? currentDecision.intent.dishName : 'Food', currentFoodOrder.cart.total);
+  showOrderOverlay('Order Confirmed!', currentFoodOrder.restaurant.deliveryTimeMin + ' min delivery', 'via Swiggy Food · ' + currentFoodOrder.restaurant.name);
+}
+
+function showDineoutActionSheet(details) {
+  var v = details.venue;
+  var slot = details.nextSlot;
+  var partySize = currentDecision ? currentDecision.intent.servings : 2;
+  var bill = Math.round((v.costForTwo / 2) * partySize);
+  var discPct = slot.deals && slot.deals[0] ? slot.deals[0].discountPercentage : 0;
+  var discount = discPct > 0 ? Math.round(bill * discPct / 100) : 0;
+
+  var html = '<div class="as-header" style="background:linear-gradient(135deg,#6B4EFF,#8B5CF6);color:white;padding:16px;border-radius:14px 14px 0 0;margin:-16px -16px 16px">';
+  html += '<div style="font-size:18px;font-weight:700">' + v.name + '</div>';
+  html += '<div style="font-size:13px;opacity:0.9">' + v.rating + '★ · ' + v.cuisine.join(', ') + ' · ' + v.locality + '</div>';
+  if (details.offerText) html += '<div style="margin-top:6px;padding:4px 10px;background:rgba(255,255,255,0.2);border-radius:8px;font-size:12px;display:inline-block">' + details.offerText + '</div>';
+  html += '</div>';
+
+  html += '<div class="as-totals">';
+  html += '<div class="as-total-row"><span>Date & Time</span><span>' + slot.dateStr + ' · ' + slot.displayTime + '</span></div>';
+  html += '<div class="as-total-row"><span>Guests</span><span>' + partySize + '</span></div>';
+  html += '<div class="as-total-row"><span>Est. Bill</span><span>₹' + bill + '</span></div>';
+  if (discount > 0) html += '<div class="as-total-row as-discount"><span>' + discPct + '% off</span><span>-₹' + discount + '</span></div>';
+  html += '<div class="as-total-row as-final"><span>You\'ll pay approx.</span><span>₹' + (bill - discount) + '</span></div>';
+  html += '</div>';
+
+  html += '<button class="as-action-btn" style="background:#6B4EFF" onclick="confirmDineoutBooking()">Book Table · ' + slot.displayTime + '</button>';
+  html += '<div class="as-note">Free reservation · Powered by Swiggy Dineout</div>';
+
+  currentDineout = details;
+  dineoutPartySize = partySize;
+  openActionSheet(html);
+}
+
+function confirmDineoutBooking() {
+  closeActionSheet();
+  var v = currentDineout.venue;
+  var bill = Math.round((v.costForTwo / 2) * dineoutPartySize);
+  saveDecisionOrder('dineout', currentDecision ? currentDecision.intent.dishName : 'Dineout', bill);
+  showOrderOverlay('Table Booked!', currentDineout.nextSlot.displayTime + ' · ' + dineoutPartySize + ' guests', 'via Swiggy Dineout · ' + v.name);
+}
+
+// ─── Food Order Screen ────────────────────────────────────────────────────────
+
+var currentFoodOrder = null;
+
+function renderFoodOrder(details) {
+  currentFoodOrder = details;
+  var r = details.restaurant;
+  var cart = details.cart;
+
+  // Header
+  var header = document.getElementById('food-restaurant-header');
+  if (header) {
+    header.innerHTML = '<div class="frh-name">' + r.name + '</div>' +
+      '<div class="frh-meta"><span>' + r.rating + ' ★</span><span>' + r.distanceKm + ' km</span><span>' + r.deliveryTimeMin + ' min</span></div>' +
+      '<div class="frh-cuisine">' + r.cuisine.join(' · ') + '</div>';
+  }
+
+  // Menu items
+  var menuEl = document.getElementById('food-menu-items');
+  if (menuEl) {
+    var html = '';
+    for (var i = 0; i < details.menuItems.length; i++) {
+      var item = details.menuItems[i];
+      var inCart = cart.items.find(function(ci) { return ci.menuItem.itemId === item.itemId; });
+      var qty = inCart ? inCart.quantity : 0;
+      html += '<div class="food-menu-item">';
+      html += '<div class="fmi-info">';
+      html += '<div class="fmi-name"><span class="fmi-veg-dot ' + (item.isVeg ? 'veg' : 'nonveg') + '"></span>' + item.name;
+      if (item.isBestseller) html += ' <span class="fmi-bestseller">★ Bestseller</span>';
+      html += '</div>';
+      html += '<div class="fmi-price">₹' + item.price + '</div></div>';
+      html += '<div class="fmi-qty-controls">';
+      html += '<button class="fmi-qty-btn" onclick="updateFoodQty(\'' + item.itemId + '\',-1)">−</button>';
+      html += '<span class="fmi-qty" id="fqty-' + item.itemId + '">' + qty + '</span>';
+      html += '<button class="fmi-qty-btn" onclick="updateFoodQty(\'' + item.itemId + '\',1)">+</button>';
+      html += '</div></div>';
+    }
+    menuEl.innerHTML = html;
+  }
+
+  // Cart summary
+  updateFoodCartSummary();
+}
+
+function updateFoodQty(itemId, delta) {
+  if (!currentFoodOrder) return;
+  var cart = currentFoodOrder.cart;
+  var existing = cart.items.find(function(ci) { return ci.menuItem.itemId === itemId; });
+
+  if (existing) {
+    existing.quantity = Math.max(0, existing.quantity + delta);
+    existing.totalPrice = existing.menuItem.price * existing.quantity;
+    if (existing.quantity === 0) {
+      cart.items = cart.items.filter(function(ci) { return ci.menuItem.itemId !== itemId; });
+    }
+  } else if (delta > 0) {
+    var menuItem = currentFoodOrder.menuItems.find(function(m) { return m.itemId === itemId; });
+    if (menuItem) cart.items.push({ menuItem: menuItem, quantity: 1, totalPrice: menuItem.price });
+  }
+
+  // Update quantity display
+  var qtyEl = document.getElementById('fqty-' + itemId);
+  var item = cart.items.find(function(ci) { return ci.menuItem.itemId === itemId; });
+  if (qtyEl) qtyEl.textContent = item ? item.quantity : '0';
+
+  // Recalculate totals
+  cart.subtotal = cart.items.reduce(function(s, i) { return s + i.totalPrice; }, 0);
+  cart.total = Math.round(cart.subtotal + cart.deliveryFee - cart.discount);
+  updateFoodCartSummary();
+}
+
+function updateFoodCartSummary() {
+  if (!currentFoodOrder) return;
+  var cart = currentFoodOrder.cart;
+  var summary = document.getElementById('food-cart-summary');
+  if (!summary) return;
+
+  var html = '<div class="fcs-row"><span>Subtotal</span><span>₹' + cart.subtotal + '</span></div>';
+  html += '<div class="fcs-row"><span>Delivery Fee</span><span>₹' + cart.deliveryFee + '</span></div>';
+  if (cart.discount > 0) {
+    html += '<div class="fcs-row fcs-discount"><span>Discount (' + (cart.appliedCoupon ? cart.appliedCoupon.couponCode : '') + ')</span><span>-₹' + cart.discount + '</span></div>';
+  }
+  html += '<div class="fcs-row total"><span>Total</span><span>₹' + cart.total + '</span></div>';
+  html += '<button class="fcs-order-btn" onclick="placeFoodOrder()">Place Order · Swiggy Food</button>';
+  summary.innerHTML = html;
+}
+
+function placeFoodOrder() {
+  if (!currentFoodOrder) return;
+  // Save to history
+  saveDecisionOrder('food', currentDecision ? currentDecision.intent.dishName : 'Food Order', currentFoodOrder.cart.total);
+  // Show overlay then post-order
+  showOrderOverlay('Your order is being prepared!', currentFoodOrder.restaurant.deliveryTimeMin + ' min delivery', 'via Swiggy Food');
+}
+
+// ─── Dineout Screen ───────────────────────────────────────────────────────────
+
+var currentDineout = null;
+var dineoutPartySize = 2;
+
+function renderDineoutFlow(details) {
+  currentDineout = details;
+  dineoutPartySize = currentDecision ? currentDecision.intent.servings : 2;
+  var v = details.venue;
+
+  // Header
+  var header = document.getElementById('dineout-venue-header');
+  if (header) {
+    var html = '<div class="dvh-name">' + v.name + '</div>';
+    html += '<div class="dvh-meta"><span>' + v.rating + ' ★</span><span>' + v.locality + '</span><span>₹' + v.costForTwo + ' for two</span></div>';
+    html += '<div class="dvh-cuisine">' + v.cuisine.join(' · ') + '</div>';
+    if (details.offerText) html += '<div class="dvh-offer">' + details.offerText + '</div>';
+    header.innerHTML = html;
+  }
+
+  // Slot
+  var slotsEl = document.getElementById('dineout-slots');
+  if (slotsEl) {
+    var slot = details.nextSlot;
+    var html = '<div class="dineout-date-scroll">';
+    html += '<button class="dineout-date-chip selected"><span class="ddc-day">Today</span><span class="ddc-date">' + slot.dateStr + '</span></button>';
+    html += '</div>';
+    html += '<div class="dineout-slots" style="margin-top:12px">';
+    html += '<button class="slot-chip selected">' + slot.displayTime + '</button>';
+    // Add a few more slots around it
+    var otherTimes = ['6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM'];
+    for (var i = 0; i < otherTimes.length; i++) {
+      if (otherTimes[i] !== slot.displayTime) {
+        html += '<button class="slot-chip">' + otherTimes[i] + '</button>';
+      }
+    }
+    html += '</div>';
+    slotsEl.innerHTML = html;
+  }
+
+  // Party size
+  var partyEl = document.getElementById('dineout-party');
+  if (partyEl) {
+    partyEl.innerHTML = '<div class="dineout-party-row"><label>Guests</label>' +
+      '<div class="party-stepper"><button onclick="changeDineoutParty(-1)">−</button>' +
+      '<span class="party-count" id="party-count">' + dineoutPartySize + '</span>' +
+      '<button onclick="changeDineoutParty(1)">+</button></div></div>';
+  }
+
+  updateDineoutSummary();
+}
+
+function changeDineoutParty(delta) {
+  dineoutPartySize = Math.max(1, Math.min(20, dineoutPartySize + delta));
+  var el = document.getElementById('party-count');
+  if (el) el.textContent = dineoutPartySize;
+  updateDineoutSummary();
+}
+
+function updateDineoutSummary() {
+  if (!currentDineout) return;
+  var v = currentDineout.venue;
+  var slot = currentDineout.nextSlot;
+  var estimatedBill = Math.round((v.costForTwo / 2) * dineoutPartySize);
+  var discountPct = slot.deals && slot.deals[0] ? slot.deals[0].discountPercentage : 0;
+  var discount = discountPct > 0 ? Math.round(estimatedBill * discountPct / 100) : 0;
+  var total = estimatedBill - discount;
+
+  var summary = document.getElementById('dineout-summary');
+  if (!summary) return;
+
+  var html = '<div class="dineout-booking-summary">';
+  html += '<div class="dbs-row"><span>Venue</span><span>' + v.name + '</span></div>';
+  html += '<div class="dbs-row"><span>Date & Time</span><span>' + slot.dateStr + ' · ' + slot.displayTime + '</span></div>';
+  html += '<div class="dbs-row"><span>Guests</span><span>' + dineoutPartySize + '</span></div>';
+  html += '<div class="dbs-row"><span>Est. Bill</span><span>₹' + estimatedBill + '</span></div>';
+  if (discount > 0) {
+    html += '<div class="dbs-row dbs-offer"><span>Discount (' + discountPct + '% off)</span><span>-₹' + discount + '</span></div>';
+  }
+  html += '<div class="dbs-row total"><span>You\'ll pay approx.</span><span>₹' + total + '</span></div>';
+  html += '</div>';
+  summary.innerHTML = html;
+}
+
+function bookDineoutTable() {
+  if (!currentDineout) return;
+  var v = currentDineout.venue;
+  var estimatedBill = Math.round((v.costForTwo / 2) * dineoutPartySize);
+  saveDecisionOrder('dineout', currentDecision ? currentDecision.intent.dishName : 'Dine Out', estimatedBill);
+  showOrderOverlay('Table Booked!', currentDineout.nextSlot.displayTime + ' · ' + dineoutPartySize + ' guests', 'via Swiggy Dineout at ' + v.name);
+}
+
+// ─── Unified Order Overlay ────────────────────────────────────────────────────
+
+function showOrderOverlay(title, subtitle, via) {
+  var overlay = document.getElementById('order-overlay');
+  if (overlay) {
+    var card = overlay.querySelector('.order-success-card');
+    if (card) {
+      card.querySelector('h2').textContent = title;
+      card.querySelector('p').innerHTML = subtitle;
+      card.querySelector('.order-id').textContent = via;
+    }
+    overlay.classList.add('visible');
+    setTimeout(function() {
+      overlay.classList.remove('visible');
+      // Update post-order screen
+      var poTitle = document.querySelector('#screen-post-order .po-success h2');
+      if (poTitle) poTitle.textContent = subtitle;
+      var poSub = document.querySelector('#screen-post-order .po-sub');
+      if (poSub) poSub.textContent = via;
+      renderPostOrder();
+      navigateTo('screen-post-order');
+    }, 2000);
+  }
+}
+
+// ─── History / Analytics ──────────────────────────────────────────────────────
+
+function saveDecisionOrder(channel, dishName, cost) {
+  var history = JSON.parse(localStorage.getItem('prism_v2_history') || '[]');
+  history.push({
+    id: 'dec_' + Date.now(),
+    date: new Date().toISOString(),
+    channel: channel,
+    dishName: dishName,
+    cost: cost,
+    healthScore: Math.round(40 + Math.random() * 40),
+    servings: currentDecision ? currentDecision.intent.servings : 2
+  });
+  if (history.length > 50) history = history.slice(-50);
+  localStorage.setItem('prism_v2_history', JSON.stringify(history));
+}
+
+function getV2History() {
+  return JSON.parse(localStorage.getItem('prism_v2_history') || '[]');
+}
+
+function renderFoodXRay() {
+  var history = getV2History();
+  if (history.length === 0) {
+    var body = document.querySelector('#screen-food-xray .xray-body');
+    if (body) body.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--text-sec)"><p>No order history yet.</p><p style="margin-top:8px">Use Prism to make your first food decision!</p><button class="dc-choose-btn" style="max-width:200px;margin:16px auto" onclick="navigateTo(\'screen-smart-search\')">Get Started</button></div>';
+    return;
+  }
+
+  var totalSpend = 0;
+  var channels = { instamart: 0, food: 0, dineout: 0 };
+  var channelCounts = { instamart: 0, food: 0, dineout: 0 };
+  var avgHealth = 0;
+
+  for (var i = 0; i < history.length; i++) {
+    totalSpend += history[i].cost;
+    channels[history[i].channel] = (channels[history[i].channel] || 0) + history[i].cost;
+    channelCounts[history[i].channel] = (channelCounts[history[i].channel] || 0) + 1;
+    avgHealth += history[i].healthScore;
+  }
+  avgHealth = Math.round(avgHealth / history.length);
+
+  var cookPct = totalSpend > 0 ? Math.round((channels.instamart / totalSpend) * 100) : 33;
+  var orderPct = totalSpend > 0 ? Math.round((channels.food / totalSpend) * 100) : 34;
+  var dinePct = 100 - cookPct - orderPct;
+
+  // Donut
+  var donut = document.getElementById('xray-donut');
+  if (donut) {
+    donut.innerHTML = '<div class="xray-donut" style="background:conic-gradient(var(--green) 0% ' + cookPct + '%, var(--orange) ' + cookPct + '% ' + (cookPct + orderPct) + '%, #6B4EFF ' + (cookPct + orderPct) + '% 100%)"><div class="xray-donut-inner"><span class="xray-donut-total">₹' + totalSpend + '</span><span class="xray-donut-label">total spend</span></div></div>' +
+      '<div class="xray-legend"><div class="xray-legend-item"><span class="xray-legend-dot" style="background:var(--green)"></span>Cook ₹' + channels.instamart + '</div>' +
+      '<div class="xray-legend-item"><span class="xray-legend-dot" style="background:var(--orange)"></span>Order ₹' + channels.food + '</div>' +
+      '<div class="xray-legend-item"><span class="xray-legend-dot" style="background:#6B4EFF"></span>Dine ₹' + channels.dineout + '</div></div>';
+  }
+
+  // Stats
+  var stats = document.getElementById('xray-stats');
+  if (stats) {
+    stats.innerHTML = '<div class="xray-stat-card"><div class="xray-stat-value">' + history.length + '</div><div class="xray-stat-label">Total Decisions</div></div>' +
+      '<div class="xray-stat-card"><div class="xray-stat-value">' + avgHealth + '/100</div><div class="xray-stat-label">Avg Health Score</div></div>' +
+      '<div class="xray-stat-card"><div class="xray-stat-value">' + channelCounts.instamart + '</div><div class="xray-stat-label">Times Cooked</div></div>' +
+      '<div class="xray-stat-card"><div class="xray-stat-value">' + channelCounts.food + '</div><div class="xray-stat-label">Orders Placed</div></div>';
+  }
+
+  // Insight
+  var insight = document.getElementById('xray-insight');
+  if (insight && channelCounts.food > 0 && channels.instamart > 0) {
+    var avgOrderCost = Math.round(channels.food / channelCounts.food);
+    var avgCookCost = channels.instamart > 0 ? Math.round(channels.instamart / Math.max(1, channelCounts.instamart)) : Math.round(avgOrderCost * 0.5);
+    var savings = (avgOrderCost - avgCookCost) * channelCounts.food;
+    insight.innerHTML = '<h4>Savings Insight</h4><p>Your average food order costs ₹' + avgOrderCost +
+      '. Cooking the same dishes would cost ~₹' + avgCookCost + ' each. ' +
+      'Potential savings: <span class="savings-amount">₹' + Math.max(0, savings) + '/month</span></p>';
+  }
+}

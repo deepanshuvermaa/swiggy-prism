@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Swiggy Instamart — Prism</title>
+  <title>Swiggy Prism</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
@@ -24,7 +24,7 @@
     </div>
 
     <!-- ====== SCREEN: Share Simulation ====== -->
-    <div class="screen active" id="screen-share-sim">
+    <div class="screen" id="screen-share-sim">
       <!-- Platform Tabs -->
       <div class="platform-tabs">
         <button class="ptab active" onclick="switchPlatform('youtube')">
@@ -50,7 +50,7 @@
           <button class="yt-action-btn highlight" onclick="showShareSheet()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#FC8019"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
             Share
-            <div class="guide-tooltip" id="guide-yt-share">👆 Tap Share to send this recipe to Swiggy</div>
+            <div class="guide-tooltip" id="guide-yt-share">👆 Tap Share to send this recipe to Prism</div>
           </button>
           <button class="yt-action-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg> Save</button>
           <button class="yt-action-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg> Like</button>
@@ -115,7 +115,7 @@
             <div class="share-app-icon swiggy">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="12,3 21,19 3,19"/></svg>
             </div>
-            <span class="swiggy-label">Instamart<br>Prism</span>
+            <span class="swiggy-label">Prism</span>
             <div class="guide-tooltip sheet-guide" id="guide-prism-tap">👆 Tap here to send recipe to Prism</div>
           </div>
           <div class="share-app">
@@ -187,17 +187,13 @@
         <div class="swiggy-profile">D</div>
       </div>
 
-      <div class="prism-banner">
+      <div class="prism-banner" id="prism-recipe-banner" style="display:none">
         <div class="prism-banner-icon">
-          <svg viewBox="0 0 40 40" width="36" height="36">
-            <polygon points="20,4 36,34 4,34" fill="none" stroke="white" stroke-width="2"/>
-            <circle cx="14" cy="19" r="2" fill="white" opacity="0.7"/>
-            <circle cx="24" cy="22" r="2" fill="white" opacity="0.7"/>
-          </svg>
+          <img src="assets/swiggy-logo.webp" width="28" height="28" alt="Swiggy" style="border-radius:6px">
         </div>
         <div class="prism-banner-text">
-          <strong>Prism found a recipe!</strong>
-          <span>Butter Chicken from YouTube — Tap to build your cart</span>
+          <strong id="banner-recipe-title">Prism found a recipe!</strong>
+          <span id="banner-recipe-sub">Tap to build your cart</span>
         </div>
         <button class="prism-banner-btn" onclick="startPrismFlow()">Go</button>
       </div>
@@ -284,22 +280,11 @@
 
       <!-- Swiggy Bottom Nav -->
       <div class="swiggy-nav">
-        <div class="nav-item">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <span>Food</span>
-        </div>
-        <div class="nav-item active">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
-          <span>Instamart</span>
-        </div>
-        <div class="nav-item">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-          <span>Dineout</span>
-        </div>
-        <div class="nav-item">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          <span>Genie</span>
-        </div>
+        <div class="nav-item active" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
       </div>
     </div>
 
@@ -426,9 +411,10 @@
 
       <!-- Swiggy Bottom Nav -->
       <div class="swiggy-nav">
-        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Food</span></div>
-        <div class="nav-item active"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Instamart</span></div>
-        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item active" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
         <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
       </div>
     </div>
@@ -493,7 +479,7 @@
     <div class="screen" id="screen-prism-hub">
       <div class="swiggy-topbar">
         <div class="swiggy-location">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg>
+          <img src="assets/swiggy-logo.webp" width="24" height="24" alt="Swiggy" style="border-radius:6px">
           <div>
             <span class="loc-title">Prism Hub</span>
             <span class="loc-sub" id="hub-persona-label">Your personalized feed</span>
@@ -524,23 +510,24 @@
         <div class="hub-section">
           <h3>Quick Actions</h3>
           <div class="hub-actions">
-            <button class="hub-action-card" onclick="navigateTo('screen-instamart')">
-              <span>🛒</span> New Recipe Cart
+            <button class="hub-action-card" onclick="navigateTo('screen-smart-search')">
+              <span>🔮</span> Smart Decision
             </button>
             <button class="hub-action-card" onclick="navigateTo('screen-share-sim')">
-              <span>📱</span> Capture from Video
+              <span>📱</span> Capture Recipe
             </button>
-            <button class="hub-action-card" onclick="navigateTo('screen-persona')">
-              <span>⚙️</span> Change Persona
+            <button class="hub-action-card" onclick="navigateTo('screen-food-xray')">
+              <span>📊</span> Food X-Ray
             </button>
           </div>
         </div>
       </div>
 
       <div class="swiggy-nav">
-        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Food</span></div>
-        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Instamart</span></div>
-        <div class="nav-item active"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item active" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
         <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
       </div>
     </div>
@@ -596,9 +583,183 @@
       </div>
 
       <div class="swiggy-nav">
-        <div class="nav-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Food</span></div>
-        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Instamart</span></div>
-        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item active" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Smart Search (default landing) ====== -->
+    <div class="screen active" id="screen-smart-search">
+      <div class="swiggy-topbar">
+        <div class="swiggy-location">
+          <img src="assets/swiggy-logo.webp" width="24" height="24" alt="Swiggy" style="border-radius:6px">
+          <div>
+            <span class="loc-title">Prism</span>
+          </div>
+        </div>
+        <div class="swiggy-profile" onclick="navigateTo('screen-persona')">
+          <span id="smart-search-persona-emoji">⚖️</span>
+        </div>
+      </div>
+
+      <div class="smart-search-body">
+        <div class="smart-search-hero">
+          <h2>What are you craving?</h2>
+          <p>Prism finds the best way to eat — cook, order, or dine out</p>
+        </div>
+
+        <div class="smart-search-input-row">
+          <input type="text" id="smart-search-input" class="smart-search-input" placeholder="What are you craving?" onkeydown="if(event.key==='Enter')submitSmartSearch()">
+          <button class="smart-search-send" onclick="submitSmartSearch()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+
+        <div class="search-filters">
+          <button class="search-filter-chip" onclick="quickDecision('something quick, under 30 min')">Under 30 min</button>
+          <button class="search-filter-chip" onclick="quickDecision('dinner under 500 rupees')">Under ₹500</button>
+          <button class="search-filter-chip" onclick="quickDecision('healthy meal for 2')">Healthy</button>
+          <button class="search-filter-chip" onclick="quickDecision('date night dinner for 2, budget 1500')">Date Night</button>
+          <button class="search-filter-chip" onclick="quickDecision('party food for 8, budget 3000')">Party</button>
+        </div>
+
+        <!-- Inline results appear here — no screen navigation needed -->
+        <div id="inline-results" class="inline-results"></div>
+
+        <div id="initial-suggestions" class="search-suggestions">
+          <h3>Try these</h3>
+          <div class="search-suggestion-list">
+            <button class="search-suggestion-pill" onclick="quickDecision('Butter chicken for 4, budget 800')">🍗 Butter chicken for 4, ₹800</button>
+            <button class="search-suggestion-pill" onclick="quickDecision('Biryani for 2, budget 500')">🍚 Biryani for 2, ₹500</button>
+            <button class="search-suggestion-pill" onclick="quickDecision('Quick pasta under 20 min')">🍝 Quick pasta, 20 min</button>
+            <button class="search-suggestion-pill" onclick="quickDecision('Dal tadka, budget 300')">🫘 Dal tadka, ₹300 budget</button>
+            <button class="search-suggestion-pill" onclick="quickDecision('date night dinner for 2, budget 2000')">🍷 Date night for 2, ₹2000</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Sheet for order/booking details -->
+      <div class="action-sheet" id="action-sheet">
+        <div class="action-sheet-backdrop" onclick="closeActionSheet()"></div>
+        <div class="action-sheet-panel">
+          <div class="action-sheet-handle"></div>
+          <div id="action-sheet-content"></div>
+        </div>
+      </div>
+
+      <div class="swiggy-nav">
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item active" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Decision Board ====== -->
+    <div class="screen" id="screen-decision-board">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Prism Decision</h2>
+      </div>
+
+      <div class="decision-body">
+        <div class="decision-intent" id="decision-intent-text"></div>
+        <div class="decision-cards" id="decision-cards"></div>
+      </div>
+
+      <div class="swiggy-nav">
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item active" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Food Order ====== -->
+    <div class="screen" id="screen-food-order">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-decision-board')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Order Food</h2>
+      </div>
+
+      <div class="food-order-body">
+        <div id="food-restaurant-header" class="food-restaurant-header"></div>
+        <div id="food-menu-items" class="food-menu-section"></div>
+      </div>
+
+      <div id="food-cart-summary" class="food-cart-sticky"></div>
+
+      <div class="swiggy-nav">
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item active" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Dineout Flow ====== -->
+    <div class="screen" id="screen-dineout-flow">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-decision-board')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Book Table</h2>
+      </div>
+
+      <div class="dineout-body">
+        <div id="dineout-venue-header" class="dineout-venue-header"></div>
+        <div class="dineout-section">
+          <h3>Select Slot</h3>
+          <div id="dineout-slots"></div>
+        </div>
+        <div class="dineout-section">
+          <div id="dineout-party"></div>
+        </div>
+        <div class="dineout-section">
+          <div id="dineout-summary"></div>
+        </div>
+        <button class="dineout-book-btn" onclick="bookDineoutTable()">Book Table · Swiggy Dineout</button>
+      </div>
+
+      <div class="swiggy-nav">
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item active" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+
+    <!-- ====== SCREEN: Food X-Ray ====== -->
+    <div class="screen" id="screen-food-xray">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-prism-hub')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Food X-Ray</h2>
+      </div>
+
+      <div class="xray-body">
+        <div class="xray-donut-section" id="xray-donut"></div>
+        <div class="xray-stats-grid" id="xray-stats"></div>
+        <div class="xray-insight" id="xray-insight"></div>
+      </div>
+
+      <div class="swiggy-nav">
+        <div class="nav-item" onclick="navigateTo('screen-instamart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-share-sim')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Recipe</span></div>
+        <div class="nav-item" onclick="navigateTo('screen-smart-search')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><polygon points="12,2 22,20 2,20"/></svg><span>Prism</span></div>
+        <div class="nav-item active" onclick="navigateTo('screen-prism-hub')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FC8019"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Hub</span></div>
         <div class="nav-item" onclick="navigateTo('screen-persona')"><svg width="22" height="22" viewBox="0 0 24 24" fill="#999"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profile</span></div>
       </div>
     </div>

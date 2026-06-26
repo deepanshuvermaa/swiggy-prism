@@ -627,30 +627,388 @@
 
   // ─── Public API ──────────────────────────────────────────────────────────────
 
+  // ─── Food Catalog (matches search_restaurants / get_restaurant_menu responses) ─
+
+  var FOOD_RESTAURANTS = [
+    { restaurantId:"rest_001", name:"Punjab Grill", cuisine:["North Indian","Mughlai"], rating:4.3, ratingCount:1240, deliveryTimeMin:28, deliveryFee:30, distanceKm:2.1, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_002", name:"Biryani Blues", cuisine:["Biryani","Hyderabadi"], rating:4.4, ratingCount:2100, deliveryTimeMin:35, deliveryFee:25, distanceKm:3.2, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_003", name:"Moti Mahal Delux", cuisine:["Mughlai","North Indian"], rating:4.2, ratingCount:890, deliveryTimeMin:32, deliveryFee:30, distanceKm:2.8, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_004", name:"Sagar Ratna", cuisine:["South Indian","Vegetarian"], rating:4.1, ratingCount:1560, deliveryTimeMin:25, deliveryFee:20, distanceKm:1.5, availabilityStatus:"OPEN", isVeg:true },
+    { restaurantId:"rest_005", name:"Haldiram's", cuisine:["Street Food","Chaat"], rating:4.0, ratingCount:3200, deliveryTimeMin:20, deliveryFee:15, distanceKm:1.2, availabilityStatus:"OPEN", isVeg:true },
+    { restaurantId:"rest_006", name:"Domino's Pizza", cuisine:["Pizza","Italian"], rating:3.9, ratingCount:4500, deliveryTimeMin:30, deliveryFee:0, distanceKm:2.0, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_007", name:"Pasta La Vista", cuisine:["Italian","Continental"], rating:4.2, ratingCount:670, deliveryTimeMin:35, deliveryFee:35, distanceKm:3.5, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_008", name:"Chinese Wok", cuisine:["Chinese","Asian"], rating:4.0, ratingCount:1890, deliveryTimeMin:25, deliveryFee:20, distanceKm:2.3, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_009", name:"The Egg Factory", cuisine:["Egg Specialties","Breakfast"], rating:4.1, ratingCount:560, deliveryTimeMin:22, deliveryFee:20, distanceKm:1.8, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_010", name:"Chaayos", cuisine:["Beverages","Snacks"], rating:3.8, ratingCount:2300, deliveryTimeMin:18, deliveryFee:15, distanceKm:1.0, availabilityStatus:"OPEN", isVeg:true },
+    { restaurantId:"rest_011", name:"Wow! Momo", cuisine:["Momos","Street Food"], rating:4.0, ratingCount:1780, deliveryTimeMin:20, deliveryFee:15, distanceKm:1.5, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_012", name:"Behrouz Biryani", cuisine:["Biryani","Mughlai"], rating:4.5, ratingCount:3400, deliveryTimeMin:40, deliveryFee:40, distanceKm:4.0, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_013", name:"Faasos", cuisine:["Wraps","Indian"], rating:3.9, ratingCount:2800, deliveryTimeMin:25, deliveryFee:20, distanceKm:2.0, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_014", name:"Burger King", cuisine:["Burgers","Fast Food"], rating:3.7, ratingCount:4100, deliveryTimeMin:22, deliveryFee:0, distanceKm:1.8, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_015", name:"Subway", cuisine:["Subs","Healthy"], rating:3.8, ratingCount:2900, deliveryTimeMin:20, deliveryFee:0, distanceKm:1.5, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_016", name:"Karim's", cuisine:["Mughlai","Kebabs"], rating:4.4, ratingCount:1100, deliveryTimeMin:38, deliveryFee:35, distanceKm:3.8, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_017", name:"Saravana Bhavan", cuisine:["South Indian","Vegetarian"], rating:4.3, ratingCount:2600, deliveryTimeMin:28, deliveryFee:25, distanceKm:2.2, availabilityStatus:"OPEN", isVeg:true },
+    { restaurantId:"rest_018", name:"Barbeque Nation", cuisine:["Grills","Buffet"], rating:4.2, ratingCount:1450, deliveryTimeMin:35, deliveryFee:40, distanceKm:3.0, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_019", name:"Local Dhaba", cuisine:["Home Style","North Indian"], rating:3.6, ratingCount:340, deliveryTimeMin:18, deliveryFee:10, distanceKm:0.8, availabilityStatus:"OPEN", isVeg:false },
+    { restaurantId:"rest_020", name:"Cafe Delhi Heights", cuisine:["Continental","Cafe"], rating:4.1, ratingCount:920, deliveryTimeMin:30, deliveryFee:30, distanceKm:2.5, availabilityStatus:"OPEN", isVeg:false },
+  ];
+
+  var FOOD_MENU = [
+    { itemId:"item_001", restaurantId:"rest_001", name:"Butter Chicken", price:320, isVeg:false, isBestseller:true, category:"Main Course" },
+    { itemId:"item_002", restaurantId:"rest_001", name:"Dal Makhani", price:220, isVeg:true, isBestseller:true, category:"Main Course" },
+    { itemId:"item_003", restaurantId:"rest_001", name:"Paneer Tikka", price:280, isVeg:true, isBestseller:false, category:"Starters" },
+    { itemId:"item_004", restaurantId:"rest_001", name:"Chicken Biryani", price:350, isVeg:false, isBestseller:true, category:"Rice" },
+    { itemId:"item_005", restaurantId:"rest_001", name:"Naan", price:50, isVeg:true, isBestseller:false, category:"Breads" },
+    { itemId:"item_007", restaurantId:"rest_002", name:"Chicken Biryani", price:299, isVeg:false, isBestseller:true, category:"Biryani" },
+    { itemId:"item_008", restaurantId:"rest_002", name:"Mutton Biryani", price:449, isVeg:false, isBestseller:true, category:"Biryani" },
+    { itemId:"item_009", restaurantId:"rest_002", name:"Veg Biryani", price:199, isVeg:true, isBestseller:false, category:"Biryani" },
+    { itemId:"item_012", restaurantId:"rest_003", name:"Butter Chicken", price:340, isVeg:false, isBestseller:true, category:"Main Course" },
+    { itemId:"item_014", restaurantId:"rest_003", name:"Dal Tadka", price:180, isVeg:true, isBestseller:false, category:"Main Course" },
+    { itemId:"item_015", restaurantId:"rest_003", name:"Paneer Butter Masala", price:260, isVeg:true, isBestseller:false, category:"Main Course" },
+    { itemId:"item_017", restaurantId:"rest_004", name:"Masala Dosa", price:160, isVeg:true, isBestseller:true, category:"Main Course" },
+    { itemId:"item_020", restaurantId:"rest_004", name:"Rajma Chawal", price:180, isVeg:true, isBestseller:true, category:"Thali" },
+    { itemId:"item_021", restaurantId:"rest_004", name:"Chole Bhature", price:170, isVeg:true, isBestseller:true, category:"Main Course" },
+    { itemId:"item_022", restaurantId:"rest_005", name:"Chole Bhature", price:150, isVeg:true, isBestseller:true, category:"Main Course" },
+    { itemId:"item_024", restaurantId:"rest_005", name:"Palak Paneer", price:200, isVeg:true, isBestseller:false, category:"Main Course" },
+    { itemId:"item_025", restaurantId:"rest_005", name:"Dal Tadka", price:160, isVeg:true, isBestseller:false, category:"Main Course" },
+    { itemId:"item_029", restaurantId:"rest_006", name:"Pasta", price:169, isVeg:true, isBestseller:false, category:"Pasta" },
+    { itemId:"item_030", restaurantId:"rest_007", name:"Pasta Arrabiata", price:260, isVeg:true, isBestseller:true, category:"Pasta" },
+    { itemId:"item_033", restaurantId:"rest_008", name:"Veg Fried Rice", price:180, isVeg:true, isBestseller:true, category:"Rice" },
+    { itemId:"item_034", restaurantId:"rest_008", name:"Chicken Fried Rice", price:220, isVeg:false, isBestseller:true, category:"Rice" },
+    { itemId:"item_037", restaurantId:"rest_008", name:"Chilli Chicken", price:250, isVeg:false, isBestseller:true, category:"Starters" },
+    { itemId:"item_038", restaurantId:"rest_009", name:"Egg Curry", price:180, isVeg:false, isBestseller:true, category:"Main Course" },
+    { itemId:"item_039", restaurantId:"rest_009", name:"Omelette", price:90, isVeg:false, isBestseller:true, category:"Breakfast" },
+    { itemId:"item_042", restaurantId:"rest_010", name:"Maggi", price:99, isVeg:true, isBestseller:true, category:"Snacks" },
+    { itemId:"item_043", restaurantId:"rest_010", name:"Sandwich", price:120, isVeg:true, isBestseller:false, category:"Snacks" },
+    { itemId:"item_046", restaurantId:"rest_012", name:"Chicken Biryani", price:349, isVeg:false, isBestseller:true, category:"Biryani" },
+    { itemId:"item_056", restaurantId:"rest_016", name:"Butter Chicken", price:360, isVeg:false, isBestseller:true, category:"Main Course" },
+    { itemId:"item_057", restaurantId:"rest_016", name:"Mutton Rogan Josh", price:420, isVeg:false, isBestseller:true, category:"Main Course" },
+    { itemId:"item_060", restaurantId:"rest_017", name:"Masala Dosa", price:140, isVeg:true, isBestseller:true, category:"Main Course" },
+    { itemId:"item_062", restaurantId:"rest_017", name:"Palak Paneer", price:190, isVeg:true, isBestseller:false, category:"Main Course" },
+    { itemId:"item_067", restaurantId:"rest_019", name:"Dal Tadka", price:110, isVeg:true, isBestseller:true, category:"Main Course" },
+    { itemId:"item_068", restaurantId:"rest_019", name:"Egg Curry", price:130, isVeg:false, isBestseller:true, category:"Main Course" },
+    { itemId:"item_069", restaurantId:"rest_019", name:"Aloo Gobi", price:100, isVeg:true, isBestseller:false, category:"Main Course" },
+    { itemId:"item_070", restaurantId:"rest_019", name:"Rajma Chawal", price:120, isVeg:true, isBestseller:true, category:"Thali" },
+    { itemId:"item_071", restaurantId:"rest_019", name:"Butter Chicken", price:200, isVeg:false, isBestseller:true, category:"Main Course" },
+    { itemId:"item_073", restaurantId:"rest_020", name:"Pasta", price:280, isVeg:true, isBestseller:true, category:"Pasta" },
+    { itemId:"item_075", restaurantId:"rest_020", name:"Sandwich", price:240, isVeg:false, isBestseller:false, category:"Snacks" },
+  ];
+
+  var FOOD_COUPONS = [
+    { couponCode:"WELCOME50", description:"Flat ₹50 off", discountType:"flat", discountValue:50, minOrderValue:199, maxDiscount:50 },
+    { couponCode:"PARTY20", description:"20% off up to ₹100", discountType:"percentage", discountValue:20, minOrderValue:500, maxDiscount:100 },
+    { couponCode:"SWIGGYIT", description:"10% off up to ₹50", discountType:"percentage", discountValue:10, minOrderValue:149, maxDiscount:50 },
+    { couponCode:"FEAST15", description:"15% off up to ₹75", discountType:"percentage", discountValue:15, minOrderValue:400, maxDiscount:75 },
+    { couponCode:"MEGA", description:"25% off up to ₹125", discountType:"percentage", discountValue:25, minOrderValue:600, maxDiscount:125 },
+  ];
+
+  // ─── Dineout Catalog (matches search_restaurants_dineout responses) ────────────
+
+  var DINEOUT_VENUES = [
+    { restaurantId:"din_001", name:"The Great Kabab Factory", cuisine:["Mughlai","North Indian"], rating:4.5, locality:"Connaught Place", costForTwo:1800, offers:["Flat 20% off food bill"], highlights:["Fine Dining","Family"] },
+    { restaurantId:"din_002", name:"Farzi Cafe", cuisine:["Modern Indian","Fusion"], rating:4.3, locality:"Cyber Hub", costForTwo:2200, offers:["Complimentary dessert"], highlights:["Trendy","Date Night"] },
+    { restaurantId:"din_003", name:"Dhaba by Claridges", cuisine:["North Indian","Punjabi"], rating:4.4, locality:"Connaught Place", costForTwo:1600, offers:["Flat 15% off"], highlights:["Themed","Family"] },
+    { restaurantId:"din_004", name:"Mamagoto", cuisine:["Pan Asian","Japanese"], rating:4.2, locality:"Khan Market", costForTwo:1400, offers:[], highlights:["Casual","Friends"] },
+    { restaurantId:"din_005", name:"Indian Accent", cuisine:["Fine Indian","Contemporary"], rating:4.7, locality:"The Lodhi", costForTwo:5000, offers:[], highlights:["Premium","Date Night"] },
+    { restaurantId:"din_006", name:"Burma Burma", cuisine:["Burmese","Vegetarian"], rating:4.4, locality:"Cyber Hub", costForTwo:1200, offers:["10% off on weekdays"], highlights:["Veg","Casual"] },
+    { restaurantId:"din_007", name:"Pind Balluchi", cuisine:["North Indian","Punjabi"], rating:4.0, locality:"Multiple Outlets", costForTwo:1000, offers:["Flat 25% off"], highlights:["Family","Value"] },
+    { restaurantId:"din_012", name:"Barbeque Nation", cuisine:["Grill","Buffet"], rating:4.2, locality:"Multiple Outlets", costForTwo:1500, offers:["Kids eat free"], highlights:["Family","Party"] },
+    { restaurantId:"din_014", name:"Sattvik", cuisine:["Pure Veg","North Indian"], rating:4.1, locality:"Sector 17", costForTwo:800, offers:["20% off weekday lunch"], highlights:["Veg","Family"] },
+    { restaurantId:"din_015", name:"1947", cuisine:["North Indian","Mughlai"], rating:4.3, locality:"Sector 26", costForTwo:1400, offers:["10% off for tables of 4+"], highlights:["Family","Celebrations"] },
+  ];
+
+  // ─── Cook Time DB ──────────────────────────────────────────────────────────────
+
+  var COOK_TIME = {
+    "butter chicken":45, "paneer tikka":30, biryani:60, "chicken biryani":60,
+    "veg biryani":50, "dal tadka":25, "dal makhani":40, "chole bhature":40,
+    "aloo gobi":30, "egg curry":25, "palak paneer":30, rajma:35,
+    sandwich:10, pasta:20, "fried rice":20, omelette:10, maggi:10,
+  };
+
+  var DISH_HEALTH = {
+    "butter chicken":55, biryani:50, "chicken biryani":50, "veg biryani":58,
+    "dal tadka":72, "dal makhani":60, "paneer tikka":62, "palak paneer":68,
+    "chole bhature":45, "aloo gobi":65, "egg curry":60, rajma:70,
+    sandwich:55, pasta:50, "fried rice":48, omelette:65, maggi:35,
+    pizza:40, burger:38, momos:45, dosa:60,
+  };
+
+  // ─── Intent Parser ─────────────────────────────────────────────────────────────
+
+  var KNOWN_DISHES = [
+    "butter chicken","paneer tikka","biryani","chicken biryani","veg biryani",
+    "dal tadka","dal makhani","chole bhature","aloo gobi","egg curry",
+    "palak paneer","rajma","sandwich","pasta","fried rice","omelette","maggi",
+    "paneer butter masala","kadhai paneer","chicken tikka","mutton rogan josh",
+    "fish curry","pizza","burger","momos","noodles","dosa","idli","thali","kebab",
+  ];
+
+  function parseIntent(text) {
+    var lower = text.toLowerCase().trim();
+    var dishName = "butter chicken";
+    var bestLen = 0;
+    for (var i = 0; i < KNOWN_DISHES.length; i++) {
+      if (lower.indexOf(KNOWN_DISHES[i]) !== -1 && KNOWN_DISHES[i].length > bestLen) {
+        dishName = KNOWN_DISHES[i]; bestLen = KNOWN_DISHES[i].length;
+      }
+    }
+
+    var servings = 2;
+    var m = lower.match(/(?:for\s+)?(\d+)\s*(?:people|persons?|pax|guests?|servings?)/);
+    if (m) servings = parseInt(m[1]);
+    else { m = lower.match(/for\s+(\d+)/); if (m) servings = parseInt(m[1]); }
+
+    var budget = 800;
+    m = lower.match(/(?:₹|rs\.?\s*|rupees?\s*|budget\s*[:=]?\s*|under\s+)(\d{2,5})/i);
+    if (m) budget = parseInt(m[1]);
+
+    var timeConstraintMin = null;
+    m = lower.match(/(\d+)\s*(?:min(?:utes?)?)/);
+    if (m) timeConstraintMin = parseInt(m[1]);
+
+    var occasion = "casual";
+    if (/\b(date|romantic)\b/.test(lower)) occasion = "date";
+    else if (/\b(party|group)\b/.test(lower)) occasion = "party";
+    else if (/\b(family|kids)\b/.test(lower)) occasion = "family";
+    else if (/\b(quick|fast|hurry)\b/.test(lower)) occasion = "quick";
+
+    return { dishName:dishName, servings:servings, budget:budget, timeConstraintMin:timeConstraintMin, occasion:occasion };
+  }
+
+  // ─── Token Score Helper ────────────────────────────────────────────────────────
+
+  function _tokenScore(query, target) {
+    var qt = query.toLowerCase().split(/\s+/);
+    var tt = target.toLowerCase().split(/\s+/);
+    var hits = 0;
+    for (var i = 0; i < qt.length; i++) {
+      for (var j = 0; j < tt.length; j++) {
+        if (tt[j].indexOf(qt[i]) !== -1 || qt[i].indexOf(tt[j]) !== -1) { hits++; break; }
+      }
+    }
+    return qt.length > 0 ? hits / qt.length : 0;
+  }
+
+  // ─── Decision Engine (browser-side) ────────────────────────────────────────────
+
+  function getDishHealthScore(name) {
+    var lower = name.toLowerCase();
+    for (var k in DISH_HEALTH) { if (lower.indexOf(k) !== -1 || k.indexOf(lower) !== -1) return DISH_HEALTH[k]; }
+    return 55;
+  }
+
+  function getCookTime(name) {
+    var lower = name.toLowerCase();
+    for (var k in COOK_TIME) { if (lower.indexOf(k) !== -1 || k.indexOf(lower) !== -1) return COOK_TIME[k]; }
+    return 40;
+  }
+
+  function queryCookIt(intent) {
+    var ingredients = localParseRecipe(intent.dishName, intent.servings);
+    if (ingredients.length === 0) return null;
+    var skuMap = new Map();
+    for (var i = 0; i < ingredients.length; i++) {
+      skuMap.set(ingredients[i].name, searchSKUs(ingredients[i].name));
+    }
+    var cart = _optimizeCart(ingredients, skuMap, intent.budget);
+    var cookTime = getCookTime(intent.dishName);
+    return {
+      channel:"instamart", available:true, score:0,
+      cost: cart.totalCost, timeMin: cookTime + 10,
+      healthScore: Math.min(100, getDishHealthScore(intent.dishName) + 15),
+      details: { type:"cook", cart:cart, cookTimeMin:cookTime, groceryDeliveryMin:10, recipeName:intent.dishName },
+      recommended:false, reasonShort:""
+    };
+  }
+
+  function queryOrderIt(intent) {
+    var dish = intent.dishName.toLowerCase();
+    // Find restaurants with matching menu items
+    var matches = [];
+    for (var i = 0; i < FOOD_RESTAURANTS.length; i++) {
+      var r = FOOD_RESTAURANTS[i];
+      if (r.availabilityStatus !== "OPEN") continue;
+      var menuItems = FOOD_MENU.filter(function(m) { return m.restaurantId === r.restaurantId; });
+      var dishItems = menuItems.filter(function(m) { return m.name.toLowerCase().indexOf(dish) !== -1 || dish.indexOf(m.name.toLowerCase()) !== -1; });
+      if (dishItems.length === 0) {
+        // try cuisine match
+        var cuisineScore = 0;
+        for (var c = 0; c < r.cuisine.length; c++) {
+          cuisineScore = Math.max(cuisineScore, _tokenScore(dish, r.cuisine[c]));
+        }
+        if (cuisineScore > 0.3) dishItems = menuItems.slice(0, 2);
+      }
+      if (dishItems.length > 0) matches.push({ restaurant:r, items:dishItems, menu:menuItems });
+    }
+    if (matches.length === 0) return null;
+
+    // Pick best match (most relevant items, then by rating)
+    matches.sort(function(a,b) { return b.items.length - a.items.length || b.restaurant.rating - a.restaurant.rating; });
+    var best = matches[0];
+    var mainItem = best.items[0];
+    var qty = Math.max(1, Math.ceil(intent.servings / 2));
+    var subtotal = mainItem.price * qty;
+    var deliveryFee = best.restaurant.deliveryFee;
+
+    // Find best coupon
+    var discount = 0;
+    var appliedCoupon = null;
+    for (var ci = 0; ci < FOOD_COUPONS.length; ci++) {
+      var cp = FOOD_COUPONS[ci];
+      if (subtotal < cp.minOrderValue) continue;
+      var d = cp.discountType === "flat" ? cp.discountValue : Math.min(subtotal * cp.discountValue / 100, cp.maxDiscount);
+      if (d > discount) { discount = d; appliedCoupon = cp; }
+    }
+
+    var total = Math.round(subtotal + deliveryFee - discount);
+    return {
+      channel:"food", available:true, score:0,
+      cost: total, timeMin: best.restaurant.deliveryTimeMin,
+      healthScore: getDishHealthScore(intent.dishName),
+      details: {
+        type:"order", restaurant:best.restaurant,
+        menuItems: best.items.slice(0, 5),
+        cart: {
+          restaurantId:best.restaurant.restaurantId, restaurantName:best.restaurant.name,
+          items:[{menuItem:mainItem, quantity:qty, totalPrice:subtotal}],
+          subtotal:subtotal, deliveryFee:deliveryFee,
+          appliedCoupon:appliedCoupon, discount:Math.round(discount),
+          total:total, estimatedDeliveryMin:best.restaurant.deliveryTimeMin
+        },
+        deliveryMin: best.restaurant.deliveryTimeMin
+      },
+      recommended:false, reasonShort:""
+    };
+  }
+
+  function queryDineOut(intent) {
+    var dish = intent.dishName.toLowerCase();
+    // Search venues by cuisine match
+    var scored = [];
+    for (var i = 0; i < DINEOUT_VENUES.length; i++) {
+      var v = DINEOUT_VENUES[i];
+      var score = 0;
+      for (var c = 0; c < v.cuisine.length; c++) {
+        score = Math.max(score, _tokenScore(dish, v.cuisine[c]));
+      }
+      score += _tokenScore(dish, v.name) * 0.5;
+      for (var h = 0; h < v.highlights.length; h++) {
+        if (intent.occasion && v.highlights[h].toLowerCase().indexOf(intent.occasion) !== -1) score += 0.3;
+      }
+      if (score > 0) scored.push({ venue:v, score:score });
+    }
+    scored.sort(function(a,b) { return b.score - a.score; });
+    if (scored.length === 0) scored = DINEOUT_VENUES.slice(0, 3).map(function(v) { return {venue:v, score:0.1}; });
+
+    var venue = scored[0].venue;
+    var estimatedBill = Math.round((venue.costForTwo / 2) * intent.servings);
+    var travelMin = 10; // ~2.5km avg
+
+    // Generate a mock next slot (today evening)
+    var now = new Date();
+    var slotDate = new Date(now);
+    slotDate.setHours(19, 30, 0, 0);
+    if (slotDate < now) slotDate.setDate(slotDate.getDate() + 1);
+
+    var nextSlot = {
+      dateStr: slotDate.toISOString().split("T")[0],
+      reservationTime: slotDate.getTime(),
+      displayTime: "7:30 PM",
+      slotGroupName: "Dinner",
+      deals: [{ slotId: 12345, itemId: venue.restaurantId + "-1001", title:"Free Reservation", bookingPrice:0, isFree:true, discountPercentage:0 }]
+    };
+
+    // Apply venue discount to deal
+    if (venue.offers.length > 0) {
+      var pctMatch = venue.offers[0].match(/(\d+)%/);
+      if (pctMatch) nextSlot.deals[0].discountPercentage = parseInt(pctMatch[1]);
+    }
+
+    return {
+      channel:"dineout", available:true, score:0,
+      cost: estimatedBill, timeMin: travelMin,
+      healthScore: getDishHealthScore(intent.dishName),
+      details: {
+        type:"dineout", venue:venue, nextSlot:nextSlot,
+        estimatedBill:estimatedBill, travelMin:travelMin,
+        offerText: venue.offers.length > 0 ? venue.offers[0] : null
+      },
+      recommended:false, reasonShort:""
+    };
+  }
+
+  // ─── Scorer ────────────────────────────────────────────────────────────────────
+
+  var PERSONA_WEIGHTS = {
+    foodie:   { cost:0.15, time:0.20, health:0.15, experience:0.50 },
+    gymfreak: { cost:0.15, time:0.15, health:0.55, experience:0.15 },
+    balanced: { cost:0.25, time:0.25, health:0.25, experience:0.25 },
+    budget:   { cost:0.50, time:0.15, health:0.15, experience:0.20 },
+  };
+
+  function scoreOption(option, intent, persona) {
+    var w = PERSONA_WEIGHTS[persona] || PERSONA_WEIGHTS.balanced;
+    var maxTime = intent.timeConstraintMin || 120;
+
+    var costScore = Math.max(0, Math.min(100, 100 - (option.cost / intent.budget) * 100));
+    var timeScore = Math.max(0, Math.min(100, 100 - (option.timeMin / maxTime) * 100));
+    var healthScore = option.healthScore;
+
+    var expScore = 50;
+    if (option.details.type === "cook") expScore = 40;
+    else if (option.details.type === "order") expScore = Math.min(100, 60 + option.details.restaurant.rating * 5);
+    else if (option.details.type === "dineout") expScore = Math.min(100, 80 + option.details.venue.rating * 4);
+
+    if (intent.occasion === "quick" && option.details.type === "cook") expScore = Math.max(0, expScore - 20);
+    if (intent.occasion === "date" && option.details.type === "dineout") expScore = Math.min(100, expScore + 20);
+    if (intent.occasion === "party" && intent.servings > 6 && option.details.type === "cook") expScore = Math.max(0, expScore - 15);
+
+    var score = Math.round(costScore * w.cost + timeScore * w.time + healthScore * w.health + expScore * w.experience);
+
+    var reason = "";
+    if (option.details.type === "cook") reason = "Cook at home";
+    else if (option.details.type === "order") reason = "Order delivery";
+    else reason = "Dine out";
+
+    if (costScore >= timeScore && costScore >= 60) reason += " — best value";
+    else if (timeScore >= 60) reason += " — fastest";
+    else if (healthScore >= 65) reason += " — healthiest";
+    else reason += " — good balance";
+
+    option.score = score;
+    option.reasonShort = reason;
+    return option;
+  }
+
+  function decideAll(intent, persona) {
+    var options = [];
+    var cook = queryCookIt(intent);
+    var order = queryOrderIt(intent);
+    var dineout = queryDineOut(intent);
+    if (cook) options.push(cook);
+    if (order) options.push(order);
+    if (dineout) options.push(dineout);
+
+    for (var i = 0; i < options.length; i++) scoreOption(options[i], intent, persona);
+    options.sort(function(a,b) { return b.score - a.score; });
+    for (var j = 0; j < options.length; j++) options[j].recommended = (j === 0);
+
+    return {
+      intent: intent,
+      options: options,
+      bestOption: options.length > 0 ? options[0].channel : "food",
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  // ─── Public API ────────────────────────────────────────────────────────────────
+
   window.PrismEngine = {
-    /**
-     * Parse a recipe prompt into an array of ingredient objects.
-     * Same output format as POST /api/parse  -> response.ingredients
-     *
-     * @param {string} prompt - e.g. "butter chicken for 4"
-     * @param {number} [servings] - optional override
-     * @returns {{ name, quantity, unit, category, priority }[]}
-     */
     parseRecipe: function (prompt, servings) {
       return localParseRecipe(prompt, servings);
     },
 
-    /**
-     * Optimize a cart given ingredients and budget.
-     * Handles SKU search internally using the embedded catalog.
-     * Same output format as POST /api/optimize -> response.cart
-     *
-     * @param {Array} ingredients - array from parseRecipe()
-     * @param {number} budget - budget in INR
-     * @returns {OptimizedCart} { items, totalCost, budget, budgetUtilization, droppedItems, meta }
-     */
     optimizeCart: function (ingredients, budget) {
-      // build SKU map by searching the catalog for each ingredient
       var skuMap = new Map();
       for (var i = 0; i < ingredients.length; i++) {
         var ing = ingredients[i];
@@ -660,9 +1018,14 @@
       return _optimizeCart(ingredients, skuMap, budget);
     },
 
-    // expose internals for advanced usage / debugging
+    parseIntent: parseIntent,
+    decide: decideAll,
+
     _searchSKUs: searchSKUs,
     _catalog: INSTAMART_CATALOG,
     _recipeDB: RECIPE_DB,
+    _restaurants: FOOD_RESTAURANTS,
+    _foodMenu: FOOD_MENU,
+    _dineoutVenues: DINEOUT_VENUES,
   };
 })();
