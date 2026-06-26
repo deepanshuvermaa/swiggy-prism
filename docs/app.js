@@ -1,5 +1,74 @@
 const API = window.location.origin;
 let serverAvailable = null; // null = unknown, true/false after check
+let swiggyConnected = false;
+
+// ─── Onboarding ──────────────────────────────────────────────────────────────
+
+function startWithSwiggy() {
+  // Redirect to OAuth flow — will come back after auth
+  window.location.href = '/auth/start';
+}
+
+function startWithMock() {
+  localStorage.setItem('prism_onboarded', 'mock');
+  if (!userPersona) {
+    navigateTo('screen-persona');
+  } else {
+    navigateTo('screen-smart-search');
+  }
+}
+
+function connectSwiggyFromApp() {
+  if (swiggyConnected) {
+    // Already connected — show status
+    alert('Connected to Swiggy! All 35 MCP tools active.');
+    return;
+  }
+  window.location.href = '/auth/start';
+}
+
+function updateConnectButton(connected) {
+  swiggyConnected = connected;
+  // Update ALL connect buttons across the app
+  var btns = document.querySelectorAll('.topbar-connect-btn, .global-connect');
+  btns.forEach(function(btn) {
+    var dot = btn.querySelector('.connect-dot');
+    var label = btn.querySelector('.connect-label-text') || btn.querySelector('#connect-label');
+    if (connected) {
+      btn.className = btn.className.replace(/\bconnected\b/g, '').trim() + ' connected';
+      if (dot) dot.className = 'connect-dot live';
+      if (label) label.textContent = 'Live';
+    } else {
+      btn.className = btn.className.replace(/\bconnected\b/g, '').trim();
+      if (dot) dot.className = 'connect-dot';
+      if (label) label.textContent = 'Connect';
+    }
+  });
+}
+
+// Check if user already onboarded or just came back from auth
+(function checkOnboardState() {
+  var onboarded = localStorage.getItem('prism_onboarded');
+  // If URL has auth callback params, user just authenticated
+  if (window.location.search.includes('code=')) {
+    localStorage.setItem('prism_onboarded', 'live');
+    return; // let the server handle the callback
+  }
+  if (onboarded) {
+    // Skip onboarding, go straight to app
+    setTimeout(function() {
+      navigateTo('screen-smart-search');
+      if (onboarded === 'live') updateConnectButton(true);
+    }, 50);
+  }
+  // Check server auth status
+  fetch('/api/health').then(function(r) { return r.json(); }).then(function(h) {
+    if (h.authenticated && h.mcpMode === 'live') {
+      updateConnectButton(true);
+      localStorage.setItem('prism_onboarded', 'live');
+    }
+  }).catch(function() { /* offline / static deploy — ignore */ });
+})();
 
 async function checkServer() {
   if (serverAvailable !== null) return serverAvailable;
@@ -129,7 +198,7 @@ function selectPersona(persona) {
   userPersona = persona;
   localStorage.setItem("prism_persona", persona);
   applyPersona();
-  navigateTo("screen-instamart");
+  navigateTo("screen-smart-search");
 }
 
 function applyPersona() {
@@ -260,7 +329,8 @@ function renderPrismHub() {
   const config = PERSONA_CONFIG[userPersona || "balanced"];
   const stats = getWrappedStats();
 
-  document.getElementById("hub-persona-emoji").textContent = config.emoji;
+  var hubEmoji = document.getElementById("hub-persona-emoji");
+  if (hubEmoji) hubEmoji.textContent = config.emoji;
   document.getElementById("hub-persona-label").textContent = config.tagline;
   document.getElementById("hub-savings").textContent = stats.savingsPct + "%";
   document.getElementById("hub-orders").textContent = stats.sessions + " orders";
