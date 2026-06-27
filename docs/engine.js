@@ -561,6 +561,35 @@
     if (budget < config.minBudget) budget = config.minBudget;
     if (budget > config.maxBudget) budget = config.maxBudget;
 
+    // Filter out pantry items (F6)
+    try {
+      var pantry = JSON.parse(localStorage.getItem('prism_pantry') || '[]');
+      if (pantry.length > 0) {
+        var pantrySet = pantry.map(function(p) { return p.toLowerCase(); });
+        var before = ingredients.length;
+        ingredients = ingredients.filter(function(ing) {
+          var name = (ing.name || '').toLowerCase();
+          return !pantrySet.some(function(p) { return name.indexOf(p) !== -1 || p.indexOf(name) !== -1; });
+        });
+        if (before > ingredients.length) console.log('[Prism Pantry] Skipped ' + (before - ingredients.length) + ' pantry items');
+      }
+    } catch(e) { /* ignore */ }
+
+    // Filter by dietary rules (F8)
+    try {
+      var dietary = JSON.parse(localStorage.getItem('prism_dietary') || '[]');
+      if (dietary.length > 0) {
+        var excludes = [];
+        var DIET_RULES = { keto:['rice','atta','bread','sugar','potato','maida','noodle','pasta','rava','oats','jaggery'], vegan:['chicken','paneer','egg','fish','mutton','prawn','milk','cream','curd','butter','cheese','ghee','honey'], jain:['onion','garlic','potato','ginger','carrot','beet','turnip','egg','chicken','mutton','fish','prawn'], diabetic:['sugar','jaggery','honey','maida','rice'], glutenfree:['atta','maida','bread','pasta','noodle','rava','oats'] };
+        dietary.forEach(function(d) { if (DIET_RULES[d]) excludes = excludes.concat(DIET_RULES[d]); });
+        var exSet = [...new Set(excludes)];
+        ingredients = ingredients.filter(function(ing) {
+          var name = (ing.name || '').toLowerCase();
+          return !exSet.some(function(e) { return name.indexOf(e) !== -1; });
+        });
+      }
+    } catch(e) { /* ignore */ }
+
     var startTime = performance.now();
     var totalSkusEvaluated = 0;
 

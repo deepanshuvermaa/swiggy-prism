@@ -77,6 +77,18 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/api/order-history") {
     return handleOrderHistory(req, res);
   }
+  if (url.pathname === "/api/go-to-items") {
+    return handleGoToItems(req, res);
+  }
+  if (url.pathname === "/api/check-prices" && req.method === "GET") {
+    return handleCheckPrices(req, res, url);
+  }
+  if (url.pathname === "/api/meal-plan" && req.method === "POST") {
+    return handleMealPlan(req, res);
+  }
+  if (url.pathname === "/api/group-order" && req.method === "POST") {
+    return handleGroupOrder(req, res);
+  }
   if (url.pathname === "/api/health") {
     const isLive = process.env.MCP_MODE === "live";
     return json(res, {
@@ -116,7 +128,7 @@ const server = createServer(async (req, res) => {
 
       log({ level: "info", event: "auth_success", status: "auth", userId: userLabel, details: `User: ${userLabel} — Token expires in ${Math.round((token.expiresAt - Date.now()) / 3600000)}h` });
       res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prism — Connected</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;font-family:Inter,-apple-system,sans-serif}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FFF3E8}.card{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.1);max-width:380px}.icon{font-size:48px;margin-bottom:12px}.title{font-size:22px;font-weight:700;color:#333;margin-bottom:8px}.sub{font-size:14px;color:#666;line-height:1.5}.badge{display:inline-block;margin-top:16px;padding:8px 20px;background:#FC8019;color:white;border-radius:10px;font-weight:600;font-size:14px}.links{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.link{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s}.link-primary{background:#FC8019;color:white}.link-primary:hover{background:#E5710F}.link-secondary{background:#f5f5f5;color:#333}.link-secondary:hover{background:#e8e8e8}.countdown{margin-top:12px;font-size:12px;color:#999}</style></head><body><div class="card"><div class="icon">&#x2705;</div><div class="title">Connected to Swiggy</div><div class="sub">Prism is now linked to your Swiggy account.<br>All 35 MCP tools are active.</div><div class="badge">Food &middot; Instamart &middot; Dineout</div><div class="links"><a href="/" class="link link-primary">Open Prism</a><a href="/admin" class="link link-secondary">Admin Dashboard</a></div><div class="countdown" id="cd">Redirecting to Prism in 5s...</div></div><script>localStorage.setItem('prism_onboarded','live');console.log('[Prism Auth] Connected — localStorage set to live');var s=5;var el=document.getElementById('cd');var t=setInterval(function(){s--;if(s<=0){clearInterval(t);console.log('[Prism Auth] Redirecting to app...');window.location.href='/';}else{el.textContent='Redirecting to Prism in '+s+'s...';}},1000);</script></body></html>`);
+      res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prism — Connected</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;font-family:Inter,-apple-system,sans-serif}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FFF3E8}.card{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.1);max-width:380px}.icon{font-size:48px;margin-bottom:12px}.title{font-size:22px;font-weight:700;color:#333;margin-bottom:8px}.sub{font-size:14px;color:#666;line-height:1.5}.badge{display:inline-block;margin-top:16px;padding:8px 20px;background:#FC8019;color:white;border-radius:10px;font-weight:600;font-size:14px}.links{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.link{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s}.link-primary{background:#FC8019;color:white}.link-primary:hover{background:#E5710F}.link-secondary{background:#f5f5f5;color:#333}.link-secondary:hover{background:#e8e8e8}.countdown{margin-top:12px;font-size:12px;color:#999}</style></head><body><div class="card"><div class="icon">&#x2705;</div><div class="title">Connected to Swiggy</div><div class="sub">Prism is now linked to your Swiggy account.<br>All 35 MCP tools are active.</div><div class="badge">Food &middot; Instamart &middot; Dineout</div><div class="links"><a href="/" class="link link-primary">Open Prism</a><a href="/admin" class="link link-secondary">Admin Dashboard</a></div><div class="countdown" id="cd">Redirecting to Prism in 5s...</div></div><script>localStorage.setItem('prism_onboarded','live');console.log('[Prism Auth] Connected — localStorage set to live');var needsPersona=!localStorage.getItem('prism_persona');var s=5;var el=document.getElementById('cd');if(needsPersona){el.textContent='Setting up your profile...';}var t=setInterval(function(){s--;if(s<=0){clearInterval(t);if(needsPersona){console.log('[Prism Auth] No persona — redirecting to persona screen');localStorage.setItem('prism_needs_persona','true');window.location.href='/';}else{console.log('[Prism Auth] Persona exists — redirecting to app');window.location.href='/';}}else{el.textContent=(needsPersona?'Setting up profile':'Redirecting to Prism')+' in '+s+'s...';}},1000);</script></body></html>`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       log({ level: "error", event: "auth_failed", status: "error", details: msg });
@@ -279,6 +291,147 @@ async function handleOrderHistory(_req: any, res: any) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     json(res, { success: false, error: msg }, 500);
+  }
+}
+
+async function handleGoToItems(_req: any, res: any) {
+  try {
+    const isLive = process.env.MCP_MODE === "live" && getAuthManager().isAuthenticated();
+    if (!isLive) return json(res, { success: true, items: [] });
+    const items = await (mcpClient as any).getGoToItems?.() ?? [];
+    json(res, { success: true, items });
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
+  }
+}
+
+async function handleCheckPrices(_req: any, res: any, url: URL) {
+  try {
+    const items = (url.searchParams.get("items") ?? "").split(",").filter(Boolean).slice(0, 5);
+    if (items.length === 0) return json(res, { success: true, prices: [] });
+
+    const isLive = process.env.MCP_MODE === "live" && getAuthManager().isAuthenticated();
+    const prices = [];
+    for (const item of items) {
+      try {
+        if (isLive) {
+          const restaurants = await foodProvider.searchRestaurants("", item);
+          const cheapest = restaurants.sort((a: any, b: any) => (a.deliveryFee || 300) - (b.deliveryFee || 300))[0];
+          prices.push({ dish: item, price: cheapest ? Math.round((cheapest.deliveryFee || 200) * 2) : 0, restaurant: cheapest?.name ?? '' });
+        } else {
+          prices.push({ dish: item, price: Math.round(200 + Math.random() * 400), restaurant: 'Mock Restaurant' });
+        }
+      } catch { prices.push({ dish: item, price: 0, restaurant: '' }); }
+    }
+    json(res, { success: true, prices });
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
+  }
+}
+
+async function handleMealPlan(req: any, res: any) {
+  try {
+    const body = await readBody(req);
+    const { persona = "balanced", weeklyBudget = 3500, servings = 2, dietaryPrefs = [] } = JSON.parse(body);
+
+    const DISHES = ["butter chicken", "dal tadka", "paneer tikka", "biryani", "pasta", "fried rice", "rajma", "palak paneer", "chole bhature", "egg curry", "aloo gobi", "sandwich", "dosa", "noodles"];
+    const CHANNEL_SPLIT: Record<string, number[]> = {
+      budget:   [5, 1, 1],
+      gymfreak: [5, 1, 1],
+      balanced: [3, 2, 2],
+      foodie:   [2, 3, 2],
+    };
+    const split = CHANNEL_SPLIT[persona] ?? [3, 2, 2];
+    const channels = [
+      ...Array(split[0]).fill("instamart"),
+      ...Array(split[1]).fill("food"),
+      ...Array(split[2]).fill("dineout"),
+    ];
+    // Shuffle channels for variety
+    for (let i = channels.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [channels[i], channels[j]] = [channels[j], channels[i]];
+    }
+
+    const dailyBudget = Math.round(weeklyBudget / 7);
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const plan = [];
+    const usedDishes = new Set<string>();
+
+    for (let d = 0; d < 7; d++) {
+      let dish = DISHES.find(dd => !usedDishes.has(dd)) ?? DISHES[d % DISHES.length];
+      usedDishes.add(dish);
+      const channel = channels[d];
+      const costMultiplier = channel === "instamart" ? 0.6 : channel === "food" ? 1.0 : 1.5;
+      const cost = Math.round(dailyBudget * costMultiplier * (0.8 + Math.random() * 0.4));
+
+      plan.push({
+        day: days[d],
+        dish,
+        channel,
+        cost: Math.min(cost, dailyBudget),
+        servings,
+        healthScore: Math.round(50 + Math.random() * 35),
+        timeMin: channel === "instamart" ? 40 + Math.round(Math.random() * 20) : channel === "food" ? 25 + Math.round(Math.random() * 15) : 10,
+      });
+    }
+
+    const totalCost = plan.reduce((s, p) => s + p.cost, 0);
+    const channelSplit = { cook: split[0], order: split[1], dine: split[2] };
+
+    json(res, { success: true, plan, totalCost, weeklyBudget, channelSplit });
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
+  }
+}
+
+async function handleGroupOrder(req: any, res: any) {
+  try {
+    const body = await readBody(req);
+    const { servings = 8, budget = 3000, persona = "balanced" } = JSON.parse(body);
+
+    const appetBudget = Math.round(budget * 0.3);
+    const mainBudget = Math.round(budget * 0.5);
+    const dessertBudget = Math.round(budget * 0.2);
+
+    // Generate appetizer suggestions (cook at home)
+    const appetizers = [
+      { name: "Paneer Tikka", channel: "instamart", cost: Math.round(appetBudget * 0.5), servings, type: "appetizer" },
+      { name: "Aloo Tikki", channel: "instamart", cost: Math.round(appetBudget * 0.3), servings, type: "appetizer" },
+      { name: "Masala Papad", channel: "instamart", cost: Math.round(appetBudget * 0.2), servings, type: "appetizer" },
+    ];
+
+    // Generate main course suggestions (order delivery)
+    const mains = [
+      { name: "Butter Chicken + Naan", channel: "food", cost: Math.round(mainBudget * 0.6), servings, type: "main" },
+      { name: "Veg Biryani", channel: "food", cost: Math.round(mainBudget * 0.4), servings, type: "main" },
+    ];
+
+    // Desserts
+    const desserts = [
+      { name: "Gulab Jamun", channel: "food", cost: Math.round(dessertBudget * 0.5), servings, type: "dessert" },
+      { name: "Ice Cream", channel: "instamart", cost: Math.round(dessertBudget * 0.5), servings, type: "dessert" },
+    ];
+
+    const allItems = [...appetizers, ...mains, ...desserts];
+    const totalCost = allItems.reduce((s, i) => s + i.cost, 0);
+    const perPerson = Math.round(totalCost / servings);
+    const overBudget = totalCost > budget;
+    const foodCartTotal = allItems.filter(i => i.channel === "food").reduce((s, i) => s + i.cost, 0);
+
+    json(res, {
+      success: true,
+      items: allItems,
+      totalCost,
+      perPerson,
+      budget,
+      servings,
+      overBudget,
+      foodCartWarning: foodCartTotal > 1000 ? "Food cart exceeds ₹1000 limit — may need to split orders" : null,
+      split: { appetizers: appetBudget, mains: mainBudget, desserts: dessertBudget },
+    });
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
   }
 }
 

@@ -117,15 +117,26 @@ function updateConnectButton(connected) {
     }
   }
   if (onboarded) {
-    prismLog('Boot', 'Already onboarded (' + onboarded + ') — skipping landing, going to smart-search');
-    // Skip onboarding, go straight to app
-    setTimeout(function() {
-      navigateTo('screen-smart-search');
-      if (onboarded === 'live') {
-        prismLog('Boot', 'Live mode — marking connect buttons as connected');
-        updateConnectButton(true);
-      }
-    }, 50);
+    // Check if auth just completed and persona is needed
+    var needsPersona = localStorage.getItem('prism_needs_persona');
+    if (needsPersona && !localStorage.getItem('prism_persona')) {
+      prismLog('Boot', 'Auth complete but no persona — showing persona screen');
+      localStorage.removeItem('prism_needs_persona');
+      setTimeout(function() {
+        navigateTo('screen-persona');
+        if (onboarded === 'live') updateConnectButton(true);
+      }, 50);
+    } else {
+      prismLog('Boot', 'Already onboarded (' + onboarded + ') — skipping landing, going to smart-search');
+      localStorage.removeItem('prism_needs_persona');
+      setTimeout(function() {
+        navigateTo('screen-smart-search');
+        if (onboarded === 'live') {
+          prismLog('Boot', 'Live mode — marking connect buttons as connected');
+          updateConnectButton(true);
+        }
+      }, 50);
+    }
   } else {
     prismLog('Boot', 'Not onboarded — showing landing page');
   }
@@ -280,6 +291,17 @@ function selectPersona(persona) {
   localStorage.setItem("prism_persona", persona);
   applyPersona();
   navigateTo("screen-smart-search");
+
+  // In live mode, fetch user's go-to Instamart items to enhance suggestions
+  if (localStorage.getItem('prism_onboarded') === 'live' && !isStaticDeploy()) {
+    prismLog('Persona', 'Live mode — fetching your_go_to_items from Instamart MCP');
+    fetch(API + '/api/go-to-items').then(function(r) { return r.json(); }).then(function(d) {
+      if (d.success && d.items && d.items.length > 0) {
+        prismLog('Persona', 'Got ' + d.items.length + ' go-to items from Instamart');
+        localStorage.setItem('prism_goto_items', JSON.stringify(d.items));
+      }
+    }).catch(function() { /* ignore */ });
+  }
 }
 
 function applyPersona() {
@@ -954,6 +976,9 @@ function renderInlineResults(result) {
     html += '</div></div>';
   }
 
+  // Savings calculator (F2)
+  html += renderSavingsCalculator(result);
+
   // Clear/new search link
   html += '<button class="ir-clear" onclick="clearInlineResults()">← New search</button>';
 
@@ -1483,3 +1508,448 @@ function renderXRayFromServer(data) {
       '<span class="savings-amount">Prism can save you 30-40% by switching some orders to cooking.</span></p>';
   }
 }
+
+// ─── F6: Pantry Awareness ─────────────────────────────────────────────────────
+
+function loadPantry() {
+  try { return JSON.parse(localStorage.getItem('prism_pantry') || '[]'); } catch { return []; }
+}
+
+function savePantry(items) {
+  localStorage.setItem('prism_pantry', JSON.stringify(items));
+}
+
+function togglePantry(item) {
+  var pantry = loadPantry();
+  var idx = pantry.indexOf(item);
+  if (idx >= 0) { pantry.splice(idx, 1); } else { pantry.push(item); }
+  savePantry(pantry);
+  // Update chip UI
+  var chips = document.querySelectorAll('.pantry-chip');
+  chips.forEach(function(c) {
+    var name = c.textContent.trim().split(' ').pop().toLowerCase();
+    if (pantry.indexOf(name) >= 0) c.classList.add('active');
+    else c.classList.remove('active');
+  });
+  prismLog('Pantry', 'Updated pantry: ' + pantry.join(', '));
+}
+
+function initPantryChips() {
+  var pantry = loadPantry();
+  var chips = document.querySelectorAll('.pantry-chip');
+  chips.forEach(function(c) {
+    var words = c.textContent.trim().split(' ');
+    var name = words[words.length - 1].toLowerCase();
+    if (pantry.indexOf(name) >= 0) c.classList.add('active');
+  });
+}
+
+// ─── F8: Dietary Compliance ───────────────────────────────────────────────────
+
+var DIETARY_RULES = {
+  keto: { exclude: ['rice','atta','bread','sugar','potato','maida','noodle','pasta','rava','oats','jaggery'], label: 'Keto' },
+  vegan: { exclude: ['chicken','paneer','egg','fish','mutton','prawn','milk','cream','curd','butter','cheese','ghee','honey'], label: 'Vegan' },
+  jain: { exclude: ['onion','garlic','potato','ginger','carrot','beet','turnip','egg','chicken','mutton','fish','prawn'], label: 'Jain' },
+  diabetic: { exclude: ['sugar','jaggery','honey','maida','rice'], label: 'Diabetic' },
+  glutenfree: { exclude: ['atta','maida','bread','pasta','noodle','rava','oats'], label: 'Gluten-free' },
+};
+
+function loadDietary() {
+  try { return JSON.parse(localStorage.getItem('prism_dietary') || '[]'); } catch { return []; }
+}
+
+function toggleDietary(diet) {
+  var prefs = loadDietary();
+  var idx = prefs.indexOf(diet);
+  if (idx >= 0) { prefs.splice(idx, 1); } else { prefs.push(diet); }
+  localStorage.setItem('prism_dietary', JSON.stringify(prefs));
+  // Update chip UI
+  document.querySelectorAll('.dietary-chip').forEach(function(c) {
+    if (prefs.indexOf(c.dataset.diet) >= 0) c.classList.add('active');
+    else c.classList.remove('active');
+  });
+  prismLog('Dietary', 'Updated dietary: ' + prefs.join(', '));
+}
+
+function initDietaryChips() {
+  var prefs = loadDietary();
+  document.querySelectorAll('.dietary-chip').forEach(function(c) {
+    if (prefs.indexOf(c.dataset.diet) >= 0) c.classList.add('active');
+  });
+}
+
+function getDietaryExclusions() {
+  var prefs = loadDietary();
+  var excludes = [];
+  prefs.forEach(function(p) {
+    if (DIETARY_RULES[p]) excludes = excludes.concat(DIETARY_RULES[p].exclude);
+  });
+  return [...new Set(excludes)];
+}
+
+// ─── F2: Savings Calculator ──────────────────────────────────────────────────
+
+function renderSavingsCalculator(result) {
+  var cookOpt = result.options.find(function(o) { return o.channel === 'instamart'; });
+  var orderOpt = result.options.find(function(o) { return o.channel === 'food'; });
+  if (!cookOpt || !orderOpt || cookOpt.cost <= 0) return '';
+
+  var diff = orderOpt.cost - cookOpt.cost;
+  if (diff <= 0) return '';
+
+  var freqDefaults = { foodie: 2, gymfreak: 4, balanced: 3, budget: 5 };
+  var freq = freqDefaults[userPersona] || 3;
+  var monthly = diff * freq * 4;
+
+  return '<div class="savings-calc">' +
+    '<h4>Cook vs Order Savings</h4>' +
+    '<p>You save <span class="savings-big">₹' + diff + '</span> per meal by cooking at home</p>' +
+    '<div class="savings-freq">' +
+    '<span>If you cook</span>' +
+    '<input type="number" id="savings-freq" value="' + freq + '" min="1" max="7" onchange="updateSavings(' + diff + ')">' +
+    '<span>times/week = <strong style="color:var(--green)">₹' + monthly + '/month saved</strong></span>' +
+    '</div></div>';
+}
+
+function updateSavings(diff) {
+  var freq = parseInt(document.getElementById('savings-freq').value) || 3;
+  var monthly = diff * freq * 4;
+  var container = document.querySelector('.savings-freq strong');
+  if (container) container.textContent = '₹' + monthly + '/month saved';
+}
+
+// ─── F7: Price Alerts ─────────────────────────────────────────────────────────
+
+function loadAlerts() {
+  try { return JSON.parse(localStorage.getItem('prism_alerts') || '[]'); } catch { return []; }
+}
+
+function createPriceAlert(dish, channel, currentPrice) {
+  var alerts = loadAlerts();
+  if (alerts.length >= 5) { alert('Maximum 5 alerts allowed'); return; }
+  var targetPrice = prompt('Alert me when "' + dish + '" drops below ₹', Math.round(currentPrice * 0.8));
+  if (!targetPrice) return;
+  alerts.push({ dish: dish, channel: channel, targetPrice: parseInt(targetPrice), currentPrice: currentPrice, created: Date.now(), active: true });
+  localStorage.setItem('prism_alerts', JSON.stringify(alerts));
+  prismLog('Alert', 'Created alert: ' + dish + ' < ₹' + targetPrice);
+}
+
+async function checkPriceAlerts() {
+  var alerts = loadAlerts().filter(function(a) { return a.active; });
+  if (alerts.length === 0) return;
+
+  var items = alerts.map(function(a) { return a.dish; }).join(',');
+  var prices = [];
+
+  try {
+    var useServer = await checkServer();
+    if (useServer) {
+      var r = await fetch(API + '/api/check-prices?items=' + encodeURIComponent(items));
+      var d = await r.json();
+      if (d.success) prices = d.prices;
+    } else {
+      // Mock: add random variance
+      alerts.forEach(function(a) {
+        prices.push({ dish: a.dish, price: Math.round(a.currentPrice * (0.85 + Math.random() * 0.3)), restaurant: 'Local' });
+      });
+    }
+  } catch { return; }
+
+  // Check for triggered alerts
+  for (var i = 0; i < alerts.length; i++) {
+    var priceInfo = prices.find(function(p) { return p.dish === alerts[i].dish; });
+    if (priceInfo && priceInfo.price > 0 && priceInfo.price <= alerts[i].targetPrice) {
+      showAlertBanner(alerts[i].dish, priceInfo.price, priceInfo.restaurant);
+      break; // show one at a time
+    }
+  }
+}
+
+function showAlertBanner(dish, price, restaurant) {
+  var banner = document.getElementById('alert-banner');
+  if (!banner) return;
+  banner.innerHTML = '🔔 ' + dish + ' dropped to ₹' + price + (restaurant ? ' at ' + restaurant : '') + '! Tap to order' +
+    '<button class="alert-dismiss" onclick="dismissAlert()">×</button>';
+  banner.style.display = 'flex';
+  banner.onclick = function(e) { if (e.target.tagName !== 'BUTTON') { dismissAlert(); quickDecision(dish); } };
+}
+
+function dismissAlert() {
+  var banner = document.getElementById('alert-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+// ─── F3: Meal Planning ────────────────────────────────────────────────────────
+
+async function generateMealPlan() {
+  var budget = parseInt(document.getElementById('mp-budget').value) || 3500;
+  var persona = userPersona || 'balanced';
+  var grid = document.getElementById('mp-grid');
+  var summary = document.getElementById('mp-summary');
+  if (!grid) return;
+
+  grid.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-sec)">Generating your meal plan...</div>';
+
+  var plan = null;
+  try {
+    var useServer = await checkServer();
+    if (useServer) {
+      var r = await fetch(API + '/api/meal-plan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persona: persona, weeklyBudget: budget, servings: 2, dietaryPrefs: loadDietary() })
+      });
+      var d = await r.json();
+      if (d.success) plan = d;
+    }
+  } catch { /* fall back to client */ }
+
+  if (!plan) {
+    // Client-side generation
+    plan = generateClientMealPlan(persona, budget);
+  }
+
+  renderMealPlanGrid(plan, grid, summary);
+}
+
+function generateClientMealPlan(persona, budget) {
+  var dishes = ['butter chicken','dal tadka','paneer tikka','biryani','pasta','fried rice','rajma','palak paneer','chole bhature','egg curry','aloo gobi','sandwich','dosa','noodles'];
+  var splits = { budget:[5,1,1], gymfreak:[5,1,1], balanced:[3,2,2], foodie:[2,3,2] };
+  var split = splits[persona] || [3,2,2];
+  var channels = [];
+  for (var i=0;i<split[0];i++) channels.push('instamart');
+  for (var j=0;j<split[1];j++) channels.push('food');
+  for (var k=0;k<split[2];k++) channels.push('dineout');
+  // Shuffle
+  for (var s=channels.length-1;s>0;s--) { var r=Math.floor(Math.random()*(s+1)); var tmp=channels[s]; channels[s]=channels[r]; channels[r]=tmp; }
+
+  var daily = Math.round(budget / 7);
+  var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var plan = [];
+  for (var d=0;d<7;d++) {
+    var ch = channels[d];
+    var mult = ch==='instamart'?0.6:ch==='food'?1.0:1.5;
+    plan.push({ day:days[d], dish:dishes[d%dishes.length], channel:ch, cost:Math.round(daily*mult*(0.8+Math.random()*0.4)), servings:2, healthScore:Math.round(50+Math.random()*35), timeMin:ch==='instamart'?45:ch==='food'?30:10 });
+  }
+  var totalCost = plan.reduce(function(s,p){return s+p.cost},0);
+  return { plan:plan, totalCost:totalCost, weeklyBudget:budget, channelSplit:{cook:split[0],order:split[1],dine:split[2]} };
+}
+
+function renderMealPlanGrid(data, grid, summary) {
+  var channelNames = { instamart:'🍳 Cook', food:'🛵 Order', dineout:'🍽️ Dine' };
+  var html = '';
+  for (var i=0;i<data.plan.length;i++) {
+    var p = data.plan[i];
+    html += '<div class="mp-day ch-' + p.channel + '">';
+    html += '<div class="mp-day-label">' + p.day + '</div>';
+    html += '<div class="mp-day-info"><div class="mp-day-dish">' + p.dish + '</div><div class="mp-day-channel">' + (channelNames[p.channel]||p.channel) + ' · ' + p.timeMin + ' min</div></div>';
+    html += '<div class="mp-day-cost">₹' + p.cost + '</div>';
+    html += '<button class="mp-day-swap" onclick="swapMealDay(' + i + ')">Swap</button>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+
+  if (summary) {
+    var split = data.channelSplit || {};
+    var overBudget = data.totalCost > data.weeklyBudget;
+    summary.innerHTML = '<div class="mp-summary-row"><span>Total</span><span class="mp-summary-total">₹' + data.totalCost + '</span></div>' +
+      '<div class="mp-summary-row"><span>Budget</span><span>₹' + data.weeklyBudget + '</span></div>' +
+      '<div class="mp-summary-row"><span>Split</span><span>Cook ' + (split.cook||0) + ' · Order ' + (split.order||0) + ' · Dine ' + (split.dine||0) + '</span></div>' +
+      (overBudget ? '<div style="color:#E04F5F;font-size:11px;margin-top:6px">⚠ Over budget by ₹' + (data.totalCost - data.weeklyBudget) + '</div>' : '<div style="color:var(--green);font-size:11px;margin-top:6px">✓ Within budget</div>');
+  }
+
+  // Cache plan
+  localStorage.setItem('prism_meal_plan', JSON.stringify(data));
+}
+
+function swapMealDay(idx) {
+  var cached = localStorage.getItem('prism_meal_plan');
+  if (!cached) return;
+  var data = JSON.parse(cached);
+  var dishes = ['butter chicken','dal tadka','paneer tikka','biryani','pasta','fried rice','rajma','palak paneer','chole bhature','egg curry','aloo gobi','noodles','dosa','sandwich'];
+  data.plan[idx].dish = dishes[Math.floor(Math.random()*dishes.length)];
+  data.plan[idx].cost = Math.round(data.plan[idx].cost * (0.8 + Math.random()*0.4));
+  data.totalCost = data.plan.reduce(function(s,p){return s+p.cost},0);
+  localStorage.setItem('prism_meal_plan', JSON.stringify(data));
+  renderMealPlanGrid(data, document.getElementById('mp-grid'), document.getElementById('mp-summary'));
+}
+
+// ─── F4: Social Sharing / Prism Wrapped ───────────────────────────────────────
+
+function shareWrapped() {
+  var canvas = document.getElementById('wrapped-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var stats = getWrappedStats();
+  var persona = PERSONA_CONFIG[userPersona || 'balanced'];
+
+  // Draw branded card
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, 400, 600);
+
+  // Gradient accent
+  var grad = ctx.createLinearGradient(0, 0, 400, 200);
+  grad.addColorStop(0, '#FC8019');
+  grad.addColorStop(1, '#FF6B35');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 400, 180);
+
+  // Title
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 28px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Swiggy Prism', 200, 60);
+  ctx.font = '14px Inter, sans-serif';
+  ctx.fillText('Your Monthly Food Story', 200, 85);
+
+  // Persona
+  ctx.font = '40px sans-serif';
+  ctx.fillText(persona ? persona.emoji : '⚖️', 200, 145);
+  ctx.font = '16px Inter, sans-serif';
+  ctx.fillText(persona ? persona.label : 'Balanced', 200, 170);
+
+  // Savings
+  ctx.fillStyle = '#FC8019';
+  ctx.font = 'bold 64px Inter, sans-serif';
+  ctx.fillText(stats.savingsPct + '%', 200, 280);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '16px Inter, sans-serif';
+  ctx.fillText('saved on food this month', 200, 310);
+
+  // Stats
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '13px Inter, sans-serif';
+  ctx.fillText(stats.sessions + ' orders · ₹' + stats.totalSpent + ' spent · ₹' + stats.totalBudget + ' budget', 200, 370);
+
+  // Budget bar
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.fillRect(40, 400, 320, 8);
+  ctx.fillStyle = '#FC8019';
+  var pct = Math.min(1, stats.totalSpent / Math.max(1, stats.totalBudget));
+  ctx.fillRect(40, 400, 320 * pct, 8);
+
+  // Footer
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.fillText('Powered by Swiggy Prism · ' + new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }), 200, 560);
+
+  // Show share modal
+  var preview = document.getElementById('share-preview');
+  if (preview) preview.innerHTML = '<img src="' + canvas.toDataURL('image/png') + '" alt="Prism Wrapped">';
+  var modal = document.getElementById('share-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function downloadWrapped() {
+  var canvas = document.getElementById('wrapped-canvas');
+  if (!canvas) return;
+  var a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'prism-wrapped-' + new Date().toISOString().split('T')[0] + '.png';
+  a.click();
+}
+
+function shareToWhatsApp() {
+  var text = 'Check out my Swiggy Prism Wrapped! I saved ' + getWrappedStats().savingsPct + '% on food this month 🔥';
+  if (navigator.share) {
+    var canvas = document.getElementById('wrapped-canvas');
+    canvas.toBlob(function(blob) {
+      var file = new File([blob], 'prism-wrapped.png', { type: 'image/png' });
+      navigator.share({ text: text, files: [file] }).catch(function() {});
+    });
+  } else {
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  }
+}
+
+function closeShareModal() {
+  var modal = document.getElementById('share-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// ─── F5: Group Ordering ───────────────────────────────────────────────────────
+
+async function generateGroupOrder() {
+  var guests = parseInt(document.getElementById('group-guests').value) || 8;
+  var budget = parseInt(document.getElementById('group-budget').value) || 3000;
+  var container = document.getElementById('group-result');
+  if (!container) return;
+
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-sec)">Planning your party...</div>';
+
+  var result = null;
+  try {
+    var useServer = await checkServer();
+    if (useServer) {
+      var r = await fetch(API + '/api/group-order', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ servings: guests, budget: budget, persona: userPersona || 'balanced' })
+      });
+      var d = await r.json();
+      if (d.success) result = d;
+    }
+  } catch { /* fall back */ }
+
+  if (!result) {
+    result = generateClientGroupOrder(guests, budget);
+  }
+
+  renderGroupOrder(result, container);
+}
+
+function generateClientGroupOrder(guests, budget) {
+  var appetBudget = Math.round(budget * 0.3);
+  var mainBudget = Math.round(budget * 0.5);
+  var dessertBudget = Math.round(budget * 0.2);
+  var items = [
+    { name:'Paneer Tikka', channel:'instamart', cost:Math.round(appetBudget*0.5), type:'appetizer' },
+    { name:'Aloo Tikki', channel:'instamart', cost:Math.round(appetBudget*0.3), type:'appetizer' },
+    { name:'Masala Papad', channel:'instamart', cost:Math.round(appetBudget*0.2), type:'appetizer' },
+    { name:'Butter Chicken + Naan', channel:'food', cost:Math.round(mainBudget*0.6), type:'main' },
+    { name:'Veg Biryani', channel:'food', cost:Math.round(mainBudget*0.4), type:'main' },
+    { name:'Gulab Jamun', channel:'food', cost:Math.round(dessertBudget*0.5), type:'dessert' },
+    { name:'Ice Cream', channel:'instamart', cost:Math.round(dessertBudget*0.5), type:'dessert' },
+  ];
+  var totalCost = items.reduce(function(s,i){return s+i.cost},0);
+  var foodTotal = items.filter(function(i){return i.channel==='food'}).reduce(function(s,i){return s+i.cost},0);
+  return { items:items, totalCost:totalCost, perPerson:Math.round(totalCost/guests), budget:budget, servings:guests,
+    overBudget:totalCost>budget, foodCartWarning:foodTotal>1000?'Food cart exceeds ₹1000 limit':null,
+    split:{appetizers:appetBudget,mains:mainBudget,desserts:dessertBudget} };
+}
+
+function renderGroupOrder(result, container) {
+  var channelLabels = { instamart:'Cook', food:'Order' };
+  var types = { appetizer:'Appetizers (Cook at Home)', main:'Main Course (Order Delivery)', dessert:'Desserts' };
+  var html = '';
+
+  ['appetizer','main','dessert'].forEach(function(type) {
+    var typeItems = result.items.filter(function(i){return i.type===type});
+    if (typeItems.length === 0) return;
+    html += '<div class="group-course"><div class="group-course-label">' + (types[type]||type) + '</div>';
+    typeItems.forEach(function(item) {
+      var chClass = item.channel === 'instamart' ? 'ch-cook' : 'ch-order';
+      html += '<div class="group-item"><div class="group-item-name">' + item.name + '</div>';
+      html += '<span class="group-item-channel ' + chClass + '">' + (channelLabels[item.channel]||item.channel) + '</span>';
+      html += '<div class="group-item-cost">₹' + item.cost + '</div></div>';
+    });
+    html += '</div>';
+  });
+
+  html += '<div class="group-summary">';
+  html += '<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700"><span>Total</span><span>₹' + result.totalCost + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-sec);margin-top:4px"><span>' + result.servings + ' guests</span><span>₹' + result.perPerson + '/person</span></div>';
+  if (result.overBudget) html += '<div style="color:var(--red);font-size:11px;margin-top:6px">⚠ Over budget by ₹' + (result.totalCost - result.budget) + '</div>';
+  else html += '<div style="color:var(--green);font-size:11px;margin-top:6px">✓ Within ₹' + result.budget + ' budget</div>';
+  html += '</div>';
+
+  if (result.foodCartWarning) html += '<div class="group-warning">⚠ ' + result.foodCartWarning + '</div>';
+
+  container.innerHTML = html;
+}
+
+// ─── Init all new features ───────────────────────────────────────────────────
+
+document.addEventListener("DOMContentLoaded", function() {
+  initPantryChips();
+  initDietaryChips();
+  checkPriceAlerts();
+});

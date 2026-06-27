@@ -122,6 +122,19 @@ export class MCPInstamartClient implements InstamartProvider {
     return skus.slice(0, limit);
   }
 
+  async getGoToItems(): Promise<any[]> {
+    try {
+      const addressId = await this.getAddressId();
+      const res = await this.transport.callTool({
+        name: "your_go_to_items",
+        arguments: { addressId, offset: 0 },
+      });
+      const data = extractMCPData(res);
+      if (typeof data === 'string') return [];
+      return data?.items ?? data?.products ?? data ?? [];
+    } catch { return []; }
+  }
+
   async getOrders(): Promise<any[]> {
     try {
       const res = await this.transport.callTool({ name: "get_orders", arguments: {} });
