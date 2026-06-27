@@ -78,7 +78,7 @@ const server = createServer(async (req, res) => {
     const isLive = process.env.MCP_MODE === "live";
     return json(res, {
       status: "ok",
-      hasLLM: !!process.env.GEMINI_API_KEY || !!process.env.OPENAI_API_KEY,
+      hasLLM: !!process.env.GEMINI_API_KEY || !!process.env.OPENAI_API_KEY || !!process.env.GROQ_API_KEY,
       mcpMode: isLive ? "live" : "mock",
       authenticated: isLive ? getAuthManager().isAuthenticated() : true,
     });
@@ -113,7 +113,7 @@ const server = createServer(async (req, res) => {
 
       log({ level: "info", event: "auth_success", status: "auth", userId: userLabel, details: `User: ${userLabel} — Token expires in ${Math.round((token.expiresAt - Date.now()) / 3600000)}h` });
       res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prism — Connected</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;font-family:Inter,-apple-system,sans-serif}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FFF3E8}.card{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.1);max-width:380px}.icon{font-size:48px;margin-bottom:12px}.title{font-size:22px;font-weight:700;color:#333;margin-bottom:8px}.sub{font-size:14px;color:#666;line-height:1.5}.badge{display:inline-block;margin-top:16px;padding:8px 20px;background:#FC8019;color:white;border-radius:10px;font-weight:600;font-size:14px}.links{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.link{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s}.link-primary{background:#FC8019;color:white}.link-primary:hover{background:#E5710F}.link-secondary{background:#f5f5f5;color:#333}.link-secondary:hover{background:#e8e8e8}.countdown{margin-top:12px;font-size:12px;color:#999}</style></head><body><div class="card"><div class="icon">&#x2705;</div><div class="title">Connected to Swiggy</div><div class="sub">Prism is now linked to your Swiggy account.<br>All 35 MCP tools are active.</div><div class="badge">Food &middot; Instamart &middot; Dineout</div><div class="links"><a href="/" class="link link-primary">Open Prism</a><a href="/admin" class="link link-secondary">Admin Dashboard</a></div><div class="countdown" id="cd">Redirecting to Prism in 5s...</div></div><script>var s=5;var el=document.getElementById('cd');var t=setInterval(function(){s--;if(s<=0){clearInterval(t);window.location.href='/';}else{el.textContent='Redirecting to Prism in '+s+'s...';}},1000);</script></body></html>`);
+      res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prism — Connected</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;font-family:Inter,-apple-system,sans-serif}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FFF3E8}.card{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.1);max-width:380px}.icon{font-size:48px;margin-bottom:12px}.title{font-size:22px;font-weight:700;color:#333;margin-bottom:8px}.sub{font-size:14px;color:#666;line-height:1.5}.badge{display:inline-block;margin-top:16px;padding:8px 20px;background:#FC8019;color:white;border-radius:10px;font-weight:600;font-size:14px}.links{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.link{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s}.link-primary{background:#FC8019;color:white}.link-primary:hover{background:#E5710F}.link-secondary{background:#f5f5f5;color:#333}.link-secondary:hover{background:#e8e8e8}.countdown{margin-top:12px;font-size:12px;color:#999}</style></head><body><div class="card"><div class="icon">&#x2705;</div><div class="title">Connected to Swiggy</div><div class="sub">Prism is now linked to your Swiggy account.<br>All 35 MCP tools are active.</div><div class="badge">Food &middot; Instamart &middot; Dineout</div><div class="links"><a href="/" class="link link-primary">Open Prism</a><a href="/admin" class="link link-secondary">Admin Dashboard</a></div><div class="countdown" id="cd">Redirecting to Prism in 5s...</div></div><script>localStorage.setItem('prism_onboarded','live');console.log('[Prism Auth] Connected — localStorage set to live');var s=5;var el=document.getElementById('cd');var t=setInterval(function(){s--;if(s<=0){clearInterval(t);console.log('[Prism Auth] Redirecting to app...');window.location.href='/';}else{el.textContent='Redirecting to Prism in '+s+'s...';}},1000);</script></body></html>`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       log({ level: "error", event: "auth_failed", status: "error", details: msg });
@@ -185,7 +185,7 @@ async function handleParse(req: any, res: any) {
   try {
     let ingredients: Ingredient[];
 
-    if (process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) {
+    if (process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY) {
       // use real LLM
       ingredients = await parseRecipe(clean, servings);
     } else {
@@ -193,7 +193,7 @@ async function handleParse(req: any, res: any) {
       ingredients = localParseRecipe(clean, servings);
     }
 
-    json(res, { success: true, ingredients, usedLLM: !!(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) });
+    json(res, { success: true, ingredients, usedLLM: !!(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY) });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     json(res, { success: false, error: msg }, 500);
@@ -573,7 +573,7 @@ setInterval(loadLogs, 5000);
 </body></html>`;
 
 server.listen(PORT, () => {
-  const llmStatus = process.env.GEMINI_API_KEY ? "Gemini" : process.env.OPENAI_API_KEY ? "OpenAI" : "local fallback (no API key)";
+  const llmStatus = process.env.GEMINI_API_KEY ? "Gemini" : process.env.OPENAI_API_KEY ? "OpenAI" : process.env.GROQ_API_KEY ? "Groq (Llama 3.3 70B)" : "local fallback (no API key)";
   const mcpStatus = process.env.MCP_MODE === "live" ? "LIVE (mcp.swiggy.com)" : "mock (embedded catalog)";
   console.log(`\n  Swiggy Prism server running at http://localhost:${PORT}`);
   console.log(`  LLM: ${llmStatus}`);

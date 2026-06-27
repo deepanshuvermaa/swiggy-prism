@@ -2,6 +2,17 @@ const API = window.location.origin;
 let serverAvailable = null; // null = unknown, true/false after check
 let swiggyConnected = false;
 
+// ─── Console Logging ─────────────────────────────────────────────────────────
+function prismLog(area, msg, data) {
+  var prefix = '%c[Prism ' + area + ']';
+  var style = 'color:#FC8019;font-weight:bold';
+  if (data !== undefined) {
+    console.log(prefix, style, msg, data);
+  } else {
+    console.log(prefix, style, msg);
+  }
+}
+
 // Detect if running on GitHub Pages (static) vs local server
 function isStaticDeploy() {
   var host = window.location.hostname;
@@ -11,31 +22,40 @@ function isStaticDeploy() {
 // ─── Onboarding ──────────────────────────────────────────────────────────────
 
 function startWithSwiggy() {
+  prismLog('Auth', 'Connect with Swiggy clicked');
   if (isStaticDeploy()) {
+    prismLog('Auth', 'Static deploy detected — showing overlay');
     showConnectOverlay();
     return;
   }
+  prismLog('Auth', 'Redirecting to /auth/start...');
   window.location.href = '/auth/start';
 }
 
 function startWithMock() {
+  prismLog('Auth', 'Explore with Demo Data clicked');
   localStorage.setItem('prism_onboarded', 'mock');
   if (!userPersona) {
+    prismLog('Auth', 'No persona set — routing to persona screen');
     navigateTo('screen-persona');
   } else {
+    prismLog('Auth', 'Persona exists (' + userPersona + ') — routing to smart-search');
     navigateTo('screen-smart-search');
   }
 }
 
 function connectSwiggyFromApp() {
+  prismLog('Auth', 'In-app Connect button clicked, swiggyConnected=' + swiggyConnected);
   if (swiggyConnected) {
     alert('Connected to Swiggy! All 35 MCP tools active.');
     return;
   }
   if (isStaticDeploy()) {
+    prismLog('Auth', 'Static deploy — showing overlay');
     showConnectOverlay();
     return;
   }
+  prismLog('Auth', 'Redirecting to /auth/start...');
   window.location.href = '/auth/start';
 }
 
@@ -84,26 +104,49 @@ function updateConnectButton(connected) {
 // Check if user already onboarded or just came back from auth
 (function checkOnboardState() {
   var onboarded = localStorage.getItem('prism_onboarded');
+  var hasCode = window.location.search.includes('code=');
+  prismLog('Boot', 'checkOnboardState — onboarded=' + onboarded + ', hasCode=' + hasCode + ', static=' + isStaticDeploy() + ', url=' + window.location.pathname);
+
   // If URL has auth callback params, user just authenticated
-  if (window.location.search.includes('code=')) {
+  if (hasCode) {
+    prismLog('Boot', 'Auth code detected in URL — setting onboarded=live');
     localStorage.setItem('prism_onboarded', 'live');
-    if (!isStaticDeploy()) return; // let the server handle the callback
+    if (!isStaticDeploy()) {
+      prismLog('Boot', 'Server deploy — letting server handle /auth/callback');
+      return; // let the server handle the callback
+    }
   }
   if (onboarded) {
+    prismLog('Boot', 'Already onboarded (' + onboarded + ') — skipping landing, going to smart-search');
     // Skip onboarding, go straight to app
     setTimeout(function() {
       navigateTo('screen-smart-search');
-      if (onboarded === 'live') updateConnectButton(true);
+      if (onboarded === 'live') {
+        prismLog('Boot', 'Live mode — marking connect buttons as connected');
+        updateConnectButton(true);
+      }
     }, 50);
+  } else {
+    prismLog('Boot', 'Not onboarded — showing landing page');
   }
   // Check server auth status — only if server is expected
   if (!isStaticDeploy()) {
+    prismLog('Boot', 'Checking server health...');
     fetch('/api/health').then(function(r) { return r.json(); }).then(function(h) {
+      prismLog('Boot', 'Server health response:', h);
       if (h.authenticated && h.mcpMode === 'live') {
+        prismLog('Boot', 'Server confirms live + authenticated — updating UI');
         updateConnectButton(true);
         localStorage.setItem('prism_onboarded', 'live');
+        // If we're still on landing, navigate to app
+        if (document.getElementById('screen-onboarding').classList.contains('active')) {
+          prismLog('Boot', 'Still on landing — auto-navigating to smart-search');
+          navigateTo('screen-smart-search');
+        }
       }
-    }).catch(function() { /* server unavailable — ignore */ });
+    }).catch(function(err) {
+      prismLog('Boot', 'Server health check failed:', err);
+    });
   }
 })();
 
@@ -113,7 +156,8 @@ async function checkServer() {
     const r = await fetch(`${API}/api/health`, { signal: AbortSignal.timeout(1500) });
     const d = await r.json();
     serverAvailable = d.status === "ok";
-  } catch { serverAvailable = false; }
+    prismLog('Server', 'Health check: available=' + serverAvailable, d);
+  } catch { serverAvailable = false; prismLog('Server', 'Health check: unavailable (using client engine)'); }
   return serverAvailable;
 }
 
@@ -348,6 +392,7 @@ function getWrappedStats() {
 }
 
 function navigateTo(id) {
+  prismLog('Nav', '→ ' + id);
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if (id === "screen-cart" && currentCart) renderCart(currentCart);
@@ -463,6 +508,7 @@ function submitRecipeInput() {
 }
 
 async function runPipeline(text) {
+  prismLog('Pipeline', 'Start — "' + text + '"');
   navigateTo("screen-processing");
 
   const steps = ["step-parse", "step-search", "step-optimize", "step-health"];
@@ -478,6 +524,7 @@ async function runPipeline(text) {
   const budget = extractBudget(text);
 
   const useServer = await checkServer();
+  prismLog('Pipeline', 'Using server=' + useServer + ', budget=' + budget);
 
   // step 1: parse
   setStep(steps, 0, fill, 10);
@@ -798,8 +845,11 @@ function quickDecision(text) {
 
 function runDecisionPipeline(text) {
   var persona = userPersona || 'balanced';
+  prismLog('Decision', 'Pipeline start — query="' + text + '", persona=' + persona);
   var intent = window.PrismEngine.parseIntent(text);
+  prismLog('Decision', 'Intent parsed:', intent);
   var result = window.PrismEngine.decide(intent, persona);
+  prismLog('Decision', 'Result — ' + result.options.length + ' options, best=' + result.bestOption);
   currentDecision = result;
 
   // Hide suggestions, show inline results

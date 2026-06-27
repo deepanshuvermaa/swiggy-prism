@@ -201,6 +201,9 @@ async function callLLM(prompt: string, config: ParserConfig): Promise<string> {
   if (config.provider === "gemini") {
     return callGemini(prompt, config);
   }
+  if (process.env.GROQ_API_KEY) {
+    return callGroq(prompt, config);
+  }
   return callOpenAI(prompt, config);
 }
 
@@ -279,6 +282,46 @@ async function callOpenAI(prompt: string, config: ParserConfig): Promise<string>
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content;
     if (!text) throw new Error("Empty response from OpenAI");
+
+    return text;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function callGroq(prompt: string, config: ParserConfig): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error("GROQ_API_KEY not set");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        max_tokens: config.maxTokens,
+        temperature: config.temperature,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Groq API error: ${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) throw new Error("Empty response from Groq");
 
     return text;
   } finally {
