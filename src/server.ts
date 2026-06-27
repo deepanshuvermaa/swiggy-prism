@@ -349,6 +349,7 @@ body{font-family:Inter,-apple-system,sans-serif;background:#FAFAFA;color:#1a1a2e
 .log-duration{color:#aaa;font-size:11px;font-family:monospace}
 .log-detail{color:#666;margin-top:3px;font-size:12px;line-height:1.4}
 .log-sid{color:#bbb;font-family:monospace;font-size:9px;margin-top:2px}
+.log-user{display:inline-flex;align-items:center;gap:4px;background:#FFF3E8;color:#E5710F;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:'SF Mono',Consolas,monospace}
 .empty{text-align:center;padding:48px 24px;color:#999}
 .empty-icon{font-size:40px;margin-bottom:12px;opacity:0.4}.empty p{font-size:14px}
 
@@ -535,6 +536,7 @@ function loadLogs() {
       html += '<span class="log-badge ' + l.level + '">' + l.level + '</span>';
       html += '<div class="log-body"><div class="log-event">' + l.event;
       if (l.tool) html += ' <span class="log-tool">' + l.tool + '</span>';
+      if (l.userId) html += ' <span class="log-user">&#x1F464; ' + l.userId + '</span>';
       if (l.durationMs) html += ' <span class="log-duration">' + l.durationMs + 'ms</span>';
       html += '</div>';
       if (l.details) html += '<div class="log-detail">' + l.details + '</div>';
