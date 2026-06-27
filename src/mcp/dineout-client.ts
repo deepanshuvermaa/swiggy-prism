@@ -21,9 +21,39 @@ const DINEOUT_ENDPOINT = "https://mcp.swiggy.com/dineout";
 
 export class MCPDineoutClient implements DineoutProvider {
   private transport: MCPTransport;
+  private cachedAddressId: string | null = null;
 
   constructor(auth: PKCEAuthManager) {
     this.transport = new MCPTransport(DINEOUT_ENDPOINT, auth);
+  }
+
+  private async getAddressId(): Promise<string | null> {
+    if (this.cachedAddressId) return this.cachedAddressId;
+    try {
+      const res = await this.transport.callTool({ name: "get_saved_locations", arguments: {} });
+      const data = extractMCPData(res);
+      console.log('[Dineout] get_saved_locations raw:', typeof data, typeof data === 'string' ? data.slice(0, 300) : JSON.stringify(data).slice(0, 300));
+
+      let addressId: string | null = null;
+      if (typeof data === 'string') {
+        const idMatch = data.match(/\(ID:\s*([a-zA-Z0-9_-]+)\)/);
+        if (idMatch) addressId = idMatch[1];
+      } else {
+        const addresses = Array.isArray(data) ? data : data?.addresses ?? data?.locations ?? data?.savedLocations ?? [];
+        if (addresses.length > 0) {
+          addressId = addresses[0].addressId ?? addresses[0].id ?? addresses[0].address_id;
+        }
+      }
+
+      if (addressId) {
+        this.cachedAddressId = addressId;
+        console.log('[Dineout] Using addressId:', addressId);
+        return addressId;
+      }
+    } catch (err) {
+      console.warn('[Dineout] get_saved_locations failed:', err instanceof Error ? err.message : err);
+    }
+    return null;
   }
 
   async searchVenues(
@@ -32,8 +62,14 @@ export class MCPDineoutClient implements DineoutProvider {
     longitude: number,
     entityType?: "locality" | "CUISINE" | "RESTAURANT_CATEGORY"
   ): Promise<DineoutVenue[]> {
-    // Dineout uses lat/lng, not addressId (get_addresses doesn't exist on dineout)
-    const args: Record<string, unknown> = { query, latitude, longitude };
+    const addressId = await this.getAddressId();
+    const args: Record<string, unknown> = { query };
+    if (addressId) {
+      args.addressId = addressId;
+    } else if (latitude && longitude) {
+      args.latitude = latitude;
+      args.longitude = longitude;
+    }
     if (entityType) args.entityType = entityType;
 
     const res = await this.transport.callTool({

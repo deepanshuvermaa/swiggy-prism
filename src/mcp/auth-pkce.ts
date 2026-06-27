@@ -14,6 +14,9 @@
  */
 
 import crypto from "node:crypto";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const MCP_BASE = "https://mcp.swiggy.com";
 
@@ -212,11 +215,35 @@ export async function logout(accessToken: string): Promise<void> {
 /**
  * Token manager — handles expiry checks and re-auth signaling.
  */
+const TOKEN_FILE = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", ".token.json");
+
 export class PKCEAuthManager {
   private token: TokenState | null = null;
 
+  constructor() {
+    // Load persisted token on startup
+    try {
+      if (existsSync(TOKEN_FILE)) {
+        const data = JSON.parse(readFileSync(TOKEN_FILE, "utf-8"));
+        if (data.expiresAt && Date.now() < data.expiresAt) {
+          this.token = data;
+          console.log("[Auth] Loaded persisted token — expires in " + Math.round((data.expiresAt - Date.now()) / 3600000) + "h");
+        } else {
+          console.log("[Auth] Persisted token expired — need re-auth");
+        }
+      }
+    } catch { /* no persisted token */ }
+  }
+
   setToken(token: TokenState): void {
     this.token = token;
+    // Persist to disk so it survives server restarts
+    try {
+      writeFileSync(TOKEN_FILE, JSON.stringify(token), "utf-8");
+      console.log("[Auth] Token persisted to disk");
+    } catch (err) {
+      console.warn("[Auth] Failed to persist token:", err);
+    }
   }
 
   getAccessToken(): string {
