@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"http://localhost:3000/api/parse-video?url=https://www.youtube.com/watch?v=PJL2d89gvJo\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/decide -H \"Content-Type: application/json\" -d '{\"text\":\"dal tadka for 2, budget 300\",\"persona\":\"balanced\",\"pantryItems\":[\"rice\",\"onion\",\"oil\"],\"dietaryPrefs\":[]}')",
+      "Bash(curl -s \"http://localhost:3000/api/parse-video?url=https://www.youtube.com/watch?v=_VrmDijXBaU\")",
+      "Bash(curl -s -L \"https://www.youtube.com/watch?v=_VrmDijXBaU\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\")",
+      "Bash(curl -s -L \"https://www.youtube.com/watch?v=a03U45jFxOI\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\")",
+      "Bash(curl -s -L \"https://www.youtube.com/watch?v=a03U45jFxOI\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\" -H \"Accept-Language: en-US,en;q=0.9\")",
+      "Bash(node -e \"fetch\\('https://www.youtube.com/watch?v=a03U45jFxOI',{headers:{'User-Agent':'Mozilla/5.0'}}\\).then\\(r=>r.text\\(\\)\\).then\\(h=>{var t=h.match\\(/<title>\\(.*?\\)<\\\\\\\\/title>/i\\);var d=h.match\\(/<meta name=\\\\\"description\\\\\" content=\\\\\"\\(.*?\\)\\\\\"/i\\);console.log\\('TITLE:',t?t[1]:'NONE'\\);console.log\\('DESC:',d?d[1].slice\\(0,200\\):'NONE'\\)}\\)\")",
+      "Bash(node -e \"fetch\\('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=_VrmDijXBaU&format=json'\\).then\\(r=>r.json\\(\\)\\).then\\(d=>console.log\\(JSON.stringify\\(d\\)\\)\\).catch\\(e=>console.log\\('ERR:',e.message\\)\\)\")",
+      "Bash(node -e \"fetch\\('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=PJL2d89gvJo&format=json'\\).then\\(r=>r.json\\(\\)\\).then\\(d=>console.log\\(JSON.stringify\\(d\\)\\)\\).catch\\(e=>console.log\\('ERR:',e.message\\)\\)\")",
+      "Bash(node -e \"fetch\\('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=Ij5jhrdOjhk&format=json'\\).then\\(r=>r.json\\(\\)\\).then\\(d=>console.log\\(d.title\\)\\).catch\\(e=>console.log\\('ERR:',e.message\\)\\)\")",
+      "Bash(node -e \"fetch\\('https://noembed.com/embed?url=https://www.youtube.com/watch?v=a03U45jFxOI'\\).then\\(r=>r.json\\(\\)\\).then\\(d=>console.log\\(d.title\\)\\).catch\\(e=>console.log\\('ERR:',e.message\\)\\)\")",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('Recipe:',j.recipe\\);console.log\\('Title:',j.title\\);console.log\\('Ingredients:',j.ingredients?.length||0\\)}\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/parse-video?url=https://www.youtube.com/watch?v=4mNqk0_VMP4\")",
+      "Bash(curl -s \"http://localhost:3000/api/parse-video?url=https://www.youtube.com/watch?v=YpkRMiCBm_g\")",
+      "Bash(node -e \"fetch\\('https://noembed.com/embed?url=https://www.youtube.com/watch?v=4mNqk0_VMP4'\\).then\\(r=>r.json\\(\\)\\).then\\(d=>console.log\\('Title:',d.title,'Error:',d.error\\)\\).catch\\(e=>console.log\\('ERR:',e.message\\)\\)\")",
+      "Bash(node -e \"fetch\\('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=4mNqk0_VMP4&format=json'\\).then\\(r=>r.text\\(\\)\\).then\\(d=>console.log\\(d.slice\\(0,200\\)\\)\\).catch\\(e=>console.log\\('ERR:',e.message\\)\\)\")",
+      "Bash(node -e ':*)",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{try{var j=JSON.parse\\(d\\);console.log\\('  Recipe:',j.recipe\\);console.log\\('  Title:',j.title\\);console.log\\('  Ingredients:',j.ingredients?.length||0\\)}catch{console.log\\(String\\(d\\)\\)}}\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/parse-video?url=https://www.youtube.com/watch?v=RsDm4arDJMQ\")",
+      "Bash(curl -s \"http://localhost:3000/api/parse-video?url=https://www.youtube.com/watch?v=sIh9nJA6JBE\")",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('Recipe:',j.recipe,'|','Ingredients:',j.ingredients?.length\\)}\\)\")",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('Recipe:',j.recipe,'|','Ingredients:',j.ingredients?.length\\);if\\(j.ingredients\\)j.ingredients.slice\\(0,5\\).forEach\\(function\\(i\\){console.log\\('  -',i.name,i.quantity+i.unit\\)}\\)}\\)\")",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Status:',j.status,'LLM:',j.hasLLM,'MCP:',j.mcpMode,'Auth:',j.authenticated\\)}\\)\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/decide -H \"Content-Type: application/json\" -d '{\"text\":\"biryani for 4, budget 600\",\"persona\":\"balanced\",\"pantryItems\":[\"rice\",\"onion\",\"oil\"],\"dietaryPrefs\":[]}')",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);if\\(j.result\\)j.result.options.forEach\\(function\\(o\\){console.log\\('  '+o.channel+': ₹'+o.cost+', '+o.timeMin+'min, health='+o.healthScore+'%'+\\(o.details.restaurant?' \\('+o.details.restaurant.name+'\\)':''\\)+\\(o.details.venue?' \\('+o.details.venue.name+'\\)':''\\)\\)}\\)}\\)\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/meal-plan -H \"Content-Type: application/json\" -d '{\"persona\":\"balanced\",\"weeklyBudget\":3500}')",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Meals:',j.plan?.length,'Total: ₹'+j.totalCost,'Budget: ₹'+j.weeklyBudget\\);console.log\\('  Split:',JSON.stringify\\(j.channelSplit\\)\\)}\\)\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/group-order -H \"Content-Type: application/json\" -d '{\"servings\":8,\"budget\":3000}')",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Items:',j.items?.length,'Total: ₹'+j.totalCost,'Per person: ₹'+j.perPerson\\)}\\)\")",
+      "Bash(curl -s http://localhost:3000/api/order-history)",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Orders:',j.orderCount,'Spent: ₹'+j.totalSpent\\)}\\)\")",
+      "Bash(curl -s http://localhost:3000/api/go-to-items)",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Items:',j.items?.length||0\\)}\\)\")",
+      "Bash(curl -s -o /dev/null -w \"  Status: %{http_code}\" http://localhost:3000/admin)",
+      "Bash(curl -s http://localhost:3000/api/sessions)",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Sessions:',j.sessions?.length||0\\)}\\)\")"
+    ]
+  }
+}

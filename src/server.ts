@@ -316,43 +316,72 @@ async function handleParseVideo(_req: any, res: any, url: URL) {
     const videoUrl = url.searchParams.get("url") ?? "";
     if (!videoUrl) return json(res, { success: false, error: "URL required" }, 400);
 
-    // Fetch YouTube page to get title and description
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10000);
+    let title = "";
+    let desc = "";
+
+    // Method 1: YouTube oembed API (official, most reliable)
     try {
-      const pageRes = await fetch(videoUrl, {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        signal: controller.signal,
-      });
-      const html = await pageRes.text();
-      clearTimeout(timer);
-
-      // Extract title from <title> tag
-      const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-      const title = titleMatch ? titleMatch[1].replace(/ - YouTube$/, '').trim() : '';
-
-      // Extract description from meta
-      const descMatch = html.match(/<meta name="description" content="(.*?)"/i);
-      const desc = descMatch ? descMatch[1] : '';
-
-      const combined = title + '. ' + desc;
-
-      // Use LLM to extract dish name from video title/description
-      if (process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) {
-        const { parseRecipe } = await import("./core/parser.js");
-        const ingredients = await parseRecipe(combined, 4);
-        // Derive dish name from title
-        const dishName = title.replace(/\|.*$/, '').replace(/recipe/i, '').replace(/how to make/i, '').trim().toLowerCase();
-        return json(res, { success: true, recipe: dishName || 'recipe from video', ingredients, title });
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
+      const oembedRes = await fetch(oembedUrl, { signal: AbortSignal.timeout(5000) });
+      if (oembedRes.ok) {
+        const oembedData = await oembedRes.json();
+        if (oembedData.title) {
+          title = oembedData.title;
+          console.log("[ParseVideo] oembed title:", title);
+        }
       }
+    } catch { /* fallback to direct fetch */ }
 
-      // Fallback: just return the title as dish name
-      const simpleDish = title.replace(/\|.*$/, '').replace(/recipe/i, '').replace(/how to make/i, '').trim().toLowerCase();
-      return json(res, { success: true, recipe: simpleDish || 'butter chicken', title });
-    } catch {
-      clearTimeout(timer);
-      return json(res, { success: false, error: "Could not fetch video page" }, 500);
+    // Method 2: Direct YouTube page fetch (for description)
+    if (!title || !desc) {
+      try {
+        const pageRes = await fetch(videoUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+          },
+          signal: AbortSignal.timeout(10000),
+        });
+        const html = await pageRes.text();
+
+        if (!title) {
+          const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+          title = titleMatch ? titleMatch[1].replace(/ - YouTube$/, '').trim() : '';
+        }
+
+        const descMatch = html.match(/<meta name="description" content="(.*?)"/i);
+        desc = descMatch ? descMatch[1] : '';
+
+        // Also try og:description which often has more detail
+        const ogDesc = html.match(/<meta property="og:description" content="(.*?)"/i);
+        if (ogDesc && ogDesc[1].length > desc.length) desc = ogDesc[1];
+      } catch { /* ok, we might have title from noembed */ }
     }
+
+    if (!title) {
+      return json(res, { success: false, error: "Could not extract video info. Try a different YouTube link." });
+    }
+
+    const combined = title + '. ' + desc;
+    console.log("[ParseVideo] Combined text:", combined.slice(0, 300));
+
+    // Use LLM to extract recipe
+    if (process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) {
+      const { parseRecipe } = await import("./core/parser.js");
+      const ingredients = await parseRecipe(combined, 4);
+      const dishName = title
+        .replace(/\|.*$/, '').replace(/[-–].*$/, '')
+        .replace(/recipe/i, '').replace(/how to make/i, '').replace(/at home/i, '')
+        .replace(/restaurant style/i, '').replace(/by .*$/i, '')
+        .trim().toLowerCase();
+      return json(res, { success: true, recipe: dishName || 'recipe from video', ingredients, title });
+    }
+
+    const simpleDish = title
+      .replace(/\|.*$/, '').replace(/[-–].*$/, '')
+      .replace(/recipe/i, '').replace(/how to make/i, '')
+      .trim().toLowerCase();
+    return json(res, { success: true, recipe: simpleDish || 'recipe from video', title });
   } catch (err) {
     json(res, { success: false, error: String(err) }, 500);
   }
