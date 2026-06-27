@@ -23,6 +23,7 @@ const INSTAMART_ENDPOINT = "https://mcp.swiggy.com/im";
 export class MCPInstamartClient implements InstamartProvider {
   private transport: MCPTransport;
   private cachedAddressId: string | null = null;
+  private addressPromise: Promise<string> | null = null;
 
   constructor(auth: PKCEAuthManager) {
     this.transport = new MCPTransport(INSTAMART_ENDPOINT, auth);
@@ -34,6 +35,12 @@ export class MCPInstamartClient implements InstamartProvider {
 
   private async getAddressId(): Promise<string> {
     if (this.cachedAddressId) return this.cachedAddressId;
+    if (this.addressPromise) return this.addressPromise;
+    this.addressPromise = this._fetchAddressId();
+    return this.addressPromise;
+  }
+
+  private async _fetchAddressId(): Promise<string> {
     try {
       const res = await this.transport.callTool({ name: "get_addresses", arguments: {} });
       const data = extractMCPData(res);

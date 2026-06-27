@@ -39,9 +39,12 @@ export class MCPDineoutClient implements DineoutProvider {
         const idMatch = data.match(/\(ID:\s*([a-zA-Z0-9_-]+)\)/);
         if (idMatch) addressId = idMatch[1];
       } else {
-        const addresses = Array.isArray(data) ? data : data?.addresses ?? data?.locations ?? data?.savedLocations ?? [];
-        if (addresses.length > 0) {
-          addressId = addresses[0].addressId ?? addresses[0].id ?? addresses[0].address_id;
+        // Response: { locations: [...] } or { data: { locations: [...] } } or direct array
+        const locations = Array.isArray(data) ? data
+          : data?.locations ?? data?.addresses ?? data?.savedLocations
+          ?? data?.data?.locations ?? data?.data?.addresses ?? [];
+        if (locations.length > 0) {
+          addressId = locations[0].id ?? locations[0].addressId ?? locations[0].address_id;
         }
       }
 
