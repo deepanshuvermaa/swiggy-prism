@@ -843,16 +843,45 @@ function quickDecision(text) {
   runDecisionPipeline(text);
 }
 
-function runDecisionPipeline(text) {
+async function runDecisionPipeline(text) {
   var persona = userPersona || 'balanced';
   prismLog('Decision', 'Pipeline start — query="' + text + '", persona=' + persona);
+
+  var useServer = await checkServer();
+
+  if (useServer) {
+    // Server-side decision — uses real MCP + LLM when in live mode
+    prismLog('Decision', 'Using SERVER pipeline (live MCP + Groq LLM)');
+    try {
+      var r = await fetch(API + '/api/decide', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, persona: persona }),
+      });
+      var d = await r.json();
+      if (d.success && d.result) {
+        prismLog('Decision', 'Server result — ' + d.result.options.length + ' options, best=' + d.result.bestOption);
+        currentDecision = d.result;
+        var suggestions = document.getElementById('initial-suggestions');
+        if (suggestions) suggestions.style.display = 'none';
+        renderInlineResults(d.result);
+        return;
+      } else {
+        prismLog('Decision', 'Server decision failed: ' + (d.error || 'unknown'), d);
+      }
+    } catch (err) {
+      prismLog('Decision', 'Server decision error, falling back to client:', err);
+    }
+  }
+
+  // Fallback: client-side decision (mock data)
+  prismLog('Decision', 'Using CLIENT pipeline (mock data)');
   var intent = window.PrismEngine.parseIntent(text);
   prismLog('Decision', 'Intent parsed:', intent);
   var result = window.PrismEngine.decide(intent, persona);
   prismLog('Decision', 'Result — ' + result.options.length + ' options, best=' + result.bestOption);
   currentDecision = result;
 
-  // Hide suggestions, show inline results
   var suggestions = document.getElementById('initial-suggestions');
   if (suggestions) suggestions.style.display = 'none';
 

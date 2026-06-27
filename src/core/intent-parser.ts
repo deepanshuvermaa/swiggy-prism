@@ -50,7 +50,7 @@ export function parseIntent(text: string): FoodIntent {
   const lower = text.toLowerCase().trim();
 
   // Extract dish name — find best matching known dish
-  let dishName = "butter chicken"; // fallback
+  let dishName = "";
   let bestMatchLen = 0;
   for (const dish of KNOWN_DISHES) {
     if (lower.includes(dish) && dish.length > bestMatchLen) {
@@ -58,16 +58,24 @@ export function parseIntent(text: string): FoodIntent {
       bestMatchLen = dish.length;
     }
   }
-  // If no known dish matched, use first meaningful words as dish name
+  // If no known dish matched, extract meaningful words
   if (bestMatchLen === 0) {
     const cleaned = lower
-      .replace(/\b(for|people|persons?|budget|under|rs|rupees?|₹|min|minutes?|hrs?|hours?|quick|fast|date|night|party|family|casual|veg|non-?veg)\b/g, "")
+      .replace(/\b(i\s+want|give\s+me|make\s+me|something|for|people|persons?|budget|under|rs|rupees?|₹|min|minutes?|hrs?|hours?|quick|fast|date|night|party|family|casual|veg|non-?veg|healthy|cheap|good)\b/g, "")
       .replace(/\d+/g, "")
       .replace(/[,.\-]/g, " ")
       .trim();
-    if (cleaned.length > 0) {
+    if (cleaned.length > 2) {
       dishName = cleaned.split(/\s+/).slice(0, 3).join(" ");
     }
+  }
+  // If still empty (e.g. "something quick"), pick a sensible default based on context
+  if (!dishName) {
+    if (/\b(quick|fast|hurry)\b/.test(lower)) dishName = "fried rice";
+    else if (/\b(healthy)\b/.test(lower)) dishName = "dal tadka";
+    else if (/\b(date|romantic)\b/.test(lower)) dishName = "pasta";
+    else if (/\b(party|celebration)\b/.test(lower)) dishName = "biryani";
+    else dishName = "thali"; // generic fallback
   }
 
   // Extract servings: "for 4", "4 people", "4 persons"
@@ -79,29 +87,7 @@ export function parseIntent(text: string): FoodIntent {
       ? parseInt(forMatch[1])
       : 2;
 
-  // Extract budget: "₹800", "rs 800", "budget 800", "under 800", or largest 3-5 digit number
-  let budget = 800; // default
-  const budgetPatterns = [
-    /(?:₹|rs\.?\s*|rupees?\s*|budget\s*[:=]?\s*|under\s+)(\d{2,5})/i,
-    /(\d{3,5})\s*(?:₹|rs|rupees?|budget)/i,
-  ];
-  for (const pattern of budgetPatterns) {
-    const m = lower.match(pattern);
-    if (m) {
-      budget = parseInt(m[1]);
-      break;
-    }
-  }
-  // Fallback: find largest 3-5 digit number if no budget keyword matched
-  if (budget === 800) {
-    const numbers = lower.match(/\b(\d{3,5})\b/g);
-    if (numbers) {
-      const largest = Math.max(...numbers.map(Number));
-      if (largest >= 100 && largest <= 50000) budget = largest;
-    }
-  }
-
-  // Extract time constraint: "45 min", "30 minutes", "1 hour"
+  // Extract time constraint FIRST — so "30 min" doesn't become budget=30
   let timeConstraintMin: number | undefined;
   const timeMatch = lower.match(/(\d+)\s*(?:min(?:utes?)?)/);
   const hourMatch = lower.match(/(\d+)\s*(?:hrs?|hours?)/);
@@ -109,6 +95,34 @@ export function parseIntent(text: string): FoodIntent {
     timeConstraintMin = parseInt(timeMatch[1]);
   } else if (hourMatch) {
     timeConstraintMin = parseInt(hourMatch[1]) * 60;
+  }
+
+  // Strip time expressions before budget parsing so "30 min" isn't treated as ₹30
+  const textWithoutTime = lower
+    .replace(/(?:under|within|in)\s+\d+\s*(?:min(?:utes?)?|hrs?|hours?)/g, "")
+    .replace(/\d+\s*(?:min(?:utes?)?|hrs?|hours?)/g, "");
+
+  // Extract budget: "₹800", "rs 800", "budget 800", "under 800"
+  let budget = 800; // default
+  const budgetPatterns = [
+    /(?:₹|rs\.?\s*|rupees?\s*|budget\s*[:=]?\s*)(\d{2,5})/i,
+    /(\d{3,5})\s*(?:₹|rs|rupees?|budget)/i,
+    /under\s+(?:₹|rs\.?\s*)?(\d{3,5})/i,
+  ];
+  for (const pattern of budgetPatterns) {
+    const m = textWithoutTime.match(pattern);
+    if (m) {
+      budget = parseInt(m[1]);
+      break;
+    }
+  }
+  // Fallback: find largest 3-5 digit number (must be ≥100 to avoid time values)
+  if (budget === 800) {
+    const numbers = textWithoutTime.match(/\b(\d{3,5})\b/g);
+    if (numbers) {
+      const largest = Math.max(...numbers.map(Number));
+      if (largest >= 100 && largest <= 50000) budget = largest;
+    }
   }
 
   // Infer occasion from keywords

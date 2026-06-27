@@ -5,7 +5,8 @@ import type {
 import type { FoodProvider } from "../mcp/providers.js";
 import type { DineoutProvider } from "../mcp/providers.js";
 import type { InstamartProvider } from "../mcp/adapter.js";
-import { localParseRecipe as parseRecipe } from "../core/local-parser.js";
+import { localParseRecipe } from "../core/local-parser.js";
+import { parseRecipe as llmParseRecipe } from "../core/parser.js";
 import { optimizeCart } from "../core/optimizer.js";
 import { getCookTime, getGroceryDeliveryTime, getDineoutTravelTime } from "./time-estimator.js";
 import { rankOptions } from "./scorer.js";
@@ -34,7 +35,17 @@ async function queryCookIt(
   instamartProvider: InstamartProvider
 ): Promise<ChannelOption | null> {
   try {
-    const ingredients = parseRecipe(intent.dishName, intent.servings);
+    const hasLLM = !!(process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
+    let ingredients;
+    if (hasLLM) {
+      try {
+        ingredients = await llmParseRecipe(intent.dishName + " for " + intent.servings, intent.servings);
+      } catch {
+        ingredients = localParseRecipe(intent.dishName, intent.servings);
+      }
+    } else {
+      ingredients = localParseRecipe(intent.dishName, intent.servings);
+    }
     if (ingredients.length === 0) return null;
 
     // Search SKUs for each ingredient

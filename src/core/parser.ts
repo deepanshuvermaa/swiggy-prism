@@ -198,13 +198,11 @@ async function callLLMWithRetry(prompt: string, config: ParserConfig, retries: n
 }
 
 async function callLLM(prompt: string, config: ParserConfig): Promise<string> {
-  if (config.provider === "gemini") {
-    return callGemini(prompt, config);
-  }
-  if (process.env.GROQ_API_KEY) {
-    return callGroq(prompt, config);
-  }
-  return callOpenAI(prompt, config);
+  // Auto-detect: use whichever API key is available
+  if (process.env.GROQ_API_KEY) return callGroq(prompt, config);
+  if (process.env.GEMINI_API_KEY) return callGemini(prompt, config);
+  if (process.env.OPENAI_API_KEY) return callOpenAI(prompt, config);
+  throw new Error("No LLM API key set (GROQ_API_KEY, GEMINI_API_KEY, or OPENAI_API_KEY)");
 }
 
 async function callGemini(prompt: string, config: ParserConfig): Promise<string> {

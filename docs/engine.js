@@ -557,11 +557,9 @@
   function _optimizeCart(ingredients, skuMap, budget, config) {
     if (!config) config = DEFAULT_CONFIG;
 
-    if (budget < config.minBudget || budget > config.maxBudget) {
-      throw new Error(
-        "Budget must be between \u20B9" + config.minBudget + " and \u20B9" + config.maxBudget
-      );
-    }
+    // Clamp budget to valid range instead of crashing
+    if (budget < config.minBudget) budget = config.minBudget;
+    if (budget > config.maxBudget) budget = config.maxBudget;
 
     var startTime = performance.now();
     var totalSkusEvaluated = 0;
@@ -745,32 +743,60 @@
 
   function parseIntent(text) {
     var lower = text.toLowerCase().trim();
-    var dishName = "butter chicken";
+
+    // 1. Extract dish name
+    var dishName = "";
     var bestLen = 0;
     for (var i = 0; i < KNOWN_DISHES.length; i++) {
       if (lower.indexOf(KNOWN_DISHES[i]) !== -1 && KNOWN_DISHES[i].length > bestLen) {
         dishName = KNOWN_DISHES[i]; bestLen = KNOWN_DISHES[i].length;
       }
     }
+    if (!dishName) {
+      var cleaned = lower
+        .replace(/\b(i\s+want|give\s+me|make\s+me|something|for|people|persons?|budget|under|rs|rupees?|min|minutes?|hrs?|hours?|quick|fast|date|night|party|family|casual|veg|non-?veg|healthy|cheap|good)\b/g, "")
+        .replace(/\d+/g, "").replace(/[,.\-₹]/g, " ").trim();
+      if (cleaned.length > 2) dishName = cleaned.split(/\s+/).slice(0, 3).join(" ");
+    }
+    if (!dishName) {
+      if (/\b(quick|fast|hurry)\b/.test(lower)) dishName = "fried rice";
+      else if (/\bhealthy\b/.test(lower)) dishName = "dal tadka";
+      else if (/\b(date|romantic)\b/.test(lower)) dishName = "pasta";
+      else if (/\b(party|celebration)\b/.test(lower)) dishName = "biryani";
+      else dishName = "thali";
+    }
 
+    // 2. Servings
     var servings = 2;
     var m = lower.match(/(?:for\s+)?(\d+)\s*(?:people|persons?|pax|guests?|servings?)/);
     if (m) servings = parseInt(m[1]);
     else { m = lower.match(/for\s+(\d+)/); if (m) servings = parseInt(m[1]); }
 
-    var budget = 800;
-    m = lower.match(/(?:₹|rs\.?\s*|rupees?\s*|budget\s*[:=]?\s*|under\s+)(\d{2,5})/i);
-    if (m) budget = parseInt(m[1]);
-
+    // 3. Time constraint FIRST (before budget, so "30 min" isn't budget=30)
     var timeConstraintMin = null;
     m = lower.match(/(\d+)\s*(?:min(?:utes?)?)/);
     if (m) timeConstraintMin = parseInt(m[1]);
+    else { m = lower.match(/(\d+)\s*(?:hrs?|hours?)/); if (m) timeConstraintMin = parseInt(m[1]) * 60; }
 
+    // 4. Budget — strip time expressions first
+    var noTime = lower
+      .replace(/(?:under|within|in)\s+\d+\s*(?:min(?:utes?)?|hrs?|hours?)/g, "")
+      .replace(/\d+\s*(?:min(?:utes?)?|hrs?|hours?)/g, "");
+    var budget = 800;
+    m = noTime.match(/(?:₹|rs\.?\s*|rupees?\s*|budget\s*[:=]?\s*)(\d{2,5})/i);
+    if (m) { budget = parseInt(m[1]); }
+    else { m = noTime.match(/under\s+(?:₹|rs\.?\s*)?(\d{3,5})/i); if (m) budget = parseInt(m[1]); }
+    if (budget === 800) {
+      var nums = noTime.match(/\b(\d{3,5})\b/g);
+      if (nums) { var largest = Math.max.apply(null, nums.map(Number)); if (largest >= 100) budget = largest; }
+    }
+
+    // 5. Occasion
     var occasion = "casual";
-    if (/\b(date|romantic)\b/.test(lower)) occasion = "date";
-    else if (/\b(party|group)\b/.test(lower)) occasion = "party";
-    else if (/\b(family|kids)\b/.test(lower)) occasion = "family";
-    else if (/\b(quick|fast|hurry)\b/.test(lower)) occasion = "quick";
+    if (/\b(date|romantic|anniversary)\b/.test(lower)) occasion = "date";
+    else if (/\b(party|group|celebration)\b/.test(lower)) occasion = "party";
+    else if (/\b(family|kids|home)\b/.test(lower)) occasion = "family";
+    else if (/\b(quick|fast|hurry|rush)\b/.test(lower)) occasion = "quick";
 
     return { dishName:dishName, servings:servings, budget:budget, timeConstraintMin:timeConstraintMin, occasion:occasion };
   }
@@ -1070,9 +1096,10 @@
 
   function decideAll(intent, persona) {
     var options = [];
-    var cook = queryCookIt(intent);
-    var order = queryOrderIt(intent);
-    var dineout = queryDineOut(intent);
+    var cook = null, order = null, dineout = null;
+    try { cook = queryCookIt(intent); } catch(e) { console.warn('[Prism Engine] Cook channel failed:', e.message); }
+    try { order = queryOrderIt(intent); } catch(e) { console.warn('[Prism Engine] Order channel failed:', e.message); }
+    try { dineout = queryDineOut(intent); } catch(e) { console.warn('[Prism Engine] Dineout channel failed:', e.message); }
     if (cook) options.push(cook);
     if (order) options.push(order);
     if (dineout) options.push(dineout);
