@@ -15,6 +15,7 @@
 import type { SKU, MCPResponse } from "../types/index.js";
 import type { InstamartProvider } from "./adapter.js";
 import { MCPTransport, extractMCPData } from "./mcp-transport.js";
+import { parseInstamartProductText } from "./text-parsers.js";
 import { PKCEAuthManager } from "./auth-pkce.js";
 
 const INSTAMART_ENDPOINT = "https://mcp.swiggy.com/im";
@@ -36,21 +37,29 @@ export class MCPInstamartClient implements InstamartProvider {
     try {
       const res = await this.transport.callTool({ name: "get_addresses", arguments: {} });
       const data = extractMCPData(res);
-      console.log('[Instamart] get_addresses raw:', JSON.stringify(data).slice(0, 500));
+      console.log('[Instamart] get_addresses raw type:', typeof data, typeof data === 'string' ? data.slice(0, 200) : JSON.stringify(data).slice(0, 200));
 
-      // data could be: { addresses: [...] } or [...] directly
-      let addresses: any[] = [];
-      if (Array.isArray(data)) addresses = data;
-      else if (data?.addresses && Array.isArray(data.addresses)) addresses = data.addresses;
-      else if (data?.savedAddresses && Array.isArray(data.savedAddresses)) addresses = data.savedAddresses;
+      // MCP returns addresses as text string: "Found N saved addresses:\n1. [Label] Name: ... (ID: abc123)"
+      // Or as JSON array. Handle both.
+      let addressId: string | null = null;
 
-      if (addresses.length > 0) {
-        const addr = addresses[0];
-        this.cachedAddressId = addr.addressId ?? addr.id ?? addr.address_id ?? addr.addressid;
-        console.log('[Instamart] Using address:', this.cachedAddressId, 'label:', addr.label || addr.name || addr.tag || '', 'keys:', Object.keys(addr));
-        if (this.cachedAddressId) return this.cachedAddressId;
+      if (typeof data === 'string') {
+        // Parse ID from text like "(ID: d66o4v0535snvbkgje6g)"
+        const idMatch = data.match(/\(ID:\s*([a-zA-Z0-9_-]+)\)/);
+        if (idMatch) addressId = idMatch[1];
+      } else {
+        const addresses = Array.isArray(data) ? data : data?.addresses ?? data?.savedAddresses ?? [];
+        if (addresses.length > 0) {
+          addressId = addresses[0].addressId ?? addresses[0].id ?? addresses[0].address_id;
+        }
       }
-      console.warn('[Instamart] No valid addressId found in response');
+
+      if (addressId) {
+        this.cachedAddressId = addressId;
+        console.log('[Instamart] Using addressId:', addressId);
+        return addressId;
+      }
+      console.warn('[Instamart] No valid addressId found');
     } catch (err) {
       console.warn('[Instamart] get_addresses failed:', err instanceof Error ? err.message : err);
     }
@@ -66,7 +75,14 @@ export class MCPInstamartClient implements InstamartProvider {
     });
 
     const rawData = extractMCPData(res);
-    console.log('[DEBUG Instamart] searchSKUs query="' + query + '" rawData keys:', Object.keys(rawData || {}), 'full:', JSON.stringify(rawData).slice(0, 500));
+    if (!rawData) return []; // isError was true
+
+    // MCP returns text — parse products from it
+    if (typeof rawData === 'string') {
+      console.log('[Instamart] search_products text for "' + query + '":', rawData.slice(0, 800));
+      return parseInstamartProductText(rawData).slice(0, limit);
+    }
+
     const products = rawData?.products ?? rawData?.items ?? rawData?.results ?? [];
     const skus: SKU[] = [];
     for (const product of products) {

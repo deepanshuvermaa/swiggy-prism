@@ -14,34 +14,16 @@
 import type { DineoutVenue, DineoutSlot, DineoutBooking } from "../types/index.js";
 import type { DineoutProvider } from "./providers.js";
 import { MCPTransport, extractMCPData } from "./mcp-transport.js";
+import { parseDineoutText } from "./text-parsers.js";
 import { PKCEAuthManager } from "./auth-pkce.js";
 
 const DINEOUT_ENDPOINT = "https://mcp.swiggy.com/dineout";
 
 export class MCPDineoutClient implements DineoutProvider {
   private transport: MCPTransport;
-  private cachedAddressId: string | null = null;
 
   constructor(auth: PKCEAuthManager) {
     this.transport = new MCPTransport(DINEOUT_ENDPOINT, auth);
-  }
-
-  private async getAddressId(): Promise<string | null> {
-    if (this.cachedAddressId) return this.cachedAddressId;
-    try {
-      // Dineout might share addresses with food, try fetching
-      const res = await this.transport.callTool({ name: "get_addresses", arguments: {} });
-      const data = extractMCPData(res);
-      const addresses = data?.addresses ?? data ?? [];
-      if (Array.isArray(addresses) && addresses.length > 0) {
-        this.cachedAddressId = addresses[0].addressId ?? addresses[0].id;
-        console.log('[Dineout] Using address:', this.cachedAddressId);
-        return this.cachedAddressId;
-      }
-    } catch {
-      // Dineout may not support get_addresses — fall back to lat/lng
-    }
-    return null;
   }
 
   async searchVenues(
@@ -50,14 +32,8 @@ export class MCPDineoutClient implements DineoutProvider {
     longitude: number,
     entityType?: "locality" | "CUISINE" | "RESTAURANT_CATEGORY"
   ): Promise<DineoutVenue[]> {
-    const addressId = await this.getAddressId();
-    const args: Record<string, unknown> = { query };
-    if (addressId) {
-      args.addressId = addressId;
-    } else {
-      args.latitude = latitude;
-      args.longitude = longitude;
-    }
+    // Dineout uses lat/lng, not addressId (get_addresses doesn't exist on dineout)
+    const args: Record<string, unknown> = { query, latitude, longitude };
     if (entityType) args.entityType = entityType;
 
     const res = await this.transport.callTool({
@@ -65,8 +41,25 @@ export class MCPDineoutClient implements DineoutProvider {
       arguments: args,
     });
     const data = extractMCPData(res);
-    console.log('[Dineout] searchVenues result keys:', Object.keys(data || {}));
-    return data?.restaurants ?? [];
+    console.log('[Dineout] searchVenues raw type:', typeof data, typeof data === 'string' ? data.slice(0, 300) : JSON.stringify(data).slice(0, 300));
+
+    // MCP returns text string with restaurant listings — parse it
+    if (typeof data === 'string') {
+      return parseDineoutText(data);
+    }
+    const raw = data?.restaurants ?? [];
+    return raw.map((r: any) => ({
+      restaurantId: r.id ?? r.restaurantId,
+      name: r.name ?? '',
+      cuisine: r.cuisine ?? r.cuisines ?? [],
+      rating: parseFloat(r.rating?.value ?? r.rating ?? r.avgRating ?? 4.0),
+      ratingCount: parseInt(r.rating?.count ?? r.ratingCount ?? 500),
+      locality: r.locality ?? r.area ?? '',
+      costForTwo: parseInt(String(r.costForTwo ?? '1200').replace(/[^\d]/g, '')) || 1200,
+      availability: "AVAILABLE" as const,
+      highlights: r.highlights ?? [],
+      offers: r.offers ?? [],
+    }));
   }
 
   async getVenueDetails(

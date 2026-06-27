@@ -13,6 +13,7 @@
 import type { Restaurant, MenuItem, FoodCoupon, FoodCart, FoodCartItem } from "../types/index.js";
 import type { FoodProvider } from "./providers.js";
 import { MCPTransport, extractMCPData } from "./mcp-transport.js";
+import { parseFoodRestaurantText } from "./text-parsers.js";
 import { PKCEAuthManager } from "./auth-pkce.js";
 
 const FOOD_ENDPOINT = "https://mcp.swiggy.com/food";
@@ -30,18 +31,24 @@ export class MCPFoodClient implements FoodProvider {
     try {
       const res = await this.transport.callTool({ name: "get_addresses", arguments: {} });
       const data = extractMCPData(res);
-      console.log('[Food] get_addresses raw:', JSON.stringify(data).slice(0, 500));
+      console.log('[Food] get_addresses raw type:', typeof data, typeof data === 'string' ? data.slice(0, 200) : JSON.stringify(data).slice(0, 200));
 
-      let addresses: any[] = [];
-      if (Array.isArray(data)) addresses = data;
-      else if (data?.addresses && Array.isArray(data.addresses)) addresses = data.addresses;
-      else if (data?.savedAddresses && Array.isArray(data.savedAddresses)) addresses = data.savedAddresses;
+      let addressId: string | null = null;
 
-      if (addresses.length > 0) {
-        const addr = addresses[0];
-        this.cachedAddressId = addr.addressId ?? addr.id ?? addr.address_id ?? addr.addressid;
-        console.log('[Food] Using address:', this.cachedAddressId, 'label:', addr.label || addr.name || addr.tag || '', 'keys:', Object.keys(addr));
-        if (this.cachedAddressId) return this.cachedAddressId;
+      if (typeof data === 'string') {
+        const idMatch = data.match(/\(ID:\s*([a-zA-Z0-9_-]+)\)/);
+        if (idMatch) addressId = idMatch[1];
+      } else {
+        const addresses = Array.isArray(data) ? data : data?.addresses ?? data?.savedAddresses ?? [];
+        if (addresses.length > 0) {
+          addressId = addresses[0].addressId ?? addresses[0].id ?? addresses[0].address_id;
+        }
+      }
+
+      if (addressId) {
+        this.cachedAddressId = addressId;
+        console.log('[Food] Using addressId:', addressId);
+        return addressId;
       }
       console.warn('[Food] No valid addressId found');
     } catch (err) {
@@ -57,18 +64,37 @@ export class MCPFoodClient implements FoodProvider {
       arguments: { addressId: realAddressId, query },
     });
     const data = extractMCPData(res);
-    console.log('[Food] searchRestaurants result keys:', Object.keys(data || {}));
-    return data?.restaurants ?? [];
+    console.log('[Food] searchRestaurants raw type:', typeof data, typeof data === 'string' ? data.slice(0, 300) : JSON.stringify(data).slice(0, 300));
+
+    if (typeof data === 'string') {
+      return parseFoodRestaurantText(data);
+    }
+    // Map MCP fields to our Restaurant interface
+    const raw = data?.restaurants ?? [];
+    return raw.map((r: any) => ({
+      restaurantId: r.id ?? r.restaurantId,
+      name: r.name ?? '',
+      cuisine: r.cuisines ?? r.cuisine ?? [],
+      rating: parseFloat(r.avgRating ?? r.rating?.value ?? r.rating ?? 4.0),
+      ratingCount: parseInt(r.totalRatings ?? r.ratingCount ?? 500),
+      deliveryTimeMin: r.deliveryTimeMinutes ?? r.deliveryTimeMin ?? 30,
+      deliveryFee: r.deliveryFee ?? 40,
+      distanceKm: r.distanceKm ?? r.distance ?? 3.0,
+      availabilityStatus: r.availabilityStatus ?? "OPEN",
+      isVeg: r.isVeg ?? r.veg ?? false,
+    }));
   }
 
   async getMenu(addressId: string, restaurantId: string): Promise<MenuItem[]> {
+    const realAddressId = await this.getAddressId();
     const res = await this.transport.callTool({
       name: "get_restaurant_menu",
-      arguments: { restaurantId },
+      arguments: { restaurantId, addressId: realAddressId },
     });
     // Flatten paginated categories into flat item list
     const menuData = extractMCPData(res);
-    const categories = menuData?.categories ?? menuData?.menu ?? [];
+    console.log('[Food] getMenu raw type:', typeof menuData, typeof menuData === 'object' ? JSON.stringify(menuData).slice(0, 300) : String(menuData).slice(0, 300));
+    const categories = menuData?.categories ?? menuData?.menu ?? menuData?.groupedCard ?? [];
     const items: MenuItem[] = [];
     for (const cat of categories) {
       for (const item of cat.items ?? []) {

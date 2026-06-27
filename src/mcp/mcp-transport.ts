@@ -54,6 +54,14 @@ export function extractMCPData(res: any): any {
     return null;
   }
 
+  // Prefer structuredContent if it has real data (not empty {})
+  if (payload?.structuredContent && typeof payload.structuredContent === 'object') {
+    const keys = Object.keys(payload.structuredContent);
+    if (keys.length > 0) {
+      return payload.structuredContent;
+    }
+  }
+
   // Extract from content[0].text (standard MCP format)
   if (payload?.content && Array.isArray(payload.content)) {
     const textContent = payload.content.find((c: any) => c.type === "text");

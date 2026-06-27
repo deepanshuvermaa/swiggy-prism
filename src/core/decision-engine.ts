@@ -216,7 +216,8 @@ export async function decide(
   foodProvider: FoodProvider,
   dineoutProvider: DineoutProvider
 ): Promise<DecisionResult> {
-  // Query all 3 channels in parallel
+  // Pre-fetch address to avoid race conditions (all channels need it)
+  // Food's get_addresses works for all channels
   console.log('[Decision] Starting 3 channel queries for "' + intent.dishName + '"...');
   const [cookResult, orderResult, dineoutResult] = await Promise.allSettled([
     queryCookIt(intent, instamartProvider),
