@@ -194,7 +194,8 @@ async function queryDineOut(
 
     const estimatedBill = Math.round((venue.costForTwo / 2) * intent.servings);
     const travelMin = getDineoutTravelTime(2.5); // assume ~2.5km average
-    const offerText = venue.offers.length > 0 ? venue.offers[0] : undefined;
+    const rawOffer = venue.offers?.length > 0 ? venue.offers[0] : undefined;
+    const offerText = typeof rawOffer === 'string' ? rawOffer : typeof rawOffer === 'object' ? String((rawOffer as any)?.text ?? (rawOffer as any)?.title ?? '') : undefined;
 
     const details: DineOutDetails = {
       type: "dineout",

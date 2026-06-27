@@ -924,13 +924,16 @@ function renderInlineResults(result) {
       subtitle = opt.details.recipeName.charAt(0).toUpperCase() + opt.details.recipeName.slice(1);
       extraInfo = opt.details.cookTimeMin + ' min cook + ' + opt.details.groceryDeliveryMin + ' min delivery';
     } else if (opt.details.type === 'order') {
-      subtitle = opt.details.restaurant.name;
+      subtitle = (opt.details.restaurant.name || '').replace(/\s*\(Ad\)\s*/g, '');
       extraInfo = opt.details.restaurant.rating + '★ · ' + opt.details.restaurant.distanceKm + ' km';
       if (opt.details.cart.discount > 0) extraInfo += ' · <span style="color:#39A06F">-₹' + opt.details.cart.discount + ' off</span>';
+      var rOffer = opt.details.restaurant.offer;
+      if (rOffer && typeof rOffer === 'string') extraInfo += ' · <span style="color:#39A06F">' + rOffer + '</span>';
     } else if (opt.details.type === 'dineout') {
-      subtitle = opt.details.venue.name + ' · ' + opt.details.venue.locality;
+      subtitle = (opt.details.venue.name || '') + ' · ' + (opt.details.venue.locality || '');
       extraInfo = opt.details.nextSlot.displayTime + ' tonight';
-      if (opt.details.offerText) extraInfo += ' · <span style="color:#39A06F">' + opt.details.offerText + '</span>';
+      var dOffer = opt.details.offerText;
+      if (dOffer && typeof dOffer === 'string') extraInfo += ' · <span style="color:#39A06F">' + dOffer + '</span>';
     }
 
     html += '<div class="ir-card' + (isTop ? ' ir-top' : '') + '" style="background:' + cfg.accent + ';border-left:3px solid ' + cfg.color + '">';

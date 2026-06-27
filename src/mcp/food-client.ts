@@ -80,7 +80,7 @@ export class MCPFoodClient implements FoodProvider {
     const raw = data?.restaurants ?? [];
     return raw.map((r: any) => ({
       restaurantId: r.id ?? r.restaurantId,
-      name: r.name ?? '',
+      name: (r.name ?? '').replace(/\s*\(Ad\)\s*/g, ''),
       cuisine: r.cuisines ?? r.cuisine ?? [],
       rating: parseFloat(r.avgRating ?? r.rating?.value ?? r.rating ?? 4.0),
       ratingCount: parseInt(r.totalRatings ?? r.ratingCount ?? 500),
@@ -89,7 +89,9 @@ export class MCPFoodClient implements FoodProvider {
       distanceKm: r.distanceKm ?? r.distance ?? 3.0,
       availabilityStatus: r.availabilityStatus ?? "OPEN",
       isVeg: r.isVeg ?? r.veg ?? false,
-    }));
+      offer: r.offer ?? r.aggregatedDiscountInfoV3 ?? '',
+      imageUrl: r.imageUrl ?? r.cloudinaryImageId ?? '',
+    } as any));
   }
 
   async getMenu(addressId: string, restaurantId: string): Promise<MenuItem[]> {
