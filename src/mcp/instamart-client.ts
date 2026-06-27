@@ -84,27 +84,38 @@ export class MCPInstamartClient implements InstamartProvider {
     const rawData = extractMCPData(res);
     if (!rawData) return []; // isError was true
 
+    console.log('[Instamart] search_products for "' + query + '" — type:', typeof rawData, 'keys:', typeof rawData === 'object' ? Object.keys(rawData).slice(0, 5) : 'N/A', 'sample:', JSON.stringify(rawData).slice(0, 500));
+
     // MCP returns text — parse products from it
     if (typeof rawData === 'string') {
-      console.log('[Instamart] search_products text for "' + query + '":', rawData.slice(0, 800));
       return parseInstamartProductText(rawData).slice(0, limit);
     }
 
+    // Structured JSON from Swiggy MCP
     const products = rawData?.products ?? rawData?.items ?? rawData?.results ?? [];
     const skus: SKU[] = [];
     for (const product of products) {
-      // Each product may have variants with their own spinId
-      const variants = product.variants ?? [product];
+      // Swiggy uses "variations" with spinId, displayName, price.offerPrice
+      const variants = product.variations ?? product.variants ?? [product];
       for (const variant of variants) {
+        const price = variant.price?.offerPrice ?? variant.price?.mrp ?? variant.price ?? product.price ?? 0;
+        const name = variant.displayName ?? variant.name ?? product.displayName ?? product.name ?? '';
+        if (!name) continue;
+
+        // Parse quantity from quantityDescription like "500 g x 2" or "1 kg"
+        const qtyDesc = variant.quantityDescription ?? '';
+        const qtyMatch = qtyDesc.match(/(\d+)\s*(g|kg|ml|l|pcs|pack|piece)/i);
+
         skus.push({
-          skuId: variant.spinId ?? variant.id ?? product.id,
-          name: variant.name ?? product.name,
-          brand: variant.brand ?? product.brand ?? "",
-          price: variant.price ?? product.price ?? 0,
-          quantity: variant.quantity ?? product.quantity ?? 1,
-          unit: variant.unit ?? product.unit ?? "pcs",
-          inStock: variant.inStock ?? true,
-        });
+          skuId: variant.spinId ?? variant.id ?? product.id ?? '',
+          name,
+          brand: variant.brandName ?? product.brand ?? '',
+          price: typeof price === 'number' ? price : parseFloat(price) || 0,
+          quantity: qtyMatch ? parseInt(qtyMatch[1]) : 1,
+          unit: qtyMatch ? qtyMatch[2].toLowerCase() : 'pcs',
+          inStock: variant.isInStockAndAvailable ?? variant.inStock ?? product.inStock ?? true,
+          imageUrl: variant.imageUrl ?? product.imageUrl,
+        } as any);
       }
       if (skus.length >= limit) break;
     }

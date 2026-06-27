@@ -54,10 +54,11 @@ export function extractMCPData(res: any): any {
     return null;
   }
 
-  // Prefer structuredContent if it has real data (not empty {})
+  // Prefer structuredContent if it has meaningful named keys (not numeric indices, not empty)
   if (payload?.structuredContent && typeof payload.structuredContent === 'object') {
     const keys = Object.keys(payload.structuredContent);
-    if (keys.length > 0) {
+    const hasNamedKeys = keys.length > 0 && keys.some(k => isNaN(Number(k)));
+    if (hasNamedKeys) {
       return payload.structuredContent;
     }
   }
