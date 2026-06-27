@@ -940,43 +940,131 @@
   // ─── Scorer ────────────────────────────────────────────────────────────────────
 
   var PERSONA_WEIGHTS = {
-    foodie:   { cost:0.15, time:0.20, health:0.15, experience:0.50 },
-    gymfreak: { cost:0.15, time:0.15, health:0.55, experience:0.15 },
+    foodie:   { cost:0.10, time:0.15, health:0.10, experience:0.65 },
+    gymfreak: { cost:0.10, time:0.10, health:0.65, experience:0.15 },
     balanced: { cost:0.25, time:0.25, health:0.25, experience:0.25 },
-    budget:   { cost:0.50, time:0.15, health:0.15, experience:0.20 },
+    budget:   { cost:0.55, time:0.15, health:0.10, experience:0.20 },
   };
+
+  var CHANNEL_BIAS = {
+    foodie:   { instamart:-5, food:5, dineout:12 },
+    gymfreak: { instamart:15, food:-5, dineout:-8 },
+    balanced: { instamart:3, food:0, dineout:0 },
+    budget:   { instamart:18, food:-8, dineout:-12 },
+  };
+
+  function scoreCost(cost, budget) {
+    if (budget <= 0) return 50;
+    var r = cost / budget;
+    if (r <= 0.5) return 100;
+    if (r <= 0.75) return 85;
+    if (r <= 1.0) return 70;
+    if (r <= 1.2) return 40;
+    return Math.max(0, 20 - (r - 1.2) * 50);
+  }
+
+  function scoreTime(timeMin) {
+    if (timeMin <= 15) return 100;
+    if (timeMin <= 30) return 85;
+    if (timeMin <= 45) return 70;
+    if (timeMin <= 60) return 55;
+    return Math.max(0, 40 - (timeMin - 60) / 2);
+  }
+
+  function scoreExperience(option, intent) {
+    var d = option.details;
+    if (d.type === "cook") {
+      var base = 45;
+      if (d.cookTimeMin <= 20) base += 10;
+      if (intent.servings <= 2) base += 5;
+      if (intent.occasion === "family") base += 15;
+      return Math.min(100, base);
+    }
+    if (d.type === "order") {
+      var rb = (d.restaurant.rating - 3.5) * 20;
+      var b = 60 + rb;
+      if (d.cart && d.cart.discount > 0) b += 8;
+      if (intent.occasion === "quick") b += 10;
+      return Math.min(100, Math.max(0, b));
+    }
+    if (d.type === "dineout") {
+      var rb2 = (d.venue.rating - 3.5) * 15;
+      var b2 = 75 + rb2;
+      if (intent.occasion === "date") b2 += 20;
+      if (intent.occasion === "party") b2 += 15;
+      if (d.offerText) b2 += 5;
+      return Math.min(100, Math.max(0, b2));
+    }
+    return 50;
+  }
+
+  function scoreHealth(option, persona) {
+    var base = option.healthScore;
+    if (option.details.type === "cook") base = Math.min(100, base + 12);
+    if (persona === "gymfreak" && option.details.type === "cook") base = Math.min(100, base + 8);
+    if (option.details.type === "order") base = Math.max(0, base - 5);
+    return base;
+  }
+
+  function generateReason(option, scores, persona, intent) {
+    var d = option.details;
+    var ch = d.type === "cook" ? "Cook at home" : d.type === "order" ? "Order delivery" : "Dine out";
+
+    if (persona === "budget") {
+      if (d.type === "cook" && scores.cost >= 70) return ch + " — saves ₹" + Math.round(intent.budget * 0.4) + " vs ordering";
+      if (scores.cost >= 80) return ch + " — best value at ₹" + option.cost;
+      return ch + " — " + (scores.cost >= 60 ? "within budget" : "slightly over budget");
+    }
+    if (persona === "gymfreak") {
+      if (d.type === "cook") return ch + " — full macro control, health " + option.healthScore;
+      if (scores.health >= 70) return ch + " — healthier option, " + option.healthScore + "/100";
+      return ch + " — convenient, watch portions";
+    }
+    if (persona === "foodie") {
+      if (d.type === "dineout") return ch + " — premium dining experience";
+      if (d.type === "order" && scores.experience >= 70) return ch + " — top-rated restaurant";
+      if (d.type === "cook") return ch + " — homemade flavor, save ₹" + Math.round(intent.budget * 0.3);
+      return ch + " — great taste option";
+    }
+    // balanced
+    if (scores.cost >= scores.time && scores.cost >= scores.health) return ch + " — best value for money";
+    if (scores.time >= scores.health) return ch + " — fastest at " + option.timeMin + " min";
+    if (scores.health >= 65) return ch + " — healthiest choice";
+    return ch + " — good balance";
+  }
 
   function scoreOption(option, intent, persona) {
     var w = PERSONA_WEIGHTS[persona] || PERSONA_WEIGHTS.balanced;
-    var maxTime = intent.timeConstraintMin || 120;
+    var bias = (CHANNEL_BIAS[persona] || {})[option.channel] || 0;
 
-    var costScore = Math.max(0, Math.min(100, 100 - (option.cost / intent.budget) * 100));
-    var timeScore = Math.max(0, Math.min(100, 100 - (option.timeMin / maxTime) * 100));
-    var healthScore = option.healthScore;
+    var scores = {
+      cost: scoreCost(option.cost, intent.budget),
+      time: scoreTime(option.timeMin),
+      health: scoreHealth(option, persona),
+      experience: scoreExperience(option, intent),
+    };
 
-    var expScore = 50;
-    if (option.details.type === "cook") expScore = 40;
-    else if (option.details.type === "order") expScore = Math.min(100, 60 + option.details.restaurant.rating * 5);
-    else if (option.details.type === "dineout") expScore = Math.min(100, 80 + option.details.venue.rating * 4);
+    var score = Math.round(scores.cost * w.cost + scores.time * w.time + scores.health * w.health + scores.experience * w.experience);
+    score = Math.max(0, Math.min(100, score + bias));
 
-    if (intent.occasion === "quick" && option.details.type === "cook") expScore = Math.max(0, expScore - 20);
-    if (intent.occasion === "date" && option.details.type === "dineout") expScore = Math.min(100, expScore + 20);
-    if (intent.occasion === "party" && intent.servings > 6 && option.details.type === "cook") expScore = Math.max(0, expScore - 15);
+    // Occasion adjustments
+    if (intent.occasion === "quick") {
+      if (option.timeMin > 45) score = Math.max(0, score - 15);
+      if (option.timeMin <= 20) score = Math.min(100, score + 10);
+    }
+    if (intent.occasion === "date" && option.details.type === "cook" && intent.servings <= 2) score = Math.max(0, score - 10);
+    if (intent.occasion === "party" && option.details.type === "cook" && intent.servings > 6) score = Math.max(0, score - 12);
 
-    var score = Math.round(costScore * w.cost + timeScore * w.time + healthScore * w.health + expScore * w.experience);
-
-    var reason = "";
-    if (option.details.type === "cook") reason = "Cook at home";
-    else if (option.details.type === "order") reason = "Order delivery";
-    else reason = "Dine out";
-
-    if (costScore >= timeScore && costScore >= 60) reason += " — best value";
-    else if (timeScore >= 60) reason += " — fastest";
-    else if (healthScore >= 65) reason += " — healthiest";
-    else reason += " — good balance";
+    // Budget overflow penalty
+    if (option.cost > intent.budget) {
+      var overPct = (option.cost - intent.budget) / intent.budget;
+      var penalty = persona === "budget" ? overPct * 30 : overPct * 15;
+      score = Math.max(0, Math.round(score - penalty));
+    }
 
     option.score = score;
-    option.reasonShort = reason;
+    option.healthScore = scores.health;
+    option.reasonShort = generateReason(option, scores, persona, intent);
     return option;
   }
 
