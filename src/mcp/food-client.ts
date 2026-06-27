@@ -189,6 +189,15 @@ export class MCPFoodClient implements FoodProvider {
     return this.getCart(addressId);
   }
 
+  async getOrders(): Promise<any[]> {
+    try {
+      const res = await this.transport.callTool({ name: "get_food_orders", arguments: {} });
+      const data = extractMCPData(res);
+      if (typeof data === 'string') return []; // text format — skip for now
+      return data?.orders ?? data ?? [];
+    } catch { return []; }
+  }
+
   /**
    * Place food order — NOT idempotent.
    * On 5xx/network failure, caller MUST check get_food_orders before retrying.

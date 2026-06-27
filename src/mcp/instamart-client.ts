@@ -122,6 +122,15 @@ export class MCPInstamartClient implements InstamartProvider {
     return skus.slice(0, limit);
   }
 
+  async getOrders(): Promise<any[]> {
+    try {
+      const res = await this.transport.callTool({ name: "get_orders", arguments: {} });
+      const data = extractMCPData(res);
+      if (typeof data === 'string') return [];
+      return data?.orders ?? data ?? [];
+    } catch { return []; }
+  }
+
   async addToCart(items: Array<{ skuId: string; quantity: number }>): Promise<void> {
     await this.transport.callTool({
       name: "update_cart",

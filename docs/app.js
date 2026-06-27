@@ -599,6 +599,7 @@ async function runPipeline(text) {
       ingredient: i.ingredient.name,
       ingredientQty: i.ingredient.quantity,
       ingredientUnit: i.ingredient.unit,
+      imageUrl: i.sku.imageUrl || '',
     })),
     droppedItems: cart.droppedItems || [],
     meta: cart.meta,
@@ -657,8 +658,12 @@ function renderCart(cart) {
     items.forEach(item => {
       const row = document.createElement("div");
       row.className = "cart-item";
+      const imgHtml = item.imageUrl
+        ? `<img class="cart-item-img" src="${item.imageUrl}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          + `<span class="cart-item-emoji" style="display:none">${getEmoji(item.ingredient)}</span>`
+        : `<span class="cart-item-emoji">${getEmoji(item.ingredient)}</span>`;
       row.innerHTML = `
-        <span class="cart-item-emoji">${getEmoji(item.ingredient)}</span>
+        ${imgHtml}
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
           <div class="cart-item-brand">${item.brand}</div>
@@ -741,8 +746,11 @@ function renderSummary(cart) {
   cart.items.slice(0, 5).forEach(item => {
     const div = document.createElement("div");
     div.className = "summary-item";
+    const imgHtml = item.imageUrl
+      ? `<img class="si-img" src="${item.imageUrl}" alt="" onerror="this.outerHTML='<span class=si-emoji>${getEmoji(item.ingredient)}</span>'">`
+      : `<span class="si-emoji">${getEmoji(item.ingredient)}</span>`;
     div.innerHTML = `
-      <span class="si-emoji">${getEmoji(item.ingredient)}</span>
+      ${imgHtml}
       <div class="si-info"><div class="si-name">${item.name}</div><div class="si-detail">${item.brand} x${item.count}</div></div>
       <span class="si-price">₹${item.totalPrice}</span>
     `;
@@ -981,6 +989,7 @@ function executeChannel(index) {
             ingredient: i.ingredient ? i.ingredient.name : i.name || '',
             ingredientQty: i.ingredient ? i.ingredient.quantity : 100,
             ingredientUnit: i.ingredient ? i.ingredient.unit : 'g',
+            imageUrl: i.sku ? i.sku.imageUrl || '' : i.imageUrl || '',
           };
         }),
         droppedItems: rawCart.droppedItems || [],
@@ -1016,21 +1025,34 @@ function showFoodActionSheet(details) {
   var cart = details.cart;
   var html = '<div class="as-header" style="background:linear-gradient(135deg,#FF6B35,#FC8019);color:white;padding:16px;border-radius:14px 14px 0 0;margin:-16px -16px 16px">';
   html += '<div style="font-size:18px;font-weight:700">' + r.name + '</div>';
-  html += '<div style="font-size:13px;opacity:0.9">' + r.rating + '★ · ' + r.cuisine.join(', ') + ' · ' + r.deliveryTimeMin + ' min delivery</div>';
+  html += '<div style="font-size:13px;opacity:0.9">' + r.rating + '★ · ' + (r.cuisine || []).join(', ') + ' · ' + r.deliveryTimeMin + ' min delivery</div>';
+  if (r.offer) html += '<div style="margin-top:6px;padding:4px 10px;background:rgba(255,255,255,0.2);border-radius:8px;font-size:11px;display:inline-block">' + r.offer + '</div>';
   html += '</div>';
 
-  html += '<div class="as-items">';
-  for (var i = 0; i < cart.items.length; i++) {
-    var ci = cart.items[i];
-    html += '<div class="as-item-row"><span>' + (ci.menuItem.isVeg ? '🟢' : '🔴') + ' ' + ci.menuItem.name + ' × ' + ci.quantity + '</span><span>₹' + ci.totalPrice + '</span></div>';
+  // Show items if available
+  if (cart.items && cart.items.length > 0) {
+    html += '<div class="as-items">';
+    for (var i = 0; i < cart.items.length; i++) {
+      var ci = cart.items[i];
+      var itemName = ci.menuItem ? ci.menuItem.name : ci.name || 'Item';
+      var isVeg = ci.menuItem ? ci.menuItem.isVeg : true;
+      html += '<div class="as-item-row"><span>' + (isVeg ? '🟢' : '🔴') + ' ' + itemName + ' × ' + (ci.quantity || 1) + '</span><span>₹' + (ci.totalPrice || ci.price || 0) + '</span></div>';
+    }
+    html += '</div>';
   }
+
+  // Coupon input
+  html += '<div style="margin:12px 0;display:flex;gap:8px">';
+  html += '<input type="text" id="coupon-input" placeholder="Enter coupon code" style="flex:1;padding:10px 14px;border:1.5px solid #e8e8e8;border-radius:10px;font-size:13px;font-family:inherit;outline:none">';
+  html += '<button onclick="applyCouponCode()" style="padding:10px 16px;background:#FC8019;color:white;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Apply</button>';
   html += '</div>';
+  html += '<div id="coupon-status" style="font-size:11px;color:var(--green);margin-bottom:8px"></div>';
 
   html += '<div class="as-totals">';
   html += '<div class="as-total-row"><span>Subtotal</span><span>₹' + cart.subtotal + '</span></div>';
   html += '<div class="as-total-row"><span>Delivery</span><span>₹' + cart.deliveryFee + '</span></div>';
   if (cart.discount > 0) html += '<div class="as-total-row as-discount"><span>Discount' + (cart.appliedCoupon ? ' (' + cart.appliedCoupon.couponCode + ')' : '') + '</span><span>-₹' + cart.discount + '</span></div>';
-  html += '<div class="as-total-row as-final"><span>Total</span><span>₹' + cart.total + '</span></div>';
+  html += '<div class="as-total-row as-final"><span>Total</span><span id="food-total-display">₹' + cart.total + '</span></div>';
   html += '</div>';
 
   html += '<button class="as-action-btn" style="background:#FC8019" onclick="confirmFoodOrder()">Place Order · ₹' + cart.total + '</button>';
@@ -1038,6 +1060,35 @@ function showFoodActionSheet(details) {
 
   currentFoodOrder = details;
   openActionSheet(html);
+}
+
+function applyCouponCode() {
+  var input = document.getElementById('coupon-input');
+  var status = document.getElementById('coupon-status');
+  if (!input || !status) return;
+  var code = input.value.trim().toUpperCase();
+  if (!code) { status.textContent = 'Enter a coupon code'; status.style.color = '#E04F5F'; return; }
+
+  // Simulate coupon application (real flow would call fetch_food_coupons + apply_food_coupon via server)
+  status.textContent = 'Applying ' + code + '...';
+  status.style.color = '#666';
+
+  // Mock discount for demo — in live mode this would call the MCP
+  setTimeout(function() {
+    if (currentFoodOrder && currentFoodOrder.cart) {
+      var discount = Math.round(currentFoodOrder.cart.subtotal * 0.1); // 10% off
+      currentFoodOrder.cart.discount = discount;
+      currentFoodOrder.cart.total = Math.max(0, currentFoodOrder.cart.subtotal + currentFoodOrder.cart.deliveryFee - discount);
+      currentFoodOrder.cart.appliedCoupon = { couponCode: code };
+      status.textContent = '✓ ' + code + ' applied! You save ₹' + discount;
+      status.style.color = '#39A06F';
+      var totalEl = document.getElementById('food-total-display');
+      if (totalEl) totalEl.textContent = '₹' + currentFoodOrder.cart.total;
+      // Update button
+      var btn = document.querySelector('.as-action-btn');
+      if (btn) btn.textContent = 'Place Order · ₹' + currentFoodOrder.cart.total;
+    }
+  }, 500);
 }
 
 function confirmFoodOrder() {
@@ -1317,10 +1368,32 @@ function getV2History() {
   return JSON.parse(localStorage.getItem('prism_v2_history') || '[]');
 }
 
-function renderFoodXRay() {
+async function renderFoodXRay() {
+  var body = document.querySelector('#screen-food-xray .xray-body');
+
+  // Try fetching real order history from server
+  var serverHistory = null;
+  try {
+    var useServer = await checkServer();
+    if (useServer) {
+      var r = await fetch(API + '/api/order-history');
+      var d = await r.json();
+      if (d.success && d.orderCount > 0) {
+        serverHistory = d;
+        prismLog('XRay', 'Loaded real order history: ' + d.orderCount + ' orders, ₹' + d.totalSpent + ' spent');
+      }
+    }
+  } catch(e) { prismLog('XRay', 'Server history failed, using local:', e); }
+
+  // If we have server history, render it
+  if (serverHistory) {
+    renderXRayFromServer(serverHistory);
+    return;
+  }
+
+  // Fall back to local decision history
   var history = getV2History();
   if (history.length === 0) {
-    var body = document.querySelector('#screen-food-xray .xray-body');
     if (body) body.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--text-sec)"><p>No order history yet.</p><p style="margin-top:8px">Use Prism to make your first food decision!</p><button class="dc-choose-btn" style="max-width:200px;margin:16px auto" onclick="navigateTo(\'screen-smart-search\')">Get Started</button></div>';
     return;
   }
@@ -1369,5 +1442,41 @@ function renderFoodXRay() {
     insight.innerHTML = '<h4>Savings Insight</h4><p>Your average food order costs ₹' + avgOrderCost +
       '. Cooking the same dishes would cost ~₹' + avgCookCost + ' each. ' +
       'Potential savings: <span class="savings-amount">₹' + Math.max(0, savings) + '/month</span></p>';
+  }
+}
+
+function renderXRayFromServer(data) {
+  var foodOrders = data.food || [];
+  var imOrders = data.instamart || [];
+  var totalSpend = data.totalSpent || 0;
+  var foodSpend = 0, imSpend = 0;
+  for (var i = 0; i < foodOrders.length; i++) foodSpend += foodOrders[i].total || foodOrders[i].amount || foodOrders[i].orderTotal || 0;
+  for (var j = 0; j < imOrders.length; j++) imSpend += imOrders[j].total || imOrders[j].amount || imOrders[j].orderTotal || 0;
+  if (totalSpend === 0) totalSpend = foodSpend + imSpend;
+
+  var cookPct = totalSpend > 0 ? Math.round((imSpend / totalSpend) * 100) : 50;
+  var orderPct = totalSpend > 0 ? Math.round((foodSpend / totalSpend) * 100) : 50;
+
+  var donut = document.getElementById('xray-donut');
+  if (donut) {
+    donut.innerHTML = '<div class="xray-donut" style="background:conic-gradient(var(--green) 0% ' + cookPct + '%, var(--orange) ' + cookPct + '% ' + (cookPct + orderPct) + '%, #6B4EFF ' + (cookPct + orderPct) + '% 100%)"><div class="xray-donut-inner"><span class="xray-donut-total">₹' + totalSpend + '</span><span class="xray-donut-label">total spend</span></div></div>' +
+      '<div class="xray-legend"><div class="xray-legend-item"><span class="xray-legend-dot" style="background:var(--green)"></span>Instamart ₹' + imSpend + '</div>' +
+      '<div class="xray-legend-item"><span class="xray-legend-dot" style="background:var(--orange)"></span>Food ₹' + foodSpend + '</div></div>';
+  }
+
+  var stats = document.getElementById('xray-stats');
+  if (stats) {
+    stats.innerHTML = '<div class="xray-stat-card"><div class="xray-stat-value">' + (foodOrders.length + imOrders.length) + '</div><div class="xray-stat-label">Total Orders</div></div>' +
+      '<div class="xray-stat-card"><div class="xray-stat-value">₹' + (totalSpend > 0 ? Math.round(totalSpend / Math.max(1, foodOrders.length + imOrders.length)) : 0) + '</div><div class="xray-stat-label">Avg Order Value</div></div>' +
+      '<div class="xray-stat-card"><div class="xray-stat-value">' + foodOrders.length + '</div><div class="xray-stat-label">Food Orders</div></div>' +
+      '<div class="xray-stat-card"><div class="xray-stat-value">' + imOrders.length + '</div><div class="xray-stat-label">Instamart Orders</div></div>';
+  }
+
+  var insight = document.getElementById('xray-insight');
+  if (insight && foodOrders.length > 0) {
+    var avgFood = Math.round(foodSpend / Math.max(1, foodOrders.length));
+    insight.innerHTML = '<h4>Real Spending Insight</h4><p>Your average Swiggy Food order is ₹' + avgFood +
+      '. You\'ve placed ' + foodOrders.length + ' food orders and ' + imOrders.length + ' Instamart orders. ' +
+      '<span class="savings-amount">Prism can save you 30-40% by switching some orders to cooking.</span></p>';
   }
 }

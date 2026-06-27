@@ -74,6 +74,9 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/api/decide" && req.method === "POST") {
     return handleDecide(req, res);
   }
+  if (url.pathname === "/api/order-history") {
+    return handleOrderHistory(req, res);
+  }
   if (url.pathname === "/api/health") {
     const isLive = process.env.MCP_MODE === "live";
     return json(res, {
@@ -248,6 +251,33 @@ async function handleDecide(req: any, res: any) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log({ level: "error", event: "decision_failed", status: "error", details: msg });
+    json(res, { success: false, error: msg }, 500);
+  }
+}
+
+async function handleOrderHistory(_req: any, res: any) {
+  try {
+    const isLive = process.env.MCP_MODE === "live" && getAuthManager().isAuthenticated();
+    if (!isLive) {
+      return json(res, { success: true, food: [], instamart: [], totalSpent: 0 });
+    }
+
+    const [foodOrders, instamartOrders] = await Promise.allSettled([
+      (foodProvider as any).getOrders?.() ?? [],
+      (mcpClient as any).getOrders?.() ?? [],
+    ]);
+
+    const food = foodOrders.status === "fulfilled" ? foodOrders.value : [];
+    const instamart = instamartOrders.status === "fulfilled" ? instamartOrders.value : [];
+
+    // Calculate total spent
+    let totalSpent = 0;
+    for (const o of food) totalSpent += o.total ?? o.amount ?? o.orderTotal ?? 0;
+    for (const o of instamart) totalSpent += o.total ?? o.amount ?? o.orderTotal ?? 0;
+
+    json(res, { success: true, food, instamart, totalSpent, orderCount: food.length + instamart.length });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
     json(res, { success: false, error: msg }, 500);
   }
 }

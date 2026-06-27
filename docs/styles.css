@@ -532,6 +532,7 @@ body {
   padding: 10px 0; border-bottom: 1px solid var(--grey-bg);
 }
 .cart-item-emoji { font-size: 28px; min-width: 36px; text-align: center; }
+.cart-item-img { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--grey-bg); }
 .cart-item-info { flex: 1; }
 .cart-item-name { font-size: 13px; font-weight: 600; }
 .cart-item-brand { font-size: 11px; color: var(--text-sec); }
@@ -588,6 +589,7 @@ body {
   padding: 8px 10px; background: var(--grey-bg); border-radius: var(--rs);
 }
 .si-emoji { font-size: 20px; }
+.si-img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--grey-bg); }
 .si-info { flex: 1; }
 .si-name { font-size: 12px; font-weight: 600; }
 .si-detail { font-size: 10px; color: var(--text-sec); }

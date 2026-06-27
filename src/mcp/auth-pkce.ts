@@ -228,6 +228,13 @@ export class PKCEAuthManager {
         if (data.expiresAt && Date.now() < data.expiresAt) {
           this.token = data;
           console.log("[Auth] Loaded persisted token — expires in " + Math.round((data.expiresAt - Date.now()) / 3600000) + "h");
+          // Record session for admin dashboard
+          addConnectedSession({
+            connectedAt: new Date(data.expiresAt - 432000000).toISOString(), // approx original connect time
+            expiresAt: data.expiresAt,
+            scope: data.scope || "mcp:tools",
+            ip: "persisted",
+          });
         } else {
           console.log("[Auth] Persisted token expired — need re-auth");
         }
