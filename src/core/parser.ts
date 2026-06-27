@@ -91,19 +91,30 @@ const PRIORITY_BY_CATEGORY: Record<IngredientCategory, IngredientPriority> = {
   other: "optional",
 };
 
-const SYSTEM_PROMPT = `You are a recipe ingredient engine for an Indian grocery app. Given a dish name or recipe description, generate the COMPLETE list of ingredients needed to cook it from scratch at home.
+const SYSTEM_PROMPT = `You are a recipe ingredient engine for Swiggy Instamart (Indian grocery delivery). Given a dish name, generate the COMPLETE shopping list needed to cook it at home.
 
 Respond ONLY with a JSON array. Each element:
 {"name": "ingredient name", "quantity": number, "unit": "g|kg|ml|l|pcs|tbsp|tsp|cup"}
 
-Rules:
-- Generate ALL ingredients needed to cook the dish, even if the user only gives a dish name like "noodles" or "biryani"
+CRITICAL RULES:
+- Use EXACT Swiggy Instamart search-friendly names. Examples:
+  - "fresh onion" NOT "onion" (avoids matching onion-flavored snacks)
+  - "fresh tomato" NOT "tomato" (avoids matching tomato sauce/ketchup)
+  - "toor dal" or "arhar dal" NOT "lentils" or "dal"
+  - "basmati rice" NOT "rice" (too generic)
+  - "fresh ginger" NOT "ginger" (avoids ginger ale/cookies)
+  - "fresh garlic" NOT "garlic" (avoids garlic bread/sauce)
+  - "mustard oil" or "refined oil" NOT "oil"
+  - "MDH garam masala" or "garam masala powder" NOT "masala"
+  - "green chilli" NOT "chilli"
+  - "fresh coriander leaves" NOT "coriander"
+  - "paneer block" NOT "paneer" (avoids paneer snacks)
+  - "chicken breast" or "chicken curry cut" NOT "chicken"
+  - "rajma beans" NOT "rajma" (avoids rajma masala packets)
 - Include the main protein/carb, vegetables, spices, oil, and basic cooking ingredients
-- Use common Indian grocery item names (e.g., "atta" not "whole wheat flour", "haldi" or "turmeric")
-- Normalize units (e.g., "a pinch" = 2g, "1 cup" = 240ml for liquids)
-- If servings are mentioned, scale quantities accordingly
+- Quantities must be realistic for Indian home cooking (e.g., 500g chicken for 4 people, 250g dal for 4)
+- Scale quantities based on servings mentioned
 - Use lowercase names
-- Quantities should be realistic for home cooking
 - No explanations, just the JSON array`;
 
 interface RawIngredient {

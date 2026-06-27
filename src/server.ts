@@ -89,6 +89,9 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/api/group-order" && req.method === "POST") {
     return handleGroupOrder(req, res);
   }
+  if (url.pathname === "/api/parse-video") {
+    return handleParseVideo(req, res, url);
+  }
   if (url.pathname === "/api/health") {
     const isLive = process.env.MCP_MODE === "live";
     return json(res, {
@@ -282,15 +285,75 @@ async function handleOrderHistory(_req: any, res: any) {
     const food = foodOrders.status === "fulfilled" ? foodOrders.value : [];
     const instamart = instamartOrders.status === "fulfilled" ? instamartOrders.value : [];
 
-    // Calculate total spent
+    // Log actual order structure for debugging
+    if (food.length > 0) console.log('[OrderHistory] Food order sample:', JSON.stringify(food[0]).slice(0, 500));
+    if (instamart.length > 0) console.log('[OrderHistory] Instamart order sample:', JSON.stringify(instamart[0]).slice(0, 500));
+
+    // Calculate total spent — try many possible field names
     let totalSpent = 0;
-    for (const o of food) totalSpent += o.total ?? o.amount ?? o.orderTotal ?? 0;
-    for (const o of instamart) totalSpent += o.total ?? o.amount ?? o.orderTotal ?? 0;
+    const extractAmount = (o: any): number => {
+      if (typeof o === 'string') {
+        // Parse amount from text like "Order total: ₹450"
+        const m = o.match(/₹\s*([\d,]+)/);
+        return m ? parseInt(m[1].replace(/,/g, '')) : 0;
+      }
+      return o?.total ?? o?.amount ?? o?.orderTotal ?? o?.billAmount ?? o?.bill?.total
+        ?? o?.orderValue ?? o?.cost ?? o?.price ?? o?.grandTotal ?? o?.billing?.total ?? 0;
+    };
+    for (const o of food) totalSpent += extractAmount(o);
+    for (const o of instamart) totalSpent += extractAmount(o);
 
     json(res, { success: true, food, instamart, totalSpent, orderCount: food.length + instamart.length });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     json(res, { success: false, error: msg }, 500);
+  }
+}
+
+async function handleParseVideo(_req: any, res: any, url: URL) {
+  try {
+    const videoUrl = url.searchParams.get("url") ?? "";
+    if (!videoUrl) return json(res, { success: false, error: "URL required" }, 400);
+
+    // Fetch YouTube page to get title and description
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    try {
+      const pageRes = await fetch(videoUrl, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: controller.signal,
+      });
+      const html = await pageRes.text();
+      clearTimeout(timer);
+
+      // Extract title from <title> tag
+      const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+      const title = titleMatch ? titleMatch[1].replace(/ - YouTube$/, '').trim() : '';
+
+      // Extract description from meta
+      const descMatch = html.match(/<meta name="description" content="(.*?)"/i);
+      const desc = descMatch ? descMatch[1] : '';
+
+      const combined = title + '. ' + desc;
+
+      // Use LLM to extract dish name from video title/description
+      if (process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) {
+        const { parseRecipe } = await import("./core/parser.js");
+        const ingredients = await parseRecipe(combined, 4);
+        // Derive dish name from title
+        const dishName = title.replace(/\|.*$/, '').replace(/recipe/i, '').replace(/how to make/i, '').trim().toLowerCase();
+        return json(res, { success: true, recipe: dishName || 'recipe from video', ingredients, title });
+      }
+
+      // Fallback: just return the title as dish name
+      const simpleDish = title.replace(/\|.*$/, '').replace(/recipe/i, '').replace(/how to make/i, '').trim().toLowerCase();
+      return json(res, { success: true, recipe: simpleDish || 'butter chicken', title });
+    } catch {
+      clearTimeout(timer);
+      return json(res, { success: false, error: "Could not fetch video page" }, 500);
+    }
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
   }
 }
 

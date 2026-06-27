@@ -420,23 +420,47 @@
 
   // ─── Mock MCP Search (from mcp/mock.ts) ──────────────────────────────────────
 
+  // Snack/processed food keywords — should NOT match raw ingredient searches
+  var JUNK_KEYWORDS = ['chips','crispz','biscuit','cookie','snack','drink','juice','soda','candy','chocolate','syrup','pickle','jam','ketchup','sauce','spread','noodle pack','instant','ready to eat','frozen','ice cream','cake','bread','toast','rusk','namkeen','bhujia','mixture'];
+
   function searchSKUs(query, limit) {
     if (limit == null) limit = 10;
-
-    var tokens = query.toLowerCase().split(/\s+/);
+    var queryLower = query.toLowerCase().trim();
+    var tokens = queryLower.split(/\s+/);
     var scored = [];
 
     for (var i = 0; i < INSTAMART_CATALOG.length; i++) {
       var sku = INSTAMART_CATALOG[i];
       if (!sku.inStock) continue;
 
-      var skuText = (sku.name + " " + sku.brand).toLowerCase();
+      var skuName = sku.name.toLowerCase();
+      var skuText = (skuName + ' ' + (sku.brand || '')).toLowerCase();
+
+      // Check if SKU is a junk/processed food item
+      var isJunk = JUNK_KEYWORDS.some(function(jk) { return skuText.indexOf(jk) !== -1; });
+
+      // Exact name match (highest priority)
+      if (skuName === queryLower || skuName.indexOf(queryLower) === 0) {
+        scored.push({ sku: sku, score: isJunk ? 5 : 100 });
+        continue;
+      }
+
+      // Word boundary match — "onion" matches "fresh onion" but NOT "onion flavoured chips"
       var hits = 0;
       for (var t = 0; t < tokens.length; t++) {
-        if (skuText.indexOf(tokens[t]) !== -1) hits++;
+        // Check for word boundary match using regex
+        var re = new RegExp('\\b' + tokens[t] + '\\b');
+        if (re.test(skuText)) hits++;
+        else if (skuText.indexOf(tokens[t]) !== -1) hits += 0.3; // partial match gets less score
       }
+
       if (hits > 0) {
-        scored.push({ sku: sku, score: hits });
+        var score = hits * 10;
+        // Heavy penalty for junk food matching a raw ingredient query
+        if (isJunk) score -= 50;
+        // Bonus for fresh/raw items when searching for ingredients
+        if (skuText.indexOf('fresh') !== -1 || skuText.indexOf('organic') !== -1) score += 5;
+        if (score > 0) scored.push({ sku: sku, score: score });
       }
     }
 

@@ -181,6 +181,20 @@
 
     <!-- ====== SCREEN: Share Simulation ====== -->
     <div class="screen" id="screen-share-sim">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Recipe Capture</h2>
+      </div>
+
+      <!-- URL Input for real video -->
+      <div style="padding:8px 16px;display:flex;gap:8px">
+        <input type="text" id="video-url-input" placeholder="Paste YouTube URL here..." style="flex:1;padding:10px 14px;border:1.5px solid var(--grey-light);border-radius:10px;font-size:13px;font-family:inherit;outline:none">
+        <button onclick="parseVideoUrl()" style="padding:10px 16px;background:var(--orange);color:white;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Parse</button>
+      </div>
+      <div id="video-parse-status" style="padding:0 16px;font-size:11px;color:var(--text-sec)"></div>
+
       <!-- Platform Tabs -->
       <div class="platform-tabs">
         <button class="ptab active" onclick="switchPlatform('youtube')">
@@ -292,6 +306,12 @@
 
     <!-- ====== SCREEN: Persona Onboarding ====== -->
     <div class="screen" id="screen-persona">
+      <div class="swiggy-topbar">
+        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2 class="topbar-title">Profile</h2>
+      </div>
       <div class="persona-body">
         <div class="persona-header">
           <svg viewBox="0 0 40 40" width="48" height="48"><polygon points="20,4 36,34 4,34" fill="none" stroke="#FC8019" stroke-width="2.5"/><circle cx="14" cy="19" r="2.5" fill="#FC8019"/><circle cx="24" cy="22" r="2.5" fill="#FC8019"/></svg>
@@ -479,7 +499,7 @@
     <!-- ====== SCREEN: Prism Processing ====== -->
     <div class="screen" id="screen-processing">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-instamart')">
+        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Prism — Smart Cart</h2>
@@ -525,7 +545,7 @@
     <!-- ====== SCREEN: Optimized Cart (Swiggy-native) ====== -->
     <div class="screen" id="screen-cart">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-instamart')">
+        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Your Prism Cart</h2>

@@ -684,13 +684,18 @@ function renderCart(cart) {
         ? `<img class="cart-item-img" src="${item.imageUrl}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
           + `<span class="cart-item-emoji" style="display:none">${getEmoji(item.ingredient)}</span>`
         : `<span class="cart-item-emoji">${getEmoji(item.ingredient)}</span>`;
+      var itemIdx = cart.items.indexOf(item);
       row.innerHTML = `
         ${imgHtml}
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
           <div class="cart-item-brand">${item.brand}</div>
         </div>
-        <div class="cart-item-qty">${item.count}</div>
+        <div class="cart-item-stepper">
+          <button class="qty-btn" onclick="adjustCartQty(${itemIdx},-1)">−</button>
+          <span class="qty-val">${item.count}</span>
+          <button class="qty-btn" onclick="adjustCartQty(${itemIdx},1)">+</button>
+        </div>
         <div class="cart-item-price">₹${item.totalPrice}</div>
       `;
       body.appendChild(row);
@@ -748,6 +753,18 @@ function computeNutrition(cart) {
   const circumference = 2 * Math.PI * 42;
   ring.setAttribute("stroke-dashoffset", String(circumference - (score / 100) * circumference));
   ring.setAttribute("stroke", score > 65 ? "#39A06F" : score > 40 ? "#F7C948" : "#E04F5F");
+}
+
+function adjustCartQty(idx, delta) {
+  if (!currentCart || !currentCart.items[idx]) return;
+  var item = currentCart.items[idx];
+  item.count = Math.max(0, item.count + delta);
+  item.totalPrice = item.price * item.count;
+  if (item.count === 0) {
+    currentCart.items.splice(idx, 1);
+  }
+  currentCart.totalCost = currentCart.items.reduce(function(s, i) { return s + i.totalPrice; }, 0);
+  renderCart(currentCart);
 }
 
 function toggleHealthPanel() {
@@ -1712,38 +1729,67 @@ async function generateMealPlan() {
 }
 
 function generateClientMealPlan(persona, budget) {
-  var dishes = ['butter chicken','dal tadka','paneer tikka','biryani','pasta','fried rice','rajma','palak paneer','chole bhature','egg curry','aloo gobi','sandwich','dosa','noodles'];
-  var splits = { budget:[5,1,1], gymfreak:[5,1,1], balanced:[3,2,2], foodie:[2,3,2] };
-  var split = splits[persona] || [3,2,2];
-  var channels = [];
-  for (var i=0;i<split[0];i++) channels.push('instamart');
-  for (var j=0;j<split[1];j++) channels.push('food');
-  for (var k=0;k<split[2];k++) channels.push('dineout');
-  // Shuffle
-  for (var s=channels.length-1;s>0;s--) { var r=Math.floor(Math.random()*(s+1)); var tmp=channels[s]; channels[s]=channels[r]; channels[r]=tmp; }
+  var BREAKFAST = ['🥞 Dosa','🍳 Omelette','🫓 Paratha','🥣 Poha','🍞 Sandwich','🥣 Upma','🧇 Idli'];
+  var LUNCH = ['🫘 Dal Tadka','🫘 Rajma Chawal','🍚 Biryani','🍛 Thali','🍚 Fried Rice','🥬 Palak Paneer','🫛 Chole'];
+  var DINNER = ['🍗 Butter Chicken','🧀 Paneer Tikka','🍝 Pasta','🍜 Noodles','🫛 Chole Bhature','🥚 Egg Curry','🥔 Aloo Gobi'];
 
-  var daily = Math.round(budget / 7);
   var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   var plan = [];
-  for (var d=0;d<7;d++) {
-    var ch = channels[d];
-    var mult = ch==='instamart'?0.6:ch==='food'?1.0:1.5;
-    plan.push({ day:days[d], dish:dishes[d%dishes.length], channel:ch, cost:Math.round(daily*mult*(0.8+Math.random()*0.4)), servings:2, healthScore:Math.round(50+Math.random()*35), timeMin:ch==='instamart'?45:ch==='food'?30:10 });
+  var bBudget = Math.round(budget * 0.2 / 7);
+  var lBudget = Math.round(budget * 0.35 / 7);
+  var dBudget = Math.round(budget * 0.45 / 7);
+
+  for (var d = 0; d < 7; d++) {
+    var bCh = 'instamart', lCh = d % 3 === 0 ? 'food' : 'instamart', dCh = d % 7 === 5 ? 'dineout' : d % 2 === 0 ? 'food' : 'instamart';
+    plan.push(
+      { day: days[d], meal: 'breakfast', dish: BREAKFAST[d % BREAKFAST.length], channel: bCh, cost: Math.round(bBudget * (0.7 + Math.random() * 0.6)) },
+      { day: days[d], meal: 'lunch', dish: LUNCH[d % LUNCH.length], channel: lCh, cost: Math.round(lBudget * (0.7 + Math.random() * 0.6)) },
+      { day: days[d], meal: 'dinner', dish: DINNER[d % DINNER.length], channel: dCh, cost: Math.round(dBudget * (0.7 + Math.random() * 0.6)) }
+    );
   }
   var totalCost = plan.reduce(function(s,p){return s+p.cost},0);
-  return { plan:plan, totalCost:totalCost, weeklyBudget:budget, channelSplit:{cook:split[0],order:split[1],dine:split[2]} };
+  var cookCount = plan.filter(function(p){return p.channel==='instamart'}).length;
+  var orderCount = plan.filter(function(p){return p.channel==='food'}).length;
+  var dineCount = plan.filter(function(p){return p.channel==='dineout'}).length;
+  return { plan:plan, totalCost:totalCost, weeklyBudget:budget, channelSplit:{cook:cookCount,order:orderCount,dine:dineCount} };
 }
 
 function renderMealPlanGrid(data, grid, summary) {
   var channelNames = { instamart:'🍳 Cook', food:'🛵 Order', dineout:'🍽️ Dine' };
+  var mealLabels = { breakfast:'☀️', lunch:'☀️', dinner:'🌙' };
   var html = '';
-  for (var i=0;i<data.plan.length;i++) {
-    var p = data.plan[i];
-    html += '<div class="mp-day ch-' + p.channel + '">';
-    html += '<div class="mp-day-label">' + p.day + '</div>';
-    html += '<div class="mp-day-info"><div class="mp-day-dish">' + p.dish + '</div><div class="mp-day-channel">' + (channelNames[p.channel]||p.channel) + ' · ' + p.timeMin + ' min</div></div>';
-    html += '<div class="mp-day-cost">₹' + p.cost + '</div>';
-    html += '<button class="mp-day-swap" onclick="swapMealDay(' + i + ')">Swap</button>';
+
+  // Group by day
+  var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  for (var d = 0; d < days.length; d++) {
+    var dayMeals = data.plan.filter(function(p) { return p.day === days[d]; });
+    if (dayMeals.length === 0) {
+      // Old format — single meal per day
+      var p = data.plan[d];
+      if (!p) continue;
+      html += '<div class="mp-day ch-' + p.channel + '">';
+      html += '<div class="mp-day-label">' + p.day + '</div>';
+      html += '<div class="mp-day-info"><div class="mp-day-dish">' + p.dish + '</div><div class="mp-day-channel">' + (channelNames[p.channel]||p.channel) + '</div></div>';
+      html += '<div class="mp-day-cost">₹' + p.cost + '</div>';
+      html += '<button class="mp-day-swap" onclick="swapMealDay(' + d + ')">Swap</button>';
+      html += '</div>';
+      continue;
+    }
+
+    // New format — breakfast/lunch/dinner per day
+    html += '<div class="mp-day-group">';
+    html += '<div class="mp-day-header">' + days[d] + '</div>';
+    for (var m = 0; m < dayMeals.length; m++) {
+      var meal = dayMeals[m];
+      var idx = data.plan.indexOf(meal);
+      html += '<div class="mp-meal ch-' + meal.channel + '">';
+      html += '<div class="mp-meal-type">' + (mealLabels[meal.meal] || '') + ' ' + (meal.meal || '').charAt(0).toUpperCase() + (meal.meal || '').slice(1) + '</div>';
+      html += '<div class="mp-meal-dish">' + meal.dish + '</div>';
+      html += '<div class="mp-meal-meta">' + (channelNames[meal.channel]||meal.channel) + '</div>';
+      html += '<div class="mp-meal-cost">₹' + meal.cost + '</div>';
+      html += '<button class="mp-day-swap" onclick="swapMealDay(' + idx + ')">↻</button>';
+      html += '</div>';
+    }
     html += '</div>';
   }
   grid.innerHTML = html;
@@ -1916,9 +1962,24 @@ function generateClientGroupOrder(guests, budget) {
     split:{appetizers:appetBudget,mains:mainBudget,desserts:dessertBudget} };
 }
 
+function getGroupEmoji(name) {
+  var n = (name || '').toLowerCase();
+  if (n.indexOf('paneer') !== -1) return '🧀';
+  if (n.indexOf('tikki') !== -1) return '🥔';
+  if (n.indexOf('papad') !== -1) return '🫓';
+  if (n.indexOf('chicken') !== -1) return '🍗';
+  if (n.indexOf('biryani') !== -1) return '🍚';
+  if (n.indexOf('naan') !== -1) return '🫓';
+  if (n.indexOf('gulab') !== -1) return '🍮';
+  if (n.indexOf('ice cream') !== -1) return '🍨';
+  if (n.indexOf('dal') !== -1) return '🫘';
+  if (n.indexOf('rice') !== -1) return '🍚';
+  return '🍽️';
+}
+
 function renderGroupOrder(result, container) {
   var channelLabels = { instamart:'Cook', food:'Order' };
-  var types = { appetizer:'Appetizers (Cook at Home)', main:'Main Course (Order Delivery)', dessert:'Desserts' };
+  var types = { appetizer:'🍢 Appetizers (Cook at Home)', main:'🍛 Main Course (Order Delivery)', dessert:'🍮 Desserts' };
   var html = '';
 
   ['appetizer','main','dessert'].forEach(function(type) {
@@ -1927,7 +1988,8 @@ function renderGroupOrder(result, container) {
     html += '<div class="group-course"><div class="group-course-label">' + (types[type]||type) + '</div>';
     typeItems.forEach(function(item) {
       var chClass = item.channel === 'instamart' ? 'ch-cook' : 'ch-order';
-      html += '<div class="group-item"><div class="group-item-name">' + item.name + '</div>';
+      var emoji = getGroupEmoji(item.name);
+      html += '<div class="group-item"><span style="font-size:20px;flex-shrink:0">' + emoji + '</span><div class="group-item-name">' + item.name + '</div>';
       html += '<span class="group-item-channel ' + chClass + '">' + (channelLabels[item.channel]||item.channel) + '</span>';
       html += '<div class="group-item-cost">₹' + item.cost + '</div></div>';
     });
@@ -1944,6 +2006,47 @@ function renderGroupOrder(result, container) {
   if (result.foodCartWarning) html += '<div class="group-warning">⚠ ' + result.foodCartWarning + '</div>';
 
   container.innerHTML = html;
+}
+
+// ─── F4: YouTube Recipe URL Parsing ───────────────────────────────────────────
+
+async function parseVideoUrl() {
+  var input = document.getElementById('video-url-input');
+  var status = document.getElementById('video-parse-status');
+  if (!input || !status) return;
+  var url = input.value.trim();
+  if (!url) { status.textContent = 'Paste a YouTube URL'; status.style.color = '#E04F5F'; return; }
+
+  status.textContent = 'Extracting recipe from video...';
+  status.style.color = 'var(--orange)';
+
+  try {
+    var useServer = await checkServer();
+    if (useServer) {
+      var r = await fetch(API + '/api/parse-video?url=' + encodeURIComponent(url));
+      var d = await r.json();
+      if (d.success && d.recipe) {
+        status.innerHTML = '<span style="color:var(--green)">Found: ' + d.recipe + '</span>';
+        // Auto-search with the extracted recipe
+        setTimeout(function() { navigateTo('screen-smart-search'); quickDecision(d.recipe); }, 1000);
+        return;
+      } else {
+        status.textContent = d.error || 'Could not extract recipe from this video';
+        status.style.color = '#E04F5F';
+      }
+    } else {
+      // Mock: extract dish name from URL
+      var mockDish = 'butter chicken';
+      if (url.toLowerCase().indexOf('biryani') !== -1) mockDish = 'biryani';
+      else if (url.toLowerCase().indexOf('paneer') !== -1) mockDish = 'paneer tikka';
+      else if (url.toLowerCase().indexOf('dal') !== -1) mockDish = 'dal tadka';
+      status.innerHTML = '<span style="color:var(--green)">Found: ' + mockDish + ' recipe</span>';
+      setTimeout(function() { navigateTo('screen-smart-search'); quickDecision(mockDish + ' for 4, budget 800'); }, 1000);
+    }
+  } catch(e) {
+    status.textContent = 'Error: ' + (e.message || 'Failed to parse');
+    status.style.color = '#E04F5F';
+  }
 }
 
 // ─── Init all new features ───────────────────────────────────────────────────

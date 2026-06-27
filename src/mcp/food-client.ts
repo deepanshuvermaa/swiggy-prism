@@ -193,9 +193,17 @@ export class MCPFoodClient implements FoodProvider {
 
   async getOrders(): Promise<any[]> {
     try {
-      const res = await this.transport.callTool({ name: "get_food_orders", arguments: {} });
+      const addressId = await this.getAddressId();
+      const res = await this.transport.callTool({ name: "get_food_orders", arguments: { addressId, orderCount: 20 } });
       const data = extractMCPData(res);
-      if (typeof data === 'string') return []; // text format — skip for now
+      console.log('[Food] getOrders raw type:', typeof data, typeof data === 'string' ? data.slice(0, 300) : JSON.stringify(data).slice(0, 300));
+      if (typeof data === 'string') {
+        // Parse order amounts from text like "Order #123 — ₹450 — Delivered"
+        var amounts: any[] = [];
+        var matches = data.match(/₹\s*([\d,]+)/g);
+        if (matches) matches.forEach(function(m: string) { amounts.push({ total: parseInt(m.replace(/[₹,\s]/g, '')) }); });
+        return amounts.length > 0 ? amounts : [];
+      }
       return data?.orders ?? data ?? [];
     } catch { return []; }
   }
