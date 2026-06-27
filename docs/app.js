@@ -689,7 +689,7 @@ function renderCart(cart) {
         ${imgHtml}
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-brand">${item.brand}</div>
+          <div class="cart-item-brand">${item.brand}${item.ingredientQty ? ' · ' + item.ingredientQty + (item.ingredientUnit || '') : ''}</div>
         </div>
         <div class="cart-item-stepper">
           <button class="qty-btn" onclick="adjustCartQty(${itemIdx},-1)">−</button>
