@@ -903,7 +903,7 @@ async function runDecisionPipeline(text) {
       var r = await fetch(API + '/api/decide', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text, persona: persona }),
+        body: JSON.stringify({ text: text, persona: persona, pantryItems: loadPantry(), dietaryPrefs: loadDietary() }),
       });
       var d = await r.json();
       if (d.success && d.result) {

@@ -32,7 +32,8 @@ function getDishHealth(dishName: string): number {
 
 async function queryCookIt(
   intent: FoodIntent,
-  instamartProvider: InstamartProvider
+  instamartProvider: InstamartProvider,
+  pantryItems: string[] = []
 ): Promise<ChannelOption | null> {
   try {
     const hasLLM = !!(process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
@@ -47,6 +48,17 @@ async function queryCookIt(
       ingredients = localParseRecipe(intent.dishName, intent.servings);
     }
     if (ingredients.length === 0) return null;
+
+    // Filter out pantry items
+    if (pantryItems.length > 0) {
+      const pantrySet = pantryItems.map(p => p.toLowerCase());
+      const before = ingredients.length;
+      ingredients = ingredients.filter(ing => {
+        const name = ing.name.toLowerCase();
+        return !pantrySet.some(p => name.includes(p) || p.includes(name));
+      });
+      if (before > ingredients.length) console.log('[Cook] Skipped', before - ingredients.length, 'pantry items');
+    }
 
     // Search SKUs for top ingredients only (essentials + important) for speed
     const topIngredients = ingredients
@@ -228,13 +240,14 @@ export async function decide(
   persona: Persona,
   instamartProvider: InstamartProvider,
   foodProvider: FoodProvider,
-  dineoutProvider: DineoutProvider
+  dineoutProvider: DineoutProvider,
+  pantryItems: string[] = []
 ): Promise<DecisionResult> {
   // Pre-fetch address to avoid race conditions (all channels need it)
   // Food's get_addresses works for all channels
   console.log('[Decision] Starting 3 channel queries for "' + intent.dishName + '"...');
   const [cookResult, orderResult, dineoutResult] = await Promise.allSettled([
-    queryCookIt(intent, instamartProvider),
+    queryCookIt(intent, instamartProvider, pantryItems),
     queryOrderIt(intent, foodProvider),
     queryDineOut(intent, dineoutProvider),
   ]);

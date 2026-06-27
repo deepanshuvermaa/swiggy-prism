@@ -250,13 +250,14 @@ async function handleOptimize(req: any, res: any) {
 
 async function handleDecide(req: any, res: any) {
   const body = await readBody(req);
-  const { text, persona = "balanced" } = JSON.parse(body) as { text: string; persona?: Persona };
+  const { text, persona = "balanced", pantryItems = [], dietaryPrefs = [] } = JSON.parse(body) as { text: string; persona?: Persona; pantryItems?: string[]; dietaryPrefs?: string[] };
   const clean = sanitizePrompt(text);
   const start = Date.now();
 
   try {
     const intent = parseIntent(clean);
-    const result = await decide(intent, persona, mcpClient, foodProvider, dineoutProvider);
+    if (dietaryPrefs.length > 0) intent.dietaryPrefs = dietaryPrefs;
+    const result = await decide(intent, persona, mcpClient, foodProvider, dineoutProvider, pantryItems);
     log({
       level: "info", event: "decision_complete", status: "ok",
       durationMs: Date.now() - start,
