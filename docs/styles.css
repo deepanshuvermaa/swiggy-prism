@@ -1349,16 +1349,17 @@ body {
 .mp-day-channel { font-size: 10px; color: var(--text-sec); }
 .mp-day-cost { font-size: 14px; font-weight: 700; }
 .mp-day-swap { background: none; border: 1px solid var(--grey-light); border-radius: 6px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-family: inherit; }
-.mp-day-group { margin-bottom: 12px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06); }
-.mp-day-header { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 8px 12px; background: var(--grey-bg); color: var(--charcoal); }
-.mp-meal { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--grey-bg); }
+.mp-day-group { margin-bottom: 10px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.mp-day-header { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: var(--charcoal); color: white; }
+.mp-meal { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-bottom: 1px solid var(--grey-bg); background: white; }
+.mp-meal:last-child { border-bottom: none; }
 .mp-meal.ch-instamart { border-left: 3px solid var(--green); }
 .mp-meal.ch-food { border-left: 3px solid var(--orange); }
 .mp-meal.ch-dineout { border-left: 3px solid #6B4EFF; }
-.mp-meal-type { font-size: 10px; font-weight: 600; color: var(--text-sec); min-width: 65px; }
+.mp-meal-type { font-size: 9px; font-weight: 700; color: var(--text-sec); min-width: 58px; text-transform: capitalize; }
 .mp-meal-dish { flex: 1; font-size: 12px; font-weight: 600; }
-.mp-meal-meta { font-size: 9px; color: var(--text-sec); }
-.mp-meal-cost { font-size: 12px; font-weight: 700; min-width: 40px; text-align: right; }
+.mp-meal-meta { font-size: 8px; color: var(--text-sec); padding: 1px 5px; background: var(--grey-bg); border-radius: 4px; }
+.mp-meal-cost { font-size: 12px; font-weight: 700; min-width: 38px; text-align: right; }
 .mp-summary {
   margin-top: 16px; padding: 16px; border-radius: 14px;
   background: linear-gradient(135deg, #1a1a2e, #16213e); color: white;

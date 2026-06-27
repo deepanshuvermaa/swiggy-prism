@@ -1811,10 +1811,16 @@ function swapMealDay(idx) {
   var cached = localStorage.getItem('prism_meal_plan');
   if (!cached) return;
   var data = JSON.parse(cached);
-  var dishes = ['butter chicken','dal tadka','paneer tikka','biryani','pasta','fried rice','rajma','palak paneer','chole bhature','egg curry','aloo gobi','noodles','dosa','sandwich'];
-  data.plan[idx].dish = dishes[Math.floor(Math.random()*dishes.length)];
-  data.plan[idx].cost = Math.round(data.plan[idx].cost * (0.8 + Math.random()*0.4));
-  data.totalCost = data.plan.reduce(function(s,p){return s+p.cost},0);
+  var POOLS = {
+    breakfast: ['🥞 Dosa','🍳 Omelette','🫓 Paratha','🥣 Poha','🍞 Sandwich','🥣 Upma','🧇 Idli','🥞 Cheela','🍳 Egg Bhurji'],
+    lunch: ['🫘 Dal Tadka','🫘 Rajma Chawal','🍚 Biryani','🍛 Thali','🍚 Fried Rice','🥬 Palak Paneer','🫛 Chole','🍛 Kadhi Chawal'],
+    dinner: ['🍗 Butter Chicken','🧀 Paneer Tikka','🍝 Pasta','🍜 Noodles','🫛 Chole Bhature','🥚 Egg Curry','🥔 Aloo Gobi','🍗 Tandoori Chicken']
+  };
+  var meal = data.plan[idx];
+  var pool = POOLS[meal.meal] || POOLS.dinner;
+  meal.dish = pool[Math.floor(Math.random() * pool.length)];
+  meal.cost = Math.round(meal.cost * (0.8 + Math.random() * 0.4));
+  data.totalCost = data.plan.reduce(function(s, p) { return s + p.cost; }, 0);
   localStorage.setItem('prism_meal_plan', JSON.stringify(data));
   renderMealPlanGrid(data, document.getElementById('mp-grid'), document.getElementById('mp-summary'));
 }

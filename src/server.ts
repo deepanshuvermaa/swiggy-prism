@@ -395,52 +395,34 @@ async function handleCheckPrices(_req: any, res: any, url: URL) {
 async function handleMealPlan(req: any, res: any) {
   try {
     const body = await readBody(req);
-    const { persona = "balanced", weeklyBudget = 3500, servings = 2, dietaryPrefs = [] } = JSON.parse(body);
+    const { persona = "balanced", weeklyBudget = 3500, servings = 2 } = JSON.parse(body);
 
-    const DISHES = ["butter chicken", "dal tadka", "paneer tikka", "biryani", "pasta", "fried rice", "rajma", "palak paneer", "chole bhature", "egg curry", "aloo gobi", "sandwich", "dosa", "noodles"];
-    const CHANNEL_SPLIT: Record<string, number[]> = {
-      budget:   [5, 1, 1],
-      gymfreak: [5, 1, 1],
-      balanced: [3, 2, 2],
-      foodie:   [2, 3, 2],
-    };
-    const split = CHANNEL_SPLIT[persona] ?? [3, 2, 2];
-    const channels = [
-      ...Array(split[0]).fill("instamart"),
-      ...Array(split[1]).fill("food"),
-      ...Array(split[2]).fill("dineout"),
-    ];
-    // Shuffle channels for variety
-    for (let i = channels.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [channels[i], channels[j]] = [channels[j], channels[i]];
-    }
+    const BREAKFAST = ["🥞 Dosa","🍳 Omelette","🫓 Paratha","🥣 Poha","🍞 Sandwich","🥣 Upma","🧇 Idli"];
+    const LUNCH = ["🫘 Dal Tadka","🫘 Rajma Chawal","🍚 Biryani","🍛 Thali","🍚 Fried Rice","🥬 Palak Paneer","🫛 Chole"];
+    const DINNER = ["🍗 Butter Chicken","🧀 Paneer Tikka","🍝 Pasta","🍜 Noodles","🫛 Chole Bhature","🥚 Egg Curry","🥔 Aloo Gobi"];
 
-    const dailyBudget = Math.round(weeklyBudget / 7);
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const bBudget = Math.round(weeklyBudget * 0.2 / 7);
+    const lBudget = Math.round(weeklyBudget * 0.35 / 7);
+    const dBudget = Math.round(weeklyBudget * 0.45 / 7);
     const plan = [];
-    const usedDishes = new Set<string>();
 
     for (let d = 0; d < 7; d++) {
-      let dish = DISHES.find(dd => !usedDishes.has(dd)) ?? DISHES[d % DISHES.length];
-      usedDishes.add(dish);
-      const channel = channels[d];
-      const costMultiplier = channel === "instamart" ? 0.6 : channel === "food" ? 1.0 : 1.5;
-      const cost = Math.round(dailyBudget * costMultiplier * (0.8 + Math.random() * 0.4));
-
-      plan.push({
-        day: days[d],
-        dish,
-        channel,
-        cost: Math.min(cost, dailyBudget),
-        servings,
-        healthScore: Math.round(50 + Math.random() * 35),
-        timeMin: channel === "instamart" ? 40 + Math.round(Math.random() * 20) : channel === "food" ? 25 + Math.round(Math.random() * 15) : 10,
-      });
+      const bCh = "instamart";
+      const lCh = d % 3 === 0 ? "food" : "instamart";
+      const dCh = d === 5 ? "dineout" : d % 2 === 0 ? "food" : "instamart";
+      plan.push(
+        { day: days[d], meal: "breakfast", dish: BREAKFAST[d % BREAKFAST.length], channel: bCh, cost: Math.round(bBudget * (0.7 + Math.random() * 0.6)) },
+        { day: days[d], meal: "lunch", dish: LUNCH[d % LUNCH.length], channel: lCh, cost: Math.round(lBudget * (0.7 + Math.random() * 0.6)) },
+        { day: days[d], meal: "dinner", dish: DINNER[d % DINNER.length], channel: dCh, cost: Math.round(dBudget * (0.7 + Math.random() * 0.6)) },
+      );
     }
 
     const totalCost = plan.reduce((s, p) => s + p.cost, 0);
-    const channelSplit = { cook: split[0], order: split[1], dine: split[2] };
+    const cookCount = plan.filter(p => p.channel === "instamart").length;
+    const orderCount = plan.filter(p => p.channel === "food").length;
+    const dineCount = plan.filter(p => p.channel === "dineout").length;
+    const channelSplit = { cook: cookCount, order: orderCount, dine: dineCount };
 
     json(res, { success: true, plan, totalCost, weeklyBudget, channelSplit });
   } catch (err) {
