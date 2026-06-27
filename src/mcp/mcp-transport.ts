@@ -35,6 +35,41 @@ export interface MCPToolResponse<T = unknown> {
   error?: { message: string };
 }
 
+/**
+ * Extract data from Swiggy MCP tool response.
+ *
+ * Swiggy MCP response format (standard MCP):
+ * { content: [{ type: "text", text: "JSON_STRING" }], structuredContent: {}, isError: bool }
+ *
+ * The JSON string inside content[0].text contains the actual data.
+ * If isError is true, returns null.
+ */
+export function extractMCPData(res: any): any {
+  let payload = res?.data ?? res;
+
+  // Check for error
+  if (payload?.isError === true) {
+    const errText = payload?.content?.[0]?.text ?? "Unknown MCP error";
+    console.warn('[MCP] Tool returned error:', errText);
+    return null;
+  }
+
+  // Extract from content[0].text (standard MCP format)
+  if (payload?.content && Array.isArray(payload.content)) {
+    const textContent = payload.content.find((c: any) => c.type === "text");
+    if (textContent?.text) {
+      try { return JSON.parse(textContent.text); } catch { return textContent.text; }
+    }
+  }
+
+  // Fallback: if Swiggy wraps in { success, data }
+  if (payload?.success === true && payload?.data !== undefined) {
+    return payload.data;
+  }
+
+  return payload;
+}
+
 export class MCPTransport {
   private endpoint: string;
   private auth: PKCEAuthManager;
@@ -76,6 +111,7 @@ export class MCPTransport {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -100,10 +136,10 @@ export class MCPTransport {
           throw Object.assign(new Error("SESSION_REVOKED"), { status: 419 });
         }
 
-        // Bad input — don't retry
-        if (res.status === 400) {
-          const body = await res.json().catch(() => ({ error: { message: "Bad request" } }));
-          throw new Error(`VALIDATION_ERROR: ${body?.error?.message ?? res.statusText}`);
+        // Bad input / not acceptable — don't retry
+        if (res.status === 400 || res.status === 406) {
+          const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
+          throw new Error(`VALIDATION_ERROR: ${res.status} ${body?.error?.message ?? res.statusText}`);
         }
 
         // Transient errors — retry

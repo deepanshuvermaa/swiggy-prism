@@ -14,13 +14,14 @@
 
 import type { SKU, MCPResponse } from "../types/index.js";
 import type { InstamartProvider } from "./adapter.js";
-import { MCPTransport } from "./mcp-transport.js";
+import { MCPTransport, extractMCPData } from "./mcp-transport.js";
 import { PKCEAuthManager } from "./auth-pkce.js";
 
 const INSTAMART_ENDPOINT = "https://mcp.swiggy.com/im";
 
 export class MCPInstamartClient implements InstamartProvider {
   private transport: MCPTransport;
+  private cachedAddressId: string | null = null;
 
   constructor(auth: PKCEAuthManager) {
     this.transport = new MCPTransport(INSTAMART_ENDPOINT, auth);
@@ -28,16 +29,45 @@ export class MCPInstamartClient implements InstamartProvider {
 
   async authenticate(_clientId: string, _clientSecret: string): Promise<void> {
     // Auth is handled by PKCEAuthManager, not per-provider
-    // This method exists for interface compatibility
+  }
+
+  private async getAddressId(): Promise<string> {
+    if (this.cachedAddressId) return this.cachedAddressId;
+    try {
+      const res = await this.transport.callTool({ name: "get_addresses", arguments: {} });
+      const data = extractMCPData(res);
+      console.log('[Instamart] get_addresses raw:', JSON.stringify(data).slice(0, 500));
+
+      // data could be: { addresses: [...] } or [...] directly
+      let addresses: any[] = [];
+      if (Array.isArray(data)) addresses = data;
+      else if (data?.addresses && Array.isArray(data.addresses)) addresses = data.addresses;
+      else if (data?.savedAddresses && Array.isArray(data.savedAddresses)) addresses = data.savedAddresses;
+
+      if (addresses.length > 0) {
+        const addr = addresses[0];
+        this.cachedAddressId = addr.addressId ?? addr.id ?? addr.address_id ?? addr.addressid;
+        console.log('[Instamart] Using address:', this.cachedAddressId, 'label:', addr.label || addr.name || addr.tag || '', 'keys:', Object.keys(addr));
+        if (this.cachedAddressId) return this.cachedAddressId;
+      }
+      console.warn('[Instamart] No valid addressId found in response');
+    } catch (err) {
+      console.warn('[Instamart] get_addresses failed:', err instanceof Error ? err.message : err);
+    }
+    // DO NOT fall back to "addr_home" — it doesn't exist. Throw so the channel fails gracefully.
+    throw new Error("No saved address found. Please add an address in Swiggy app first.");
   }
 
   async searchSKUs(query: string, limit = 10): Promise<SKU[]> {
+    const addressId = await this.getAddressId();
     const res = await this.transport.callTool({
       name: "search_products",
-      arguments: { addressId: "addr_home", query, offset: 0 },
+      arguments: { addressId, query },
     });
 
-    const products = (res.data as any)?.products ?? [];
+    const rawData = extractMCPData(res);
+    console.log('[DEBUG Instamart] searchSKUs query="' + query + '" rawData keys:', Object.keys(rawData || {}), 'full:', JSON.stringify(rawData).slice(0, 500));
+    const products = rawData?.products ?? rawData?.items ?? rawData?.results ?? [];
     const skus: SKU[] = [];
     for (const product of products) {
       // Each product may have variants with their own spinId
@@ -59,11 +89,9 @@ export class MCPInstamartClient implements InstamartProvider {
   }
 
   async addToCart(items: Array<{ skuId: string; quantity: number }>): Promise<void> {
-    // Instamart update_cart REPLACES entire cart, uses selectedAddressId + items with spinId
     await this.transport.callTool({
       name: "update_cart",
       arguments: {
-        selectedAddressId: "addr_home",
         items: items.map(i => ({ spinId: i.skuId, quantity: i.quantity })),
       },
     });

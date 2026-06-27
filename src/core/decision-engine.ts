@@ -78,7 +78,8 @@ async function queryCookIt(
       recommended: false,
       reasonShort: "",
     };
-  } catch {
+  } catch (err) {
+    console.error('[DEBUG Cook] queryCookIt failed:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -147,7 +148,8 @@ async function queryOrderIt(
       recommended: false,
       reasonShort: "",
     };
-  } catch {
+  } catch (err) {
+    console.error('[DEBUG Order] queryOrderIt failed:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -201,7 +203,8 @@ async function queryDineOut(
       recommended: false,
       reasonShort: "",
     };
-  } catch {
+  } catch (err) {
+    console.error('[DEBUG Dineout] queryDineOut failed:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -214,11 +217,16 @@ export async function decide(
   dineoutProvider: DineoutProvider
 ): Promise<DecisionResult> {
   // Query all 3 channels in parallel
+  console.log('[Decision] Starting 3 channel queries for "' + intent.dishName + '"...');
   const [cookResult, orderResult, dineoutResult] = await Promise.allSettled([
     queryCookIt(intent, instamartProvider),
     queryOrderIt(intent, foodProvider),
     queryDineOut(intent, dineoutProvider),
   ]);
+
+  console.log('[Decision] Cook:', cookResult.status, cookResult.status === 'fulfilled' ? (cookResult.value ? 'cost=' + cookResult.value.cost : 'null') : (cookResult as any).reason?.message);
+  console.log('[Decision] Order:', orderResult.status, orderResult.status === 'fulfilled' ? (orderResult.value ? 'cost=' + orderResult.value.cost : 'null') : (orderResult as any).reason?.message);
+  console.log('[Decision] Dineout:', dineoutResult.status, dineoutResult.status === 'fulfilled' ? (dineoutResult.value ? 'cost=' + dineoutResult.value.cost : 'null') : (dineoutResult as any).reason?.message);
 
   const options: ChannelOption[] = [];
 

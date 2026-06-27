@@ -13,16 +13,35 @@
 
 import type { DineoutVenue, DineoutSlot, DineoutBooking } from "../types/index.js";
 import type { DineoutProvider } from "./providers.js";
-import { MCPTransport } from "./mcp-transport.js";
+import { MCPTransport, extractMCPData } from "./mcp-transport.js";
 import { PKCEAuthManager } from "./auth-pkce.js";
 
 const DINEOUT_ENDPOINT = "https://mcp.swiggy.com/dineout";
 
 export class MCPDineoutClient implements DineoutProvider {
   private transport: MCPTransport;
+  private cachedAddressId: string | null = null;
 
   constructor(auth: PKCEAuthManager) {
     this.transport = new MCPTransport(DINEOUT_ENDPOINT, auth);
+  }
+
+  private async getAddressId(): Promise<string | null> {
+    if (this.cachedAddressId) return this.cachedAddressId;
+    try {
+      // Dineout might share addresses with food, try fetching
+      const res = await this.transport.callTool({ name: "get_addresses", arguments: {} });
+      const data = extractMCPData(res);
+      const addresses = data?.addresses ?? data ?? [];
+      if (Array.isArray(addresses) && addresses.length > 0) {
+        this.cachedAddressId = addresses[0].addressId ?? addresses[0].id;
+        console.log('[Dineout] Using address:', this.cachedAddressId);
+        return this.cachedAddressId;
+      }
+    } catch {
+      // Dineout may not support get_addresses — fall back to lat/lng
+    }
+    return null;
   }
 
   async searchVenues(
@@ -31,14 +50,23 @@ export class MCPDineoutClient implements DineoutProvider {
     longitude: number,
     entityType?: "locality" | "CUISINE" | "RESTAURANT_CATEGORY"
   ): Promise<DineoutVenue[]> {
-    const args: Record<string, unknown> = { query, latitude, longitude };
+    const addressId = await this.getAddressId();
+    const args: Record<string, unknown> = { query };
+    if (addressId) {
+      args.addressId = addressId;
+    } else {
+      args.latitude = latitude;
+      args.longitude = longitude;
+    }
     if (entityType) args.entityType = entityType;
 
     const res = await this.transport.callTool({
       name: "search_restaurants_dineout",
       arguments: args,
     });
-    return (res.data as any)?.restaurants ?? [];
+    const data = extractMCPData(res);
+    console.log('[Dineout] searchVenues result keys:', Object.keys(data || {}));
+    return data?.restaurants ?? [];
   }
 
   async getVenueDetails(
@@ -50,7 +78,7 @@ export class MCPDineoutClient implements DineoutProvider {
       name: "get_restaurant_details",
       arguments: { restaurantId, latitude, longitude },
     });
-    return res.data as any;
+    return extractMCPData(res);
   }
 
   async getAvailableSlots(
@@ -64,7 +92,8 @@ export class MCPDineoutClient implements DineoutProvider {
       arguments: { restaurantId, date, latitude, longitude },
     });
 
-    const rawSlots = (res.data as any)?.slots ?? [];
+    const slotData = extractMCPData(res);
+    const rawSlots = slotData?.slots ?? [];
     // Filter to free deals only per Swiggy API constraint
     return rawSlots
       .map((s: any) => ({
@@ -102,7 +131,7 @@ export class MCPDineoutClient implements DineoutProvider {
       { retryable: false } // non-idempotent
     );
 
-    const data = res.data as any;
+    const data = extractMCPData(res);
     return {
       bookingId: data?.bookingId ?? data?.orderId ?? "",
       restaurantId,
@@ -120,6 +149,6 @@ export class MCPDineoutClient implements DineoutProvider {
       name: "get_booking_status",
       arguments: { bookingId },
     });
-    return res.data as any;
+    return extractMCPData(res);
   }
 }

@@ -91,16 +91,19 @@ const PRIORITY_BY_CATEGORY: Record<IngredientCategory, IngredientPriority> = {
   other: "optional",
 };
 
-const SYSTEM_PROMPT = `You are an ingredient extraction engine. Given a recipe description or meal plan, extract every ingredient with its quantity and unit.
+const SYSTEM_PROMPT = `You are a recipe ingredient engine for an Indian grocery app. Given a dish name or recipe description, generate the COMPLETE list of ingredients needed to cook it from scratch at home.
 
 Respond ONLY with a JSON array. Each element:
 {"name": "ingredient name", "quantity": number, "unit": "g|kg|ml|l|pcs|tbsp|tsp|cup"}
 
 Rules:
-- Normalize units (e.g., "a pinch" = 1g, "1 cup" = 240ml for liquids)
+- Generate ALL ingredients needed to cook the dish, even if the user only gives a dish name like "noodles" or "biryani"
+- Include the main protein/carb, vegetables, spices, oil, and basic cooking ingredients
+- Use common Indian grocery item names (e.g., "atta" not "whole wheat flour", "haldi" or "turmeric")
+- Normalize units (e.g., "a pinch" = 2g, "1 cup" = 240ml for liquids)
 - If servings are mentioned, scale quantities accordingly
-- Include cooking staples only if explicitly mentioned (salt, oil, etc.)
 - Use lowercase names
+- Quantities should be realistic for home cooking
 - No explanations, just the JSON array`;
 
 interface RawIngredient {
