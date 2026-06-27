@@ -19,7 +19,8 @@ import type { Ingredient, SKU, Persona } from "./types/index.js";
 import { log, getLogs, getStats } from "./logger.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const UI_DIR = join(__dirname, "..", "ui");
+// UI lives in docs/ (GitHub Pages) — resolve relative to project root
+const UI_DIR = join(__dirname, "..", "docs");
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
 
 const MIME: Record<string, string> = {
@@ -32,16 +33,20 @@ const MIME: Record<string, string> = {
   ".webp": "image/webp",
 };
 
-// OAuth redirect URIs — localhost for dev, GitHub Pages for production
+// OAuth redirect URIs — localhost for dev, Railway for production, GitHub Pages for static
 const REDIRECT_URIS = [
   `http://localhost:${PORT}/auth/callback`,
+  "https://swiggy-prism-production.up.railway.app/auth/callback",
   "https://deepanshuvermaa.github.io/swiggy-prism/auth/callback",
 ];
 
 function getRedirectUri(req: any): string {
   const host = req.headers.host ?? "";
-  if (host.includes("github.io") || host.includes("deepanshuverma")) {
+  if (host.includes("railway.app")) {
     return REDIRECT_URIS[1];
+  }
+  if (host.includes("github.io") || host.includes("deepanshuverma")) {
+    return REDIRECT_URIS[2];
   }
   return REDIRECT_URIS[0];
 }
