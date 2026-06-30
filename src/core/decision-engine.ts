@@ -49,6 +49,15 @@ async function queryCookIt(
     }
     if (ingredients.length === 0) return null;
 
+    // Deduplicate ingredients (e.g. "ginger" + "ginger garlic paste" → keep only one)
+    const seen = new Set<string>();
+    ingredients = ingredients.filter(ing => {
+      const key = ing.name.toLowerCase().split(/\s+/)[0]; // first word as key
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     // Filter out pantry items
     if (pantryItems.length > 0) {
       const pantrySet = pantryItems.map(p => p.toLowerCase());

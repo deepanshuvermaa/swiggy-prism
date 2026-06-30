@@ -325,8 +325,17 @@ async function handleOrderHistory(_req: any, res: any) {
 
 async function handleParseVideo(_req: any, res: any, url: URL) {
   try {
-    const videoUrl = url.searchParams.get("url") ?? "";
+    let videoUrl = url.searchParams.get("url") ?? "";
     if (!videoUrl) return json(res, { success: false, error: "URL required" }, 400);
+
+    // Convert short URLs (youtu.be/xxx) to full format (youtube.com/watch?v=xxx)
+    const shortMatch = videoUrl.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+    if (shortMatch) {
+      videoUrl = `https://www.youtube.com/watch?v=${shortMatch[1]}`;
+      console.log("[ParseVideo] Converted short URL to:", videoUrl);
+    }
+    // Strip tracking params (?si=xxx)
+    videoUrl = videoUrl.replace(/[&?]si=[^&]+/, '');
 
     let title = "";
     let desc = "";

@@ -120,18 +120,16 @@ export class MCPInstamartClient implements InstamartProvider {
       if (skus.length >= limit) break;
     }
 
-    // Filter junk/processed food ONLY for single-word raw ingredient queries
-    const JUNK = ['chips','crispz','biscuit','cookie','snack','drink','juice','soda','candy','chocolate','syrup','ketchup','sauce','spread','instant','ready to eat','frozen','cake','rusk','namkeen','bhujia','mixture','pickle','jam','squash','cola','pepsi','coke'];
-    const words = query.trim().split(/\s+/);
-    const isSingleWordRaw = words.length === 1 && /^(onion|tomato|ginger|garlic|potato|carrot|capsicum|spinach|paneer|chicken|egg|butter|cream|curd|milk|oil|salt|sugar)$/i.test(words[0]);
+    // Filter junk/processed food for ALL raw ingredient queries
+    const JUNK = ['chips','crispz','biscuit','cookie','snack','drink','juice','soda','candy','chocolate','syrup','ketchup','sauce','spread','instant','ready to eat','frozen','cake','rusk','namkeen','bhujia','mixture','pickle','jam','squash','cola','pepsi','coke','maggi','noodle pack'];
+    const hasRawKeyword = /\b(fresh|onion|tomato|ginger|garlic|potato|carrot|capsicum|spinach|paneer|chicken|egg|dal|rice|atta|oil|butter|cream|curd|milk|lemon|chilli|coriander|methi|jeera|cumin|haldi|turmeric)\b/i.test(query);
 
-    if (isSingleWordRaw) {
+    if (hasRawKeyword) {
       const filtered = skus.filter(s => {
         const nameLower = s.name.toLowerCase();
         return !JUNK.some(j => nameLower.includes(j));
       });
-      // If filter removes all, fall back to top 2 unfiltered (better than nothing)
-      return (filtered.length >= 2 ? filtered : skus.slice(0, 2)).slice(0, limit);
+      return (filtered.length >= 1 ? filtered : skus.slice(0, 1)).slice(0, limit);
     }
 
     return skus.slice(0, limit);

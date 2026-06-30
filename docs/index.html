@@ -182,7 +182,7 @@
     <!-- ====== SCREEN: Share Simulation ====== -->
     <div class="screen" id="screen-share-sim">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Recipe Capture</h2>
@@ -307,7 +307,7 @@
     <!-- ====== SCREEN: Persona Onboarding ====== -->
     <div class="screen" id="screen-persona">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Profile</h2>
@@ -347,7 +347,13 @@
         </div>
 
         <div class="dietary-section" id="dietary-section">
-          <h3 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--charcoal)">Dietary Preferences <span style="font-size:11px;color:var(--text-sec);font-weight:400">(optional)</span></h3>
+          <h3 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--charcoal)">Food Preference</h3>
+          <div class="dietary-chips" style="margin-bottom:12px">
+            <button class="dietary-chip" data-diet="veg" onclick="toggleDietary('veg')"><span class="veg-dot green" style="width:10px;height:10px;border-radius:2px;display:inline-block;border:1.5px solid #39A06F;background:#39A06F;margin-right:4px"></span> Vegetarian</button>
+            <button class="dietary-chip" data-diet="nonveg" onclick="toggleDietary('nonveg')"><span class="veg-dot red" style="width:10px;height:10px;border-radius:2px;display:inline-block;border:1.5px solid #E04F5F;background:#E04F5F;margin-right:4px"></span> Non-Veg</button>
+            <button class="dietary-chip" data-diet="eggetarian" onclick="toggleDietary('eggetarian')">🥚 Eggetarian</button>
+          </div>
+          <h3 style="font-size:14px;font-weight:700;margin:8px 0 8px;color:var(--charcoal)">Dietary Preferences <span style="font-size:11px;color:var(--text-sec);font-weight:400">(optional)</span></h3>
           <div class="dietary-chips">
             <button class="dietary-chip" data-diet="keto" onclick="toggleDietary('keto')">🥑 Keto</button>
             <button class="dietary-chip" data-diet="vegan" onclick="toggleDietary('vegan')">🌱 Vegan</button>
@@ -500,7 +506,7 @@
     <!-- ====== SCREEN: Prism Processing ====== -->
     <div class="screen" id="screen-processing">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Prism — Smart Cart</h2>
@@ -546,7 +552,7 @@
     <!-- ====== SCREEN: Optimized Cart (Swiggy-native) ====== -->
     <div class="screen" id="screen-cart">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Your Prism Cart</h2>
@@ -631,7 +637,7 @@
     <!-- ====== SCREEN: Summary + Wrapped ====== -->
     <div class="screen" id="screen-summary">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-cart')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Order Summary</h2>
@@ -876,7 +882,7 @@
     <!-- ====== SCREEN: Decision Board ====== -->
     <div class="screen" id="screen-decision-board">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Prism Decision</h2>
@@ -899,7 +905,7 @@
     <!-- ====== SCREEN: Food Order ====== -->
     <div class="screen" id="screen-food-order">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-decision-board')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Order Food</h2>
@@ -924,7 +930,7 @@
     <!-- ====== SCREEN: Dineout Flow ====== -->
     <div class="screen" id="screen-dineout-flow">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-decision-board')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Book Table</h2>
@@ -957,7 +963,7 @@
     <!-- ====== SCREEN: Food X-Ray ====== -->
     <div class="screen" id="screen-food-xray">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-prism-hub')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Food X-Ray</h2>
@@ -981,7 +987,7 @@
     <!-- ====== SCREEN: Meal Plan ====== -->
     <div class="screen" id="screen-meal-plan">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-prism-hub')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Meal Plan</h2>
@@ -1009,7 +1015,7 @@
     <!-- ====== SCREEN: Group Order ====== -->
     <div class="screen" id="screen-group-order">
       <div class="swiggy-topbar">
-        <button class="back-btn" onclick="navigateTo('screen-smart-search')">
+        <button class="back-btn" onclick="navigateBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h2 class="topbar-title">Group Order</h2>

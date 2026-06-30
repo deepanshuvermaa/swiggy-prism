@@ -413,10 +413,27 @@ function getWrappedStats() {
   return { totalBudget, totalSpent, sessions: history.length, savingsPct };
 }
 
+var _navHistory = [];
+
+function navigateBack() {
+  var prev = _navHistory.pop();
+  if (prev) navigateTo(prev);
+  else navigateTo('screen-smart-search');
+}
+
 function navigateTo(id) {
+  // Track navigation history for back button context
+  var current = document.querySelector('.screen.active');
+  if (current && current.id !== id) _navHistory.push(current.id);
+  if (_navHistory.length > 10) _navHistory.shift();
+
   prismLog('Nav', '→ ' + id);
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  var target = document.getElementById(id);
+  if (target) {
+    target.classList.add("active");
+    target.scrollTop = 0; // scroll to top on every navigation
+  }
   if (id === "screen-cart" && currentCart) renderCart(currentCart);
   if (id === "screen-summary" && currentCart) renderSummary(currentCart);
   if (id === "screen-prism-hub") renderPrismHub();
@@ -621,6 +638,8 @@ async function runPipeline(text) {
       ingredient: i.ingredient.name,
       ingredientQty: i.ingredient.quantity,
       ingredientUnit: i.ingredient.unit,
+      skuQtyDesc: i.sku.quantity ? i.sku.quantity + (i.sku.unit || '') : '',
+      skuId: i.sku.skuId || '',
       imageUrl: i.sku.imageUrl || '',
     })),
     droppedItems: cart.droppedItems || [],
@@ -689,7 +708,7 @@ function renderCart(cart) {
         ${imgHtml}
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-brand">${item.brand}${item.ingredientQty ? ' · ' + item.ingredientQty + (item.ingredientUnit || '') : ''}</div>
+          <div class="cart-item-brand">${item.brand || ''}${item.skuQtyDesc ? ' · ' + item.skuQtyDesc : ''}</div>
         </div>
         <div class="cart-item-stepper">
           <button class="qty-btn" onclick="adjustCartQty(${itemIdx},-1)">−</button>
@@ -707,29 +726,35 @@ function renderCart(cart) {
 }
 
 function computeNutrition(cart) {
+  if (!cart || !cart.items || cart.items.length === 0) return;
   let totals = { cal: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 };
 
   cart.items.forEach(item => {
-    const n = getNutrition(item.ingredient, item.ingredientQty || 100);
-    totals.cal += n.cal;
-    totals.protein += n.protein;
-    totals.carbs += n.carbs;
-    totals.fats += n.fats;
-    totals.fiber += n.fiber;
+    try {
+      const n = getNutrition(item.ingredient || item.name || '', item.ingredientQty || 100);
+      if (n) {
+        totals.cal += n.cal || 0;
+        totals.protein += n.protein || 0;
+        totals.carbs += n.carbs || 0;
+        totals.fats += n.fats || 0;
+        totals.fiber += n.fiber || 0;
+      }
+    } catch(e) { /* skip item if nutrition lookup fails */ }
   });
 
   const maxMacro = Math.max(totals.protein, totals.carbs, totals.fats, 1);
 
-  document.getElementById("macro-protein").style.width = (totals.protein / maxMacro * 100) + "%";
-  document.getElementById("macro-carbs").style.width = (totals.carbs / maxMacro * 100) + "%";
-  document.getElementById("macro-fats").style.width = (totals.fats / maxMacro * 100) + "%";
-  document.getElementById("macro-fiber").style.width = Math.min(100, totals.fiber / maxMacro * 100) + "%";
+  var el;
+  if (el = document.getElementById("macro-protein")) el.style.width = (totals.protein / maxMacro * 100) + "%";
+  if (el = document.getElementById("macro-carbs")) el.style.width = (totals.carbs / maxMacro * 100) + "%";
+  if (el = document.getElementById("macro-fats")) el.style.width = (totals.fats / maxMacro * 100) + "%";
+  if (el = document.getElementById("macro-fiber")) el.style.width = Math.min(100, totals.fiber / maxMacro * 100) + "%";
 
-  document.getElementById("macro-protein-val").textContent = totals.protein + "g";
-  document.getElementById("macro-carbs-val").textContent = totals.carbs + "g";
-  document.getElementById("macro-fats-val").textContent = totals.fats + "g";
-  document.getElementById("macro-fiber-val").textContent = totals.fiber + "g";
-  document.getElementById("total-calories").textContent = totals.cal + " kcal";
+  if (el = document.getElementById("macro-protein-val")) el.textContent = totals.protein + "g";
+  if (el = document.getElementById("macro-carbs-val")) el.textContent = totals.carbs + "g";
+  if (el = document.getElementById("macro-fats-val")) el.textContent = totals.fats + "g";
+  if (el = document.getElementById("macro-fiber-val")) el.textContent = totals.fiber + "g";
+  if (el = document.getElementById("total-calories")) el.textContent = totals.cal + " kcal";
 
   // health score: penalize high fat ratio, reward protein + fiber
   const totalMacro = totals.protein + totals.carbs + totals.fats + 1;
@@ -797,10 +822,22 @@ function renderSummary(cart) {
   });
 
   if (cart.items.length > 5) {
-    const more = document.createElement("div");
-    more.className = "summary-item";
-    more.innerHTML = `<span class="si-emoji">📦</span><div class="si-info"><div class="si-name">+${cart.items.length - 5} more items</div></div><span class="si-price"></span>`;
-    container.appendChild(more);
+    const moreCount = cart.items.length - 5;
+    const moreDiv = document.createElement("div");
+    moreDiv.className = "summary-item";
+    moreDiv.style.cursor = "pointer";
+    moreDiv.innerHTML = `<span class="si-emoji">📦</span><div class="si-info"><div class="si-name" style="color:var(--orange)">+${moreCount} more items ▾</div></div><span class="si-price"></span>`;
+    moreDiv.onclick = function() {
+      // Expand to show all remaining items
+      moreDiv.remove();
+      cart.items.slice(5).forEach(function(item) {
+        var div = document.createElement("div");
+        div.className = "summary-item";
+        div.innerHTML = '<span class="si-emoji">' + getEmoji(item.ingredient) + '</span><div class="si-info"><div class="si-name">' + item.name + '</div><div class="si-detail">' + (item.brand || '') + ' x' + item.count + '</div></div><span class="si-price">₹' + item.totalPrice + '</span>';
+        container.appendChild(div);
+      });
+    };
+    container.appendChild(moreDiv);
   }
 
   // wrapped — pull from localStorage history
@@ -1658,6 +1695,9 @@ function initPantryChips() {
 // ─── F8: Dietary Compliance ───────────────────────────────────────────────────
 
 var DIETARY_RULES = {
+  veg: { exclude: ['chicken','mutton','fish','prawn','meat','beef','pork','lamb','keema','bacon','salami','sausage'], label: 'Veg' },
+  nonveg: { exclude: [], label: 'Non-Veg' },
+  eggetarian: { exclude: ['chicken','mutton','fish','prawn','meat','beef','pork','lamb','keema','bacon','salami','sausage'], label: 'Eggetarian' },
   keto: { exclude: ['rice','atta','bread','sugar','potato','maida','noodle','pasta','rava','oats','jaggery'], label: 'Keto' },
   vegan: { exclude: ['chicken','paneer','egg','fish','mutton','prawn','milk','cream','curd','butter','cheese','ghee','honey'], label: 'Vegan' },
   jain: { exclude: ['onion','garlic','potato','ginger','carrot','beet','turnip','egg','chicken','mutton','fish','prawn'], label: 'Jain' },
