@@ -160,7 +160,7 @@ const server = createServer(async (req, res) => {
 
       log({ level: "info", event: "auth_start", status: "auth", details: `redirect_uri=${redirectUri}` });
 
-      const { clientId } = await registerClient(redirectUri, "Swiggy Prism");
+      const { clientId } = await registerClient(redirectUri, "Cravit");
       globalCodeVerifier = generateCodeVerifier();
       const challenge = generateCodeChallenge(globalCodeVerifier);
       const state = crypto.randomBytes(16).toString("hex");
@@ -620,7 +620,7 @@ function readBody(req: any): Promise<string> {
 const ADMIN_HTML = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Swiggy Prism — Admin Dashboard</title>
+<title>Cravit — Admin Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;box-sizing:border-box}
@@ -712,7 +712,7 @@ body{font-family:Inter,-apple-system,sans-serif;background:#FAFAFA;color:#1a1a2e
 <div class="header">
   <div class="header-row">
     <div>
-      <h1>Swiggy Prism</h1>
+      <h1>Cravit</h1>
       <div class="header-sub">Production Dashboard &mdash; Builders Club Integration</div>
     </div>
     <div class="header-badge"><span class="live-dot"></span>Live</div>
@@ -907,7 +907,7 @@ function filterLogs(level) {
 function exportLogs() {
   fetch('/api/logs?limit=500').then(function(r){return r.json()}).then(function(data) {
     data.exportedAt = new Date().toISOString();
-    data.integration = 'Swiggy Prism — Builders Club';
+    data.integration = 'Cravit — Builders Club';
     data.developer = 'Deepanshu Verma <deepanshuverma966@gmail.com>';
     var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     var a = document.createElement('a');
@@ -925,7 +925,7 @@ setInterval(loadLogs, 5000);
 server.listen(PORT, () => {
   const llmStatus = process.env.GEMINI_API_KEY ? "Gemini" : process.env.OPENAI_API_KEY ? "OpenAI" : process.env.GROQ_API_KEY ? "Groq (Llama 3.3 70B)" : "local fallback (no API key)";
   const mcpStatus = process.env.MCP_MODE === "live" ? "LIVE (mcp.swiggy.com)" : "mock (embedded catalog)";
-  console.log(`\n  Swiggy Prism server running at http://localhost:${PORT}`);
+  console.log(`\n  Cravit server running at http://localhost:${PORT}`);
   console.log(`  LLM: ${llmStatus}`);
   console.log(`  MCP: ${mcpStatus}`);
   console.log(`  Admin: http://localhost:${PORT}/admin`);

@@ -1,117 +1,111 @@
-# Swiggy Prism
+# Cravit
 
-**AI-Powered Contextual Commerce for Swiggy Instamart**
+**Should you cook it, order it, or dine out? Cravit decides.**
 
-> Transform any recipe or meal plan into a budget-optimized, nutrition-aware Instamart cart — in seconds.
+> Cross-channel food decision engine powered by Swiggy MCP. Compares cooking at home (Instamart), ordering delivery (Food), and dining out (Dineout) — optimized for your budget, time, health, and persona.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Try%20it%20now-FC8019?style=for-the-badge&logo=googlechrome&logoColor=white)](https://deepanshuvermaa.github.io/swiggy-prism/)
 
-**[https://deepanshuvermaa.github.io/swiggy-prism/](https://deepanshuvermaa.github.io/swiggy-prism/)**
+## What it does
 
----
+Type "butter chicken for 4, budget ₹800" and Cravit instantly shows:
 
-## Value Proposition
+- **Cook at Home** — Instamart grocery cart with real products, images, prices, and Knapsack budget optimization
+- **Order Delivery** — Best restaurant on Swiggy Food with ratings, delivery time, and auto-applied coupons
+- **Dine Out** — Table reservation on Swiggy Dineout with available slots and deals
 
-India's middle-class households spend 30-40% of monthly income on food. Swiggy Prism bridges the gap between **meal inspiration** and **smart grocery shopping** by:
+All using **real data from your Swiggy account** via 35 MCP tools across 3 servers.
 
-- **Eliminating decision fatigue**: Paste a recipe, get a cart — no manual searching.
-- **Respecting budgets**: Our Knapsack-based optimizer ensures every rupee counts, prioritizing essential ingredients when budgets are tight.
-- **Driving Instamart GMV**: Every interaction converts intent into a checkout-ready cart, increasing basket size and order frequency.
+## Features
 
-## Architecture
-
-```mermaid
-flowchart LR
-    A[User Prompt] -->|"butter chicken for 4, ₹800"| B[LLM Parser]
-    B -->|Structured Ingredients| C[Budget Optimizer]
-    C -->|Ranked SKU Selection| D[Swiggy MCP Server]
-    D -->|Cart Payload| E[Instamart Checkout]
-
-    subgraph "Swiggy Prism Core"
-        B
-        C
-    end
-
-    subgraph "Swiggy Platform"
-        D
-        E
-    end
-
-    style A fill:#f9f,stroke:#333
-    style E fill:#fc6,stroke:#333
-```
-
-### Flow
-
-1. **User Input** — Natural language recipe or meal plan with optional budget constraint
-2. **LLM Parser** (`src/core/parser.ts`) — Extracts structured ingredients, quantities, and units using Gemini/OpenAI
-3. **Budget Optimizer** (`src/core/optimizer.ts`) — Maps ingredients to best-value Instamart SKUs using a priority-weighted Knapsack algorithm
-4. **MCP Transport** (`src/mcp/`) — Sends optimized cart to Swiggy via Model Context Protocol
-5. **Checkout** — User reviews and confirms the pre-built cart
+| Feature | Description |
+|---|---|
+| **3-Channel Decision Engine** | Compare Cook vs Order vs Dine Out for any dish |
+| **YouTube Recipe Capture** | Paste a video URL → Groq LLM extracts recipe → Instamart cart built |
+| **Persona-Driven Scoring** | Foodie, Gym Freak, Balanced, Budget Saver — each gets different recommendations |
+| **Veg/Non-Veg/Dietary Filters** | Keto, Vegan, Jain, Diabetic, Gluten-free compliance |
+| **Pantry Awareness** | Mark items you have at home — Cravit skips them in your cart |
+| **Smart Pantry Tracking** | Auto-removes depleted pantry items after 3 uses |
+| **Meal Planning** | 7-day plan with Breakfast/Lunch/Dinner, persona-weighted channel split |
+| **Group Ordering** | Party mode — splits between cooking appetizers + ordering mains |
+| **Cook vs Order Savings** | "Save ₹X/month by cooking 3x/week" calculator |
+| **Price Alerts** | Set target prices, get notified when dishes drop |
+| **Health Scoring** | Nutrition breakdown (protein, carbs, fats, fiber) per cart |
+| **Cravit Wrapped** | Monthly spending story — shareable via WhatsApp |
+| **Real Order History** | Fetches actual Swiggy orders for Food X-Ray analytics |
+| **OAuth 2.1 PKCE** | Secure Swiggy authentication, token persists across restarts |
+| **Admin Dashboard** | MCP tool usage, connected users, activity logs |
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Runtime | Node.js 20+ / TypeScript 5.x |
-| AI/LLM | Google Gemini API / OpenAI GPT-4 |
-| Protocol | Model Context Protocol (MCP) via `https://swiggy.deepanshuverma.site` |
-| Algorithm | Priority-weighted 0/1 Knapsack |
-| Testing | Vitest |
-| Linting | ESLint + Prettier |
+- **Frontend**: Vanilla JS SPA (no framework), mobile-first phone-frame UI
+- **Backend**: Node.js HTTP server with TypeScript
+- **LLM**: Groq (Llama 3.3 70B) for recipe ingredient extraction
+- **MCP**: Swiggy Food (14 tools), Instamart (13 tools), Dineout (8 tools)
+- **Auth**: OAuth 2.1 PKCE with token persistence
+- **Optimizer**: Knapsack algorithm for budget-constrained cart building
 
-## Security & Privacy
-
-**Zero PII Retention** — Swiggy Prism processes user prompts ephemerally. No personal data, addresses, or payment information is stored, logged, or transmitted beyond the active session.
-
-- All communication with Swiggy MCP uses **TLS 1.3** encrypted transport
-- OAuth 2.0 token flow for Swiggy API authentication — tokens are never persisted to disk
-- No scraping, crawling, or unauthorized data collection from Swiggy's platform
-- Strict compliance with Swiggy's **Sacred Data** ground rules — data is used solely for cart assembly, never resold or repurposed
-- See [SECURITY.md](./SECURITY.md) for full security policy
-
-## Phases
-
-### Phase 1 — Core Utility (MVP)
-- [x] Recipe-to-Cart LLM parser
-- [x] Budget-First Knapsack optimizer
-- [x] MCP server integration
-
-### Phase 2 — Retention & Growth
-- [x] Multi-source intent — YouTube + Instagram share simulation
-- [x] Swiggy Prism "Wrapped" — spending analytics with localStorage persistence
-- [x] Health Score — calorie/macro breakdown with nutrition ring
-- [x] Persona system — Foodie / Gym Freak / Balanced / Budget Saver
-- [x] Personalized recommendations based on persona + order history
-
-## Quick Start
+## Setup
 
 ```bash
-# Clone
 git clone https://github.com/deepanshuvermaa/swiggy-prism.git
 cd swiggy-prism
-
-# Install
 npm install
-
-# Configure
-cp .env.example .env
-# Add your Gemini API key (optional — works without it using local parser)
-
-# Run dev server
-npm run dev
-# Open http://localhost:3000
-
-# Run tests
-npm test
 ```
 
-Or just try the **[Live Demo](https://deepanshuvermaa.github.io/swiggy-prism/)** — no setup needed.
+Create `.env`:
+```
+MCP_MODE=live
+GROQ_API_KEY=your_groq_key
+```
+
+```bash
+npm run dev        # Start server on localhost:3000
+npm run build      # Compile TypeScript
+npm start          # Production mode
+npm test           # Run tests
+```
+
+Open `http://localhost:3000` → Click "Connect with Swiggy" → Authenticate with OTP → All 35 MCP tools go live.
+
+## Architecture
+
+```
+docs/           → Frontend (index.html, app.js, engine.js, styles.css)
+src/core/       → Decision engine, scorer, optimizer, parsers
+src/mcp/        → Food, Instamart, Dineout MCP clients
+src/server.ts   → HTTP server with 15+ API endpoints
+```
+
+## API Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/decide` | 3-channel decision with persona scoring |
+| POST | `/api/parse` | LLM recipe ingredient extraction |
+| POST | `/api/optimize` | Knapsack cart optimization |
+| POST | `/api/meal-plan` | 7-day B/L/D meal plan |
+| POST | `/api/group-order` | Multi-channel party plan |
+| GET | `/api/parse-video` | YouTube URL → recipe extraction |
+| GET | `/api/order-history` | Real Swiggy order history |
+| GET | `/api/go-to-items` | Frequently ordered Instamart items |
+| GET | `/api/check-prices` | Price check for alerts |
+| GET | `/api/addresses` | User's saved delivery addresses |
+| GET | `/api/health` | Server + auth status |
+| GET | `/admin` | Admin dashboard |
+
+## Swiggy MCP Compliance
+
+- **"Powered by Swiggy"** attribution on all surfaces showing Swiggy data
+- Swiggy orange (#FF5200) not used as primary palette
+- Swiggy logo displayed only for attribution, not modified
+- No implied partnership beyond Builders Club integration
+- DPDP 2023 compliant — no analytics or advertising use of Swiggy data
+
+## Author
+
+**Deepanshu Verma** — [Portfolio](https://deepanshuverma.site/portfolio) · [GitHub](https://github.com/deepanshuvermaa)
 
 ## License
 
-MIT — see [LICENSE](./LICENSE)
-
----
-
-*Built by [Deepanshu Verma](https://deepanshuverma.site/portfolio) for the Swiggy Builders Club (MCP)*
+MIT

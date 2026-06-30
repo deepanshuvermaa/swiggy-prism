@@ -4,7 +4,7 @@ let swiggyConnected = false;
 
 // ─── Console Logging ─────────────────────────────────────────────────────────
 function prismLog(area, msg, data) {
-  var prefix = '%c[Prism ' + area + ']';
+  var prefix = '%c[Cravit' + area + ']';
   var style = 'color:#FC8019;font-weight:bold';
   if (data !== undefined) {
     console.log(prefix, style, msg, data);
@@ -70,7 +70,7 @@ function showConnectOverlay() {
   overlay.innerHTML = '<div style="background:white;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:successPop 0.4s ease">'
     + '<div style="font-size:36px;margin-bottom:12px">🔌</div>'
     + '<h2 style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:8px">Live Server Required</h2>'
-    + '<p style="font-size:13px;color:#666;line-height:1.6;margin-bottom:20px">Connecting to Swiggy requires the Prism backend server running locally. This demo runs on GitHub Pages (static).</p>'
+    + '<p style="font-size:13px;color:#666;line-height:1.6;margin-bottom:20px">Connecting to Swiggy requires the Cravit backend server running locally. This demo runs on GitHub Pages (static).</p>'
     + '<div style="background:#F5F5F5;border-radius:12px;padding:14px;text-align:left;margin-bottom:20px">'
     + '<p style="font-size:11px;color:#999;margin-bottom:6px;font-weight:600">TO CONNECT FOR REAL:</p>'
     + '<code style="font-size:12px;color:#1a1a2e;font-family:monospace;line-height:1.8;display:block">git clone the repo<br>npm install<br>npm run dev<br>Open localhost:3000</code>'
@@ -509,10 +509,10 @@ function captureFromShare() {
   if (banner) {
     banner.style.display = "";
     if (currentPlatform === "instagram") {
-      bannerTitle.textContent = "Prism found a recipe!";
+      bannerTitle.textContent = "Cravit found a recipe!";
       bannerSub.textContent = "Paneer Tikka from Instagram — Tap to build your cart";
     } else {
-      bannerTitle.textContent = "Prism found a recipe!";
+      bannerTitle.textContent = "Cravit found a recipe!";
       bannerSub.textContent = "Butter Chicken from YouTube — Tap to build your cart";
     }
   }
@@ -1582,7 +1582,7 @@ async function renderFoodXRay() {
   // Fall back to local decision history
   var history = getV2History();
   if (history.length === 0) {
-    if (body) body.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--text-sec)"><p>No order history yet.</p><p style="margin-top:8px">Use Prism to make your first food decision!</p><button class="dc-choose-btn" style="max-width:200px;margin:16px auto" onclick="navigateTo(\'screen-smart-search\')">Get Started</button></div>';
+    if (body) body.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--text-sec)"><p>No order history yet.</p><p style="margin-top:8px">Use Cravit to make your first food decision!</p><button class="dc-choose-btn" style="max-width:200px;margin:16px auto" onclick="navigateTo(\'screen-smart-search\')">Get Started</button></div>';
     return;
   }
 
@@ -1665,7 +1665,7 @@ function renderXRayFromServer(data) {
     var avgFood = Math.round(foodSpend / Math.max(1, foodOrders.length));
     insight.innerHTML = '<h4>Real Spending Insight</h4><p>Your average Swiggy Food order is ₹' + avgFood +
       '. You\'ve placed ' + foodOrders.length + ' food orders and ' + imOrders.length + ' Instamart orders. ' +
-      '<span class="savings-amount">Prism can save you 30-40% by switching some orders to cooking.</span></p>';
+      '<span class="savings-amount">Cravit can save you 30-40% by switching some orders to cooking.</span></p>';
   }
 }
 
@@ -2031,7 +2031,7 @@ function swapMealDay(idx) {
   renderMealPlanGrid(data, document.getElementById('mp-grid'), document.getElementById('mp-summary'));
 }
 
-// ─── F4: Social Sharing / Prism Wrapped ───────────────────────────────────────
+// ─── F4: Social Sharing / Cravit Wrapped ───────────────────────────────────────
 
 function shareWrapped() {
   var canvas = document.getElementById('wrapped-canvas');
@@ -2055,7 +2055,7 @@ function shareWrapped() {
   ctx.fillStyle = 'white';
   ctx.font = 'bold 28px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Swiggy Prism', 200, 60);
+  ctx.fillText('Cravit', 200, 60);
   ctx.font = '14px Inter, sans-serif';
   ctx.fillText('Your Monthly Food Story', 200, 85);
 
@@ -2088,11 +2088,11 @@ function shareWrapped() {
   // Footer
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.font = '11px Inter, sans-serif';
-  ctx.fillText('Powered by Swiggy Prism · ' + new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }), 200, 560);
+  ctx.fillText('Powered by Cravit · ' + new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }), 200, 560);
 
   // Show share modal
   var preview = document.getElementById('share-preview');
-  if (preview) preview.innerHTML = '<img src="' + canvas.toDataURL('image/png') + '" alt="Prism Wrapped">';
+  if (preview) preview.innerHTML = '<img src="' + canvas.toDataURL('image/png') + '" alt="Cravit Wrapped">';
   var modal = document.getElementById('share-modal');
   if (modal) modal.style.display = 'flex';
 }
@@ -2107,7 +2107,7 @@ function downloadWrapped() {
 }
 
 function shareToWhatsApp() {
-  var text = 'Check out my Swiggy Prism Wrapped! I saved ' + getWrappedStats().savingsPct + '% on food this month 🔥';
+  var text = 'Check out my Cravit Wrapped! I saved ' + getWrappedStats().savingsPct + '% on food this month 🔥';
   if (navigator.share) {
     var canvas = document.getElementById('wrapped-canvas');
     canvas.toBlob(function(blob) {
