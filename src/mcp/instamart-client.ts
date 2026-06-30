@@ -120,17 +120,14 @@ export class MCPInstamartClient implements InstamartProvider {
       if (skus.length >= limit) break;
     }
 
-    // Filter junk/processed food for ALL raw ingredient queries
-    const JUNK = ['chips','crispz','biscuit','cookie','snack','drink','juice','soda','candy','chocolate','syrup','ketchup','sauce','spread','instant','ready to eat','frozen','cake','rusk','namkeen','bhujia','mixture','pickle','jam','squash','cola','pepsi','coke','maggi','noodle pack'];
-    const hasRawKeyword = /\b(fresh|onion|tomato|ginger|garlic|potato|carrot|capsicum|spinach|paneer|chicken|egg|dal|rice|atta|oil|butter|cream|curd|milk|lemon|chilli|coriander|methi|jeera|cumin|haldi|turmeric)\b/i.test(query);
-
-    if (hasRawKeyword) {
-      const filtered = skus.filter(s => {
-        const nameLower = s.name.toLowerCase();
-        return !JUNK.some(j => nameLower.includes(j));
-      });
-      return (filtered.length >= 1 ? filtered : skus.slice(0, 1)).slice(0, limit);
-    }
+    // Light junk filter — only remove obvious snack/processed items
+    const JUNK = ['chips','crispz','biscuit','cookie','snack','candy','chocolate','syrup','cola','pepsi','coke','namkeen','bhujia','mixture','rusk'];
+    const filtered = skus.filter(s => {
+      const nameLower = s.name.toLowerCase();
+      // Only filter if the SKU is clearly a snack/junk item
+      return !JUNK.some(j => nameLower.includes(j));
+    });
+    if (filtered.length > 0) return filtered.slice(0, limit);
 
     return skus.slice(0, limit);
   }

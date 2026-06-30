@@ -416,7 +416,10 @@ function getWrappedStats() {
 var _navHistory = [];
 
 function navigateBack() {
+  // Skip transient screens (processing, overlay) in back stack
+  var skip = ['screen-processing'];
   var prev = _navHistory.pop();
+  while (prev && skip.indexOf(prev) !== -1) prev = _navHistory.pop();
   if (prev) navigateTo(prev);
   else navigateTo('screen-smart-search');
 }
@@ -853,6 +856,15 @@ async function placeOrder() {
   if (!confirmed) return;
 
   if (currentCart) saveSession(currentCart);
+
+  // Track pantry usage — items that were skipped because user had them
+  var pantryUsed = getPantryItemsUsedInRecipe(currentCart.items.map(function(i) { return { name: i.ingredient }; }));
+  if (pantryUsed.length > 0) {
+    var depleted = trackPantryUsage(pantryUsed);
+    if (depleted.length > 0) {
+      prismLog('Pantry', 'Items likely depleted after multiple uses: ' + depleted.join(', '));
+    }
+  }
 
   // Try real MCP checkout
   try {
@@ -1665,6 +1677,60 @@ function loadPantry() {
 
 function savePantry(items) {
   localStorage.setItem('prism_pantry', JSON.stringify(items));
+}
+
+// Smart pantry tracking — track usage, suggest replenishment
+function loadPantryUsage() {
+  try { return JSON.parse(localStorage.getItem('prism_pantry_usage') || '{}'); } catch { return {}; }
+}
+
+function trackPantryUsage(usedItems) {
+  var usage = loadPantryUsage();
+  var pantry = loadPantry();
+  var depleted = [];
+
+  usedItems.forEach(function(item) {
+    var key = item.toLowerCase();
+    if (!usage[key]) usage[key] = { count: 0, lastUsed: null };
+    usage[key].count++;
+    usage[key].lastUsed = new Date().toISOString();
+
+    // After 3 uses, suggest replenishment (pantry item likely depleted)
+    if (usage[key].count >= 3) {
+      depleted.push(key);
+      // Remove from pantry — it's probably used up
+      var idx = pantry.indexOf(key);
+      if (idx >= 0) {
+        pantry.splice(idx, 1);
+        prismLog('Pantry', 'Auto-removed "' + key + '" after ' + usage[key].count + ' uses — likely depleted');
+      }
+      usage[key].count = 0; // reset counter
+    }
+  });
+
+  localStorage.setItem('prism_pantry_usage', JSON.stringify(usage));
+  if (depleted.length > 0) {
+    savePantry(pantry);
+    initPantryChips();
+  }
+  return depleted;
+}
+
+function getPantryItemsUsedInRecipe(ingredients) {
+  var pantry = loadPantry();
+  if (pantry.length === 0 || !ingredients) return [];
+  var used = [];
+  pantry.forEach(function(p) {
+    var pLower = p.toLowerCase();
+    for (var i = 0; i < ingredients.length; i++) {
+      var ingName = (ingredients[i].name || ingredients[i] || '').toLowerCase();
+      if (ingName.includes(pLower) || pLower.includes(ingName)) {
+        used.push(pLower);
+        break;
+      }
+    }
+  });
+  return used;
 }
 
 function togglePantry(item) {

@@ -69,26 +69,27 @@ async function queryCookIt(
       if (before > ingredients.length) console.log('[Cook] Skipped', before - ingredients.length, 'pantry items');
     }
 
-    // Search SKUs for top ingredients only (essentials + important) for speed
-    const topIngredients = ingredients
-      .filter(i => i.priority === 'essential' || i.priority === 'important')
-      .slice(0, 6);
-    // Fall back to all if none are prioritized
-    const searchIngredients = topIngredients.length > 0 ? topIngredients : ingredients.slice(0, 6);
-
+    // Search ALL ingredients — don't limit to 6, every ingredient matters for cart completeness
+    // Batch into groups of 5 for parallel execution to avoid rate limits
     const skuMap = new Map<string, Awaited<ReturnType<typeof instamartProvider.searchSKUs>>>();
-    // Search in parallel for speed
-    const skuResults = await Promise.allSettled(
-      searchIngredients.map(async (ing) => {
-        const skus = await instamartProvider.searchSKUs(ing.name, 3);
-        return { name: ing.name, skus };
-      })
-    );
-    for (const result of skuResults) {
-      if (result.status === 'fulfilled') {
-        skuMap.set(result.value.name, result.value.skus);
+    const batches = [];
+    for (let i = 0; i < ingredients.length; i += 5) {
+      batches.push(ingredients.slice(i, i + 5));
+    }
+    for (const batch of batches) {
+      const skuResults = await Promise.allSettled(
+        batch.map(async (ing) => {
+          const skus = await instamartProvider.searchSKUs(ing.name, 3);
+          return { name: ing.name, skus };
+        })
+      );
+      for (const result of skuResults) {
+        if (result.status === 'fulfilled' && result.value.skus.length > 0) {
+          skuMap.set(result.value.name, result.value.skus);
+        }
       }
     }
+    console.log('[Cook] Searched', ingredients.length, 'ingredients, found SKUs for', skuMap.size);
 
     const cart = optimizeCart(ingredients, skuMap, intent.budget);
     const cookTime = getCookTime(intent.dishName);
