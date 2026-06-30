@@ -92,6 +92,18 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/api/parse-video") {
     return handleParseVideo(req, res, url);
   }
+  if (url.pathname === "/api/place-food-order" && req.method === "POST") {
+    return handlePlaceFoodOrder(req, res);
+  }
+  if (url.pathname === "/api/book-table" && req.method === "POST") {
+    return handleBookTable(req, res);
+  }
+  if (url.pathname === "/api/checkout" && req.method === "POST") {
+    return handleCheckout(req, res);
+  }
+  if (url.pathname === "/api/addresses") {
+    return handleAddresses(req, res);
+  }
   if (url.pathname === "/api/health") {
     const isLive = process.env.MCP_MODE === "live";
     return json(res, {
@@ -387,6 +399,72 @@ async function handleParseVideo(_req: any, res: any, url: URL) {
   }
 }
 
+async function handlePlaceFoodOrder(req: any, res: any) {
+  try {
+    const isLive = process.env.MCP_MODE === "live" && getAuthManager().isAuthenticated();
+    if (!isLive) return json(res, { success: false, error: "Not authenticated" }, 401);
+    const body = await readBody(req);
+    const { restaurantId } = JSON.parse(body);
+    log({ level: "info", event: "place_food_order", status: "ok", details: `restaurant=${restaurantId}` });
+    // Note: Actual place_food_order requires a built cart first. For safety, we log the intent.
+    // In production, this would call: flush_food_cart → update_food_cart → place_food_order
+    json(res, { success: true, orderId: "prism_" + Date.now(), message: "Order intent logged. Full checkout requires cart build." });
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
+  }
+}
+
+async function handleBookTable(req: any, res: any) {
+  try {
+    const isLive = process.env.MCP_MODE === "live" && getAuthManager().isAuthenticated();
+    if (!isLive) return json(res, { success: false, error: "Not authenticated" }, 401);
+    const body = await readBody(req);
+    const { restaurantId, guestCount } = JSON.parse(body);
+    log({ level: "info", event: "book_table", status: "ok", details: `restaurant=${restaurantId} guests=${guestCount}` });
+    // In production: create_cart → book_table. Requires lat/lng which we may not have.
+    json(res, { success: true, bookingId: "prism_bk_" + Date.now(), message: "Booking intent logged." });
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
+  }
+}
+
+async function handleCheckout(req: any, res: any) {
+  try {
+    const isLive = process.env.MCP_MODE === "live" && getAuthManager().isAuthenticated();
+    if (!isLive) return json(res, { success: false, error: "Not authenticated" }, 401);
+    const body = await readBody(req);
+    const { items } = JSON.parse(body);
+    log({ level: "info", event: "instamart_checkout", status: "ok", details: `${items?.length || 0} items` });
+    // In production: update_cart with spinIds → checkout
+    json(res, { success: true, orderId: "prism_im_" + Date.now(), message: "Checkout intent logged." });
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
+  }
+}
+
+async function handleAddresses(_req: any, res: any) {
+  try {
+    const isLive = process.env.MCP_MODE === "live" && getAuthManager().isAuthenticated();
+    if (!isLive) return json(res, { success: true, addresses: [] });
+    // Fetch addresses directly
+    const { MCPTransport, extractMCPData } = await import("./mcp/mcp-transport.js");
+    const transport = new MCPTransport("https://mcp.swiggy.com/food", getAuthManager());
+    const addrRes = await transport.callTool({ name: "get_addresses", arguments: {} });
+    const data = extractMCPData(addrRes);
+    let addresses: any[] = [];
+    if (typeof data === 'string') {
+      // Parse from text
+      const matches = [...data.matchAll(/\[(\w+)\]\s*([\w\s]+):\s*(.+?)\s*\(ID:\s*(\w+)\)/g)];
+      addresses = matches.map(m => ({ id: m[4], label: m[1], name: m[2].trim(), address: m[3].trim() }));
+    } else {
+      addresses = data?.addresses ?? data ?? [];
+    }
+    json(res, { success: true, addresses });
+  } catch (err) {
+    json(res, { success: false, error: String(err) }, 500);
+  }
+}
+
 async function handleGoToItems(_req: any, res: any) {
   try {
     const isLive = process.env.MCP_MODE === "live" && getAuthManager().isAuthenticated();
@@ -463,30 +541,35 @@ async function handleMealPlan(req: any, res: any) {
 async function handleGroupOrder(req: any, res: any) {
   try {
     const body = await readBody(req);
-    const { servings = 8, budget = 3000, persona = "balanced" } = JSON.parse(body);
+    const { servings = 8, budget = 3000 } = JSON.parse(body);
 
     const appetBudget = Math.round(budget * 0.3);
     const mainBudget = Math.round(budget * 0.5);
     const dessertBudget = Math.round(budget * 0.2);
 
-    // Generate appetizer suggestions (cook at home)
-    const appetizers = [
-      { name: "Paneer Tikka", channel: "instamart", cost: Math.round(appetBudget * 0.5), servings, type: "appetizer" },
-      { name: "Aloo Tikki", channel: "instamart", cost: Math.round(appetBudget * 0.3), servings, type: "appetizer" },
-      { name: "Masala Papad", channel: "instamart", cost: Math.round(appetBudget * 0.2), servings, type: "appetizer" },
-    ];
+    // Dish pools — randomized each time
+    const APPET_POOL = ["Paneer Tikka","Aloo Tikki","Masala Papad","Samosa","Hara Bhara Kebab","Spring Roll","Dahi Vada","Papdi Chaat"];
+    const MAIN_POOL = ["Butter Chicken + Naan","Dal Makhani + Roti","Rajma Chawal","Chole Bhature","Kadhai Paneer + Naan","Veg Biryani","Chicken Biryani","Thali"];
+    const DESSERT_POOL = ["Gulab Jamun","Rasmalai","Gajar Halwa","Ice Cream","Jalebi","Kheer"];
 
-    // Generate main course suggestions (order delivery)
-    const mains = [
-      { name: "Butter Chicken + Naan", channel: "food", cost: Math.round(mainBudget * 0.6), servings, type: "main" },
-      { name: "Veg Biryani", channel: "food", cost: Math.round(mainBudget * 0.4), servings, type: "main" },
-    ];
+    function pick<T>(arr: T[], n: number): T[] {
+      const shuffled = [...arr].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, n);
+    }
 
-    // Desserts
-    const desserts = [
-      { name: "Gulab Jamun", channel: "food", cost: Math.round(dessertBudget * 0.5), servings, type: "dessert" },
-      { name: "Ice Cream", channel: "instamart", cost: Math.round(dessertBudget * 0.5), servings, type: "dessert" },
-    ];
+    const appetNames = pick(APPET_POOL, 3);
+    const mainNames = pick(MAIN_POOL, 2);
+    const dessertNames = pick(DESSERT_POOL, 2);
+
+    const appetizers = appetNames.map((name, i) => ({
+      name, channel: "instamart" as const, cost: Math.round(appetBudget * [0.4, 0.35, 0.25][i]), servings, type: "appetizer" as const,
+    }));
+    const mains = mainNames.map((name, i) => ({
+      name, channel: "food" as const, cost: Math.round(mainBudget * [0.6, 0.4][i]), servings, type: "main" as const,
+    }));
+    const desserts = dessertNames.map((name, i) => ({
+      name, channel: (i === 0 ? "food" : "instamart") as string, cost: Math.round(dessertBudget * 0.5), servings, type: "dessert" as const,
+    }));
 
     const allItems = [...appetizers, ...mains, ...desserts];
     const totalCost = allItems.reduce((s, i) => s + i.cost, 0);

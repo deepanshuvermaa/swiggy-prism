@@ -120,17 +120,18 @@ export class MCPInstamartClient implements InstamartProvider {
       if (skus.length >= limit) break;
     }
 
-    // Filter out junk/processed food when searching for raw ingredients
+    // Filter junk/processed food ONLY for single-word raw ingredient queries
     const JUNK = ['chips','crispz','biscuit','cookie','snack','drink','juice','soda','candy','chocolate','syrup','ketchup','sauce','spread','instant','ready to eat','frozen','cake','rusk','namkeen','bhujia','mixture','pickle','jam','squash','cola','pepsi','coke'];
-    const isRawIngredient = /\b(fresh|onion|tomato|ginger|garlic|potato|carrot|capsicum|spinach|paneer|chicken|egg|dal|rice|atta|oil|butter|cream|curd|milk)\b/i.test(query);
+    const words = query.trim().split(/\s+/);
+    const isSingleWordRaw = words.length === 1 && /^(onion|tomato|ginger|garlic|potato|carrot|capsicum|spinach|paneer|chicken|egg|butter|cream|curd|milk|oil|salt|sugar)$/i.test(words[0]);
 
-    if (isRawIngredient) {
+    if (isSingleWordRaw) {
       const filtered = skus.filter(s => {
         const nameLower = s.name.toLowerCase();
         return !JUNK.some(j => nameLower.includes(j));
       });
-      // If all results are junk for a raw ingredient, return empty — optimizer will skip this ingredient
-      return filtered.slice(0, limit);
+      // If filter removes all, fall back to top 2 unfiltered (better than nothing)
+      return (filtered.length >= 2 ? filtered : skus.slice(0, 2)).slice(0, limit);
     }
 
     return skus.slice(0, limit);

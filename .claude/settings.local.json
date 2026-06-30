@@ -36,7 +36,26 @@
       "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Items:',j.items?.length||0\\)}\\)\")",
       "Bash(curl -s -o /dev/null -w \"  Status: %{http_code}\" http://localhost:3000/admin)",
       "Bash(curl -s http://localhost:3000/api/sessions)",
-      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Sessions:',j.sessions?.length||0\\)}\\)\")"
+      "Bash(node -e \"process.stdin.on\\('data',d=>{var j=JSON.parse\\(d\\);console.log\\('  Sessions:',j.sessions?.length||0\\)}\\)\")",
+      "Bash(node test-e2e.mjs)",
+      "Bash(grep -n \"undefined\\\\|window\\\\\\\\.undefined\\\\|typeof.*undefined\" \"c:/Users/Asus/Desktop/swiggy prism/docs/app.js\")",
+      "Bash(grep -n \"window\\\\\\\\.Prism\\\\|PrismEngine\\\\|engine\\\\\\\\.js\" \"c:/Users/Asus/Desktop/swiggy prism/docs/index.html\")",
+      "Bash(grep -n \"window\\\\\\\\.Prism\\\\|exports\\\\|PrismEngine\" \"c:/Users/Asus/Desktop/swiggy prism/docs/engine.js\")",
+      "Bash(npx tsc:*)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(npx tsx:*)",
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__select_page",
+      "Bash(taskkill //F //IM \"chrome-devtools-mcp.exe\")",
+      "Bash(taskkill //F //IM \"chrome-devtools-mcp\")",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__handle_dialog",
+      "mcp__chrome-devtools__type_text"
     ]
   }
 }

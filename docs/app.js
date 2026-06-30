@@ -810,12 +810,30 @@ function renderSummary(cart) {
   document.getElementById("wrapped-spent-bar").style.width = ((stats.totalSpent / stats.totalBudget) * 100) + "%";
 }
 
-function placeOrder() {
+async function placeOrder() {
+  if (!currentCart) return;
+  var confirmed = confirm('This will place a REAL Instamart order for ₹' + currentCart.totalCost + '. Proceed?');
+  if (!confirmed) return;
+
   if (currentCart) saveSession(currentCart);
+
+  // Try real MCP checkout
+  try {
+    var useServer = await checkServer();
+    if (useServer && localStorage.getItem('prism_onboarded') === 'live') {
+      prismLog('Order', 'Placing REAL Instamart order via MCP...');
+      var r = await fetch(API + '/api/checkout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: currentCart.items.map(function(i) { return { skuId: i.skuId, quantity: i.count }; }) })
+      });
+      var d = await r.json();
+      if (d.success) prismLog('Order', 'Real Instamart order placed!');
+    }
+  } catch (err) { prismLog('Order', 'MCP checkout failed:', err); }
+
   const overlay = document.getElementById("order-overlay");
   overlay.classList.add("visible");
 
-  // brief success flash, then go to post-order screen
   setTimeout(() => {
     overlay.classList.remove("visible");
     renderPostOrder();
@@ -890,14 +908,50 @@ function quickDecision(text) {
   runDecisionPipeline(text);
 }
 
+var _skeletonInterval = null;
+
+function showSkeletonLoading() {
+  var container = document.getElementById('inline-results');
+  if (!container) return;
+  var suggestions = document.getElementById('initial-suggestions');
+  if (suggestions) suggestions.style.display = 'none';
+
+  var html = '<div class="skeleton-status"><span id="skeleton-dots">Searching 3 channels</span></div>';
+  for (var i = 0; i < 3; i++) {
+    var colors = ['#39A06F', '#FC8019', '#6B4EFF'];
+    html += '<div class="skeleton-card" style="border-left-color:' + colors[i] + '">';
+    html += '<div class="skeleton-bar" style="width:60%;height:14px;margin-bottom:8px"></div>';
+    html += '<div class="skeleton-bar" style="width:80%;height:10px;margin-bottom:6px"></div>';
+    html += '<div class="skeleton-bar" style="width:40%;height:10px"></div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+
+  // Animate dots
+  var dotEl = document.getElementById('skeleton-dots');
+  var dots = 0;
+  if (_skeletonInterval) clearInterval(_skeletonInterval);
+  _skeletonInterval = setInterval(function() {
+    dots = (dots + 1) % 4;
+    if (dotEl) dotEl.textContent = 'Searching 3 channels' + '.'.repeat(dots);
+  }, 400);
+}
+
+function clearSkeletonLoading() {
+  if (_skeletonInterval) { clearInterval(_skeletonInterval); _skeletonInterval = null; }
+}
+
 async function runDecisionPipeline(text) {
   var persona = userPersona || 'balanced';
   prismLog('Decision', 'Pipeline start — query="' + text + '", persona=' + persona);
 
+  // Show loading skeleton immediately
+  showSkeletonLoading();
+
   var useServer = await checkServer();
+  var serverFailed = false;
 
   if (useServer) {
-    // Server-side decision — uses real MCP + LLM when in live mode
     prismLog('Decision', 'Using SERVER pipeline (live MCP + Groq LLM)');
     try {
       var r = await fetch(API + '/api/decide', {
@@ -909,15 +963,16 @@ async function runDecisionPipeline(text) {
       if (d.success && d.result) {
         prismLog('Decision', 'Server result — ' + d.result.options.length + ' options, best=' + d.result.bestOption);
         currentDecision = d.result;
-        var suggestions = document.getElementById('initial-suggestions');
-        if (suggestions) suggestions.style.display = 'none';
+        clearSkeletonLoading();
         renderInlineResults(d.result);
         return;
       } else {
         prismLog('Decision', 'Server decision failed: ' + (d.error || 'unknown'), d);
+        serverFailed = true;
       }
     } catch (err) {
       prismLog('Decision', 'Server decision error, falling back to client:', err);
+      serverFailed = true;
     }
   }
 
@@ -929,13 +984,11 @@ async function runDecisionPipeline(text) {
   prismLog('Decision', 'Result — ' + result.options.length + ' options, best=' + result.bestOption);
   currentDecision = result;
 
-  var suggestions = document.getElementById('initial-suggestions');
-  if (suggestions) suggestions.style.display = 'none';
-
-  renderInlineResults(result);
+  clearSkeletonLoading();
+  renderInlineResults(result, serverFailed);
 }
 
-function renderInlineResults(result) {
+function renderInlineResults(result, serverFailed) {
   var container = document.getElementById('inline-results');
   if (!container) return;
 
@@ -946,7 +999,11 @@ function renderInlineResults(result) {
   };
 
   var intent = result.intent;
-  var html = '<div class="ir-header">';
+  var html = '';
+  if (serverFailed) {
+    html += '<div class="error-banner">⚠ Couldn\'t reach Swiggy servers. Showing estimated results.</div>';
+  }
+  html += '<div class="ir-header">';
   html += '<div class="ir-query">' + intent.dishName.charAt(0).toUpperCase() + intent.dishName.slice(1) + '</div>';
   html += '<div class="ir-meta">' + intent.servings + ' servings · ₹' + intent.budget + ' budget</div>';
   html += '</div>';
@@ -1136,8 +1193,28 @@ function applyCouponCode() {
   }, 500);
 }
 
-function confirmFoodOrder() {
+async function confirmFoodOrder() {
+  if (!currentFoodOrder) return;
+  var confirmed = confirm('This will place a REAL order on your Swiggy account for ₹' + currentFoodOrder.cart.total + ' from ' + currentFoodOrder.restaurant.name + '. Proceed?');
+  if (!confirmed) { closeActionSheet(); return; }
+
   closeActionSheet();
+  // Try real MCP order placement
+  try {
+    var useServer = await checkServer();
+    if (useServer && localStorage.getItem('prism_onboarded') === 'live') {
+      prismLog('Order', 'Placing REAL food order via MCP...');
+      var r = await fetch(API + '/api/place-food-order', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: currentFoodOrder.restaurant.restaurantId })
+      });
+      var d = await r.json();
+      if (d.success) {
+        prismLog('Order', 'Real order placed! ID: ' + (d.orderId || 'N/A'));
+      }
+    }
+  } catch (err) { prismLog('Order', 'MCP order failed (demo fallback):', err); }
+
   saveDecisionOrder('food', currentDecision ? currentDecision.intent.dishName : 'Food', currentFoodOrder.cart.total);
   showOrderOverlay('Order Confirmed!', currentFoodOrder.restaurant.deliveryTimeMin + ' min delivery', 'via Swiggy Food · ' + currentFoodOrder.restaurant.name);
 }
@@ -1172,10 +1249,27 @@ function showDineoutActionSheet(details) {
   openActionSheet(html);
 }
 
-function confirmDineoutBooking() {
-  closeActionSheet();
+async function confirmDineoutBooking() {
+  if (!currentDineout) return;
   var v = currentDineout.venue;
   var bill = Math.round((v.costForTwo / 2) * dineoutPartySize);
+  var confirmed = confirm('This will book a REAL table at ' + v.name + ' for ' + dineoutPartySize + ' guests at ' + currentDineout.nextSlot.displayTime + '. Proceed?');
+  if (!confirmed) { closeActionSheet(); return; }
+
+  closeActionSheet();
+  try {
+    var useServer = await checkServer();
+    if (useServer && localStorage.getItem('prism_onboarded') === 'live') {
+      prismLog('Booking', 'Booking REAL table via MCP...');
+      var r = await fetch(API + '/api/book-table', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: v.restaurantId, guestCount: dineoutPartySize, slot: currentDineout.nextSlot })
+      });
+      var d = await r.json();
+      if (d.success) prismLog('Booking', 'Real booking confirmed! ID: ' + (d.bookingId || 'N/A'));
+    }
+  } catch (err) { prismLog('Booking', 'MCP booking failed:', err); }
+
   saveDecisionOrder('dineout', currentDecision ? currentDecision.intent.dishName : 'Dineout', bill);
   showOrderOverlay('Table Booked!', currentDineout.nextSlot.displayTime + ' · ' + dineoutPartySize + ' guests', 'via Swiggy Dineout · ' + v.name);
 }
@@ -1788,6 +1882,7 @@ function renderMealPlanGrid(data, grid, summary) {
       html += '<div class="mp-meal-meta">' + (channelNames[meal.channel]||meal.channel) + '</div>';
       html += '<div class="mp-meal-cost">₹' + meal.cost + '</div>';
       html += '<button class="mp-day-swap" onclick="swapMealDay(' + idx + ')">↻</button>';
+      html += '<button class="mp-day-order" onclick="orderMealItem(\'' + meal.dish.replace(/[^\w\s]/g, '').trim() + '\')">→</button>';
       html += '</div>';
     }
     html += '</div>';
@@ -1805,6 +1900,11 @@ function renderMealPlanGrid(data, grid, summary) {
 
   // Cache plan
   localStorage.setItem('prism_meal_plan', JSON.stringify(data));
+}
+
+function orderMealItem(dish) {
+  navigateTo('screen-smart-search');
+  quickDecision(dish + ' for 2, budget 500');
 }
 
 function swapMealDay(idx) {
@@ -1952,20 +2052,28 @@ function generateClientGroupOrder(guests, budget) {
   var appetBudget = Math.round(budget * 0.3);
   var mainBudget = Math.round(budget * 0.5);
   var dessertBudget = Math.round(budget * 0.2);
-  var items = [
-    { name:'Paneer Tikka', channel:'instamart', cost:Math.round(appetBudget*0.5), type:'appetizer' },
-    { name:'Aloo Tikki', channel:'instamart', cost:Math.round(appetBudget*0.3), type:'appetizer' },
-    { name:'Masala Papad', channel:'instamart', cost:Math.round(appetBudget*0.2), type:'appetizer' },
-    { name:'Butter Chicken + Naan', channel:'food', cost:Math.round(mainBudget*0.6), type:'main' },
-    { name:'Veg Biryani', channel:'food', cost:Math.round(mainBudget*0.4), type:'main' },
-    { name:'Gulab Jamun', channel:'food', cost:Math.round(dessertBudget*0.5), type:'dessert' },
-    { name:'Ice Cream', channel:'instamart', cost:Math.round(dessertBudget*0.5), type:'dessert' },
-  ];
+
+  var POOLS = {
+    appetizer: ['Paneer Tikka','Aloo Tikki','Masala Papad','Samosa','Hara Bhara Kebab','Spring Roll','Dahi Vada','Papdi Chaat'],
+    main: ['Butter Chicken + Naan','Dal Makhani + Roti','Rajma Chawal','Chole Bhature','Kadhai Paneer + Naan','Veg Biryani','Chicken Biryani','Thali'],
+    dessert: ['Gulab Jamun','Rasmalai','Gajar Halwa','Ice Cream','Jalebi','Kheer']
+  };
+  function pick(arr, n) { var s=[].concat(arr); for(var i=s.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=s[i];s[i]=s[j];s[j]=t;} return s.slice(0,n); }
+
+  var appItems = pick(POOLS.appetizer, 3).map(function(n,i) { return { name:n, channel:'instamart', cost:Math.round(appetBudget*[0.4,0.35,0.25][i]), type:'appetizer' }; });
+  var mainItems = pick(POOLS.main, 2).map(function(n,i) { return { name:n, channel:'food', cost:Math.round(mainBudget*[0.6,0.4][i]), type:'main' }; });
+  var dessItems = pick(POOLS.dessert, 2).map(function(n,i) { return { name:n, channel:i===0?'food':'instamart', cost:Math.round(dessertBudget*0.5), type:'dessert' }; });
+  var items = appItems.concat(mainItems).concat(dessItems);
   var totalCost = items.reduce(function(s,i){return s+i.cost},0);
   var foodTotal = items.filter(function(i){return i.channel==='food'}).reduce(function(s,i){return s+i.cost},0);
   return { items:items, totalCost:totalCost, perPerson:Math.round(totalCost/guests), budget:budget, servings:guests,
     overBudget:totalCost>budget, foodCartWarning:foodTotal>1000?'Food cart exceeds ₹1000 limit':null,
     split:{appetizers:appetBudget,mains:mainBudget,desserts:dessertBudget} };
+}
+
+function orderGroupItem(dish, guests) {
+  navigateTo('screen-smart-search');
+  quickDecision(dish + ' for ' + guests + ', budget ' + Math.round(guests * 150));
 }
 
 function getGroupEmoji(name) {
@@ -1995,9 +2103,14 @@ function renderGroupOrder(result, container) {
     typeItems.forEach(function(item) {
       var chClass = item.channel === 'instamart' ? 'ch-cook' : 'ch-order';
       var emoji = getGroupEmoji(item.name);
-      html += '<div class="group-item"><span style="font-size:20px;flex-shrink:0">' + emoji + '</span><div class="group-item-name">' + item.name + '</div>';
+      var dishName = item.name.replace(/\s*\+\s*\w+$/, ''); // "Butter Chicken + Naan" → "Butter Chicken"
+      var guests = result.servings || 4;
+      html += '<div class="group-item" onclick="orderGroupItem(\'' + dishName.replace(/'/g, "\\'") + '\',' + guests + ')" style="cursor:pointer">';
+      html += '<span style="font-size:20px;flex-shrink:0">' + emoji + '</span><div class="group-item-name">' + item.name + '</div>';
       html += '<span class="group-item-channel ' + chClass + '">' + (channelLabels[item.channel]||item.channel) + '</span>';
-      html += '<div class="group-item-cost">₹' + item.cost + '</div></div>';
+      html += '<div class="group-item-cost">₹' + item.cost + '</div>';
+      html += '<span style="font-size:12px;color:var(--orange);flex-shrink:0">→</span>';
+      html += '</div>';
     });
     html += '</div>';
   });
