@@ -1,6 +1,6 @@
-# Cravit
+# Kravr
 
-**Should you cook it, order it, or dine out? Cravit decides.**
+**Should you cook it, order it, or dine out? Kravr decides.**
 
 > Cross-channel food decision engine powered by Swiggy MCP. Compares cooking at home (Instamart), ordering delivery (Food), and dining out (Dineout) — optimized for your budget, time, health, and persona.
 
@@ -8,7 +8,7 @@
 
 ## What it does
 
-Type "butter chicken for 4, budget ₹800" and Cravit instantly shows:
+Type "butter chicken for 4, budget ₹800" and Kravr instantly shows:
 
 - **Cook at Home** — Instamart grocery cart with real products, images, prices, and Knapsack budget optimization
 - **Order Delivery** — Best restaurant on Swiggy Food with ratings, delivery time, and auto-applied coupons
@@ -24,14 +24,14 @@ All using **real data from your Swiggy account** via 35 MCP tools across 3 serve
 | **YouTube Recipe Capture** | Paste a video URL → Groq LLM extracts recipe → Instamart cart built |
 | **Persona-Driven Scoring** | Foodie, Gym Freak, Balanced, Budget Saver — each gets different recommendations |
 | **Veg/Non-Veg/Dietary Filters** | Keto, Vegan, Jain, Diabetic, Gluten-free compliance |
-| **Pantry Awareness** | Mark items you have at home — Cravit skips them in your cart |
+| **Pantry Awareness** | Mark items you have at home — Kravr skips them in your cart |
 | **Smart Pantry Tracking** | Auto-removes depleted pantry items after 3 uses |
 | **Meal Planning** | 7-day plan with Breakfast/Lunch/Dinner, persona-weighted channel split |
 | **Group Ordering** | Party mode — splits between cooking appetizers + ordering mains |
 | **Cook vs Order Savings** | "Save ₹X/month by cooking 3x/week" calculator |
 | **Price Alerts** | Set target prices, get notified when dishes drop |
 | **Health Scoring** | Nutrition breakdown (protein, carbs, fats, fiber) per cart |
-| **Cravit Wrapped** | Monthly spending story — shareable via WhatsApp |
+| **Kravr Wrapped** | Monthly spending story — shareable via WhatsApp |
 | **Real Order History** | Fetches actual Swiggy orders for Food X-Ray analytics |
 | **OAuth 2.1 PKCE** | Secure Swiggy authentication, token persists across restarts |
 | **Admin Dashboard** | MCP tool usage, connected users, activity logs |

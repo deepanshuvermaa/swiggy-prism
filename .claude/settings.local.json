@@ -68,7 +68,9 @@
       "Bash(curl -o \"cravit-logo-1.png\" \"https://d8j0ntlcm91z4.cloudfront.net/user_35Lai3kaWOOG9ASSOMnu1ZahB5G/hf_20260630_095006_0913be9e-bf06-455c-a53b-70c2241c8ea8.png\")",
       "Bash(curl -o \"cravit-logo-2.png\" \"https://d8j0ntlcm91z4.cloudfront.net/user_35Lai3kaWOOG9ASSOMnu1ZahB5G/hf_20260630_095005_4ac34405-1f36-4c1f-9cab-68071566d46f.png\")",
       "Bash(curl -o \"cravit-logo-3.png\" \"https://d8j0ntlcm91z4.cloudfront.net/user_35Lai3kaWOOG9ASSOMnu1ZahB5G/hf_20260630_095006_ba1601be-8d4e-4d63-a1ed-890ca84de25a.png\")",
-      "Bash(curl -o \"cravit-logo-4.png\" \"https://d8j0ntlcm91z4.cloudfront.net/user_35Lai3kaWOOG9ASSOMnu1ZahB5G/hf_20260630_095005_4add4a9b-6a74-4933-8d57-a819a3595f49.png\")"
+      "Bash(curl -o \"cravit-logo-4.png\" \"https://d8j0ntlcm91z4.cloudfront.net/user_35Lai3kaWOOG9ASSOMnu1ZahB5G/hf_20260630_095005_4add4a9b-6a74-4933-8d57-a819a3595f49.png\")",
+      "Bash(rm -f \"c:/Users/Asus/Desktop/swiggy prism/.token.json\")",
+      "WebSearch"
     ]
   }
 }
