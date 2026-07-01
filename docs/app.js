@@ -502,29 +502,12 @@ function showShareSheet() {
 function captureFromShare() {
   document.getElementById("share-sheet").classList.remove("visible");
 
-  // Show the recipe banner on Instamart home
-  var banner = document.getElementById("prism-recipe-banner");
-  var bannerTitle = document.getElementById("banner-recipe-title");
-  var bannerSub = document.getElementById("banner-recipe-sub");
-  if (banner) {
-    banner.style.display = "";
-    if (currentPlatform === "instagram") {
-      bannerTitle.textContent = "Kravr found a recipe!";
-      bannerSub.textContent = "Paneer Tikka from Instagram — Tap to build your cart";
-    } else {
-      bannerTitle.textContent = "Kravr found a recipe!";
-      bannerSub.textContent = "Butter Chicken from YouTube — Tap to build your cart";
-    }
-  }
+  // Extract dish from the simulated video and trigger decision pipeline
+  var dish = currentPlatform === "instagram" ? "paneer tikka for 4, budget 600" : "butter chicken for 4, budget 800";
 
-  // show persona onboarding if first time, otherwise go straight to instamart
-  setTimeout(() => {
-    if (!userPersona) {
-      navigateTo("screen-persona");
-    } else {
-      applyPersona();
-      navigateTo("screen-instamart");
-    }
+  setTimeout(function() {
+    navigateTo("screen-smart-search");
+    quickDecision(dish);
   }, 300);
 }
 

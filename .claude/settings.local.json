@@ -71,6 +71,9 @@
       "Bash(curl -o \"cravit-logo-4.png\" \"https://d8j0ntlcm91z4.cloudfront.net/user_35Lai3kaWOOG9ASSOMnu1ZahB5G/hf_20260630_095005_4add4a9b-6a74-4933-8d57-a819a3595f49.png\")",
       "Bash(rm -f \"c:/Users/Asus/Desktop/swiggy prism/.token.json\")",
       "WebSearch"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Asus\\Downloads"
     ]
   }
 }
