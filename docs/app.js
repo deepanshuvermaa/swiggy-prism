@@ -44,6 +44,19 @@ function startWithMock() {
   }
 }
 
+function logoutSwiggy() {
+  if (!confirm('This will disconnect your Swiggy account and clear all session data. Continue?')) return;
+  localStorage.clear();
+  // Tell server to clear token
+  fetch(API + '/api/logout', { method: 'POST' }).catch(function() {});
+  prismLog('Auth', 'Logged out — clearing all data');
+  updateConnectButton(false);
+  navigateTo('screen-onboarding');
+  // Scroll landing to top
+  var landing = document.querySelector('.landing-scroll');
+  if (landing) landing.scrollTop = 0;
+}
+
 function connectSwiggyFromApp() {
   prismLog('Auth', 'In-app Connect button clicked, swiggyConnected=' + swiggyConnected);
   if (swiggyConnected) {

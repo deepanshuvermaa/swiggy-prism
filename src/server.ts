@@ -89,6 +89,18 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/api/group-order" && req.method === "POST") {
     return handleGroupOrder(req, res);
   }
+  if (url.pathname === "/api/logout" && req.method === "POST") {
+    // Clear persisted token
+    try {
+      const { existsSync, unlinkSync } = await import("node:fs");
+      const { join } = await import("node:path");
+      const { fileURLToPath } = await import("node:url");
+      const tokenFile = join(fileURLToPath(new URL(".", import.meta.url)), "..", ".token.json");
+      if (existsSync(tokenFile)) unlinkSync(tokenFile);
+    } catch { /* ignore */ }
+    log({ level: "info", event: "logout", status: "ok", details: "Token cleared" });
+    return json(res, { success: true });
+  }
   if (url.pathname === "/api/parse-video") {
     return handleParseVideo(req, res, url);
   }
